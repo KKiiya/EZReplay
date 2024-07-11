@@ -1,76 +1,73 @@
 package me.lagggpixel.replay.support.nms.recordable.world.block;
 
-import me.lagggpixel.replay.api.data.Vector3i;
-import me.lagggpixel.replay.api.recordable.world.block.IBlockRecordable;
-
-import java.util.UUID;
+import me.lagggpixel.replay.api.replay.content.IReplaySession;
+import me.lagggpixel.replay.api.replay.data.recordable.Recordable;
+import me.lagggpixel.replay.api.replay.data.recordable.world.block.BlockAction;
+import me.lagggpixel.replay.api.replay.data.recordable.world.block.IBlockRecordable;
+import me.lagggpixel.replay.api.replay.data.IRecording;
+import me.lagggpixel.replay.api.utils.block.IBlockData;
+import me.lagggpixel.replay.support.nms.utils.BlockData;
+import me.lagggpixel.replay.support.nms.v1_8_R3;
+import net.minecraft.server.v1_8_R3.BlockPosition;
+import net.minecraft.server.v1_8_R3.PacketPlayOutBlockChange;
+import net.minecraft.server.v1_8_R3.PacketPlayOutNamedSoundEffect;
+import org.bukkit.Location;
+import org.bukkit.World;
+import org.bukkit.block.Block;
+import org.bukkit.craftbukkit.v1_8_R3.CraftWorld;
+import org.bukkit.craftbukkit.v1_8_R3.block.CraftBlockState;
+import org.bukkit.entity.Player;
+import org.bukkit.material.MaterialData;
 
 /**
  * @author Lagggpixel
  * @since May 01, 2024
  */
-public class BlockRecordable implements IBlockRecordable {
+public class BlockRecordable extends Recordable implements IBlockRecordable {
 
-  private byte actionType;
-  private final UUID uuid;
-  private final Vector3i location;
+    private final IBlockData blockData;
+    private final BlockAction actionType;
+    private final boolean playSound;
 
-  // Block dig data
-  private byte direction;
-  private byte digType;
+    public BlockRecordable(IRecording replay, Block block, BlockAction actionType, boolean playSound) {
+        super(replay);
+        this.blockData = new BlockData(block);
+        this.actionType = actionType;
+        this.playSound = playSound;
+    }
 
-  // Block place data
-  private short materialId;
-  private int face;
+    @Override
+    public IBlockData getBlockData() {
+        return blockData;
+    }
 
-  private BlockRecordable(UUID uuid, Vector3i location, byte actionType) {
-    this.uuid = uuid;
-    this.location = location;
-    this.actionType = actionType;
-  }
+    @Override
+    public void play(IReplaySession replaySession, Player player) {
+        net.minecraft.server.v1_8_R3.World world = ((CraftWorld) replaySession.getWorld()).getHandle();
+        Location position = blockData.getPosition().toBukkitLocation();
+        BlockPosition blockPosition = new BlockPosition(position.getBlockX(), position.getBlockY(), position.getBlockZ());
+        CraftBlockState state = new CraftBlockState(position.getBlock());
+        MaterialData data = new MaterialData(blockData.getMaterial(), blockData.getData());
+        state.setData(data);
+        PacketPlayOutBlockChange blockChange = new PacketPlayOutBlockChange(world, blockPosition);
 
-  public static BlockRecordable createBlockPlaceRecordable(UUID uuid, Vector3i location, short materialId, int face) {
-    BlockRecordable recordable = new BlockRecordable(uuid, location, (byte) 0b0010);
-    recordable.setMaterialId(materialId);
-    recordable.setFace(face);
-    return recordable;
-  }
+        v1_8_R3.sendPacket(player, blockChange);
+        if (playSound) {
+            PacketPlayOutNamedSoundEffect soundEffect = new PacketPlayOutNamedSoundEffect("", blockPosition.getX(), blockPosition.getY(), blockPosition.getZ(), 0, 0);
+            switch (actionType) {
+                case BREAK:
+                    soundEffect = new PacketPlayOutNamedSoundEffect(blockData.getBreakSound(), blockPosition.getX(), blockPosition.getY(), blockPosition.getZ(), blockData.getSoundVolume(), blockData.getSoundPitch());
+                    break;
+                case PLACE:
+                    soundEffect = new PacketPlayOutNamedSoundEffect(blockData.getPlaceSound(), blockPosition.getX(), blockPosition.getY(), blockPosition.getZ(), blockData.getSoundVolume(), blockData.getSoundPitch());
+                    break;
+            }
+            v1_8_R3.sendPacket(player, soundEffect);
+        }
+    }
 
-  private void setFace(int face) {
-    this.face = face;
-  }
-
-  private void setMaterialId(short materialId) {
-    this.materialId = materialId;
-  }
-
-  public static BlockRecordable createBlockDigRecordable(UUID uuid, Vector3i location, byte direction, byte digType) {
-    BlockRecordable recordable = new BlockRecordable(uuid, location, (byte) 0b0001);
-    recordable.setDirection(direction);
-    recordable.setDigType(digType);
-    return recordable;
-  }
-
-  private void setDirection(byte direction) {
-    this.direction = direction;
-  }
-
-  private void setDigType(byte digType) {
-    this.digType = digType;
-  }
-
-  @Override
-  public UUID getUuid() {
-    return uuid;
-  }
-
-  @Override
-  public Vector3i getBlockLocation() {
-    return location;
-  }
-
-  @Override
-  public byte getActionType() {
-    return actionType;
-  }
+    @Override
+    public World getWorld() {
+        return blockData.getPosition().getWorld();
+    }
 }

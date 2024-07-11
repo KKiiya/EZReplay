@@ -1,8 +1,8 @@
 package me.lagggpixel.replay.support.nms.packets;
 
 import io.netty.channel.*;
-import me.lagggpixel.replay.api.events.PacketReadEvent;
-import me.lagggpixel.replay.api.events.PacketWriteEvent;
+import me.lagggpixel.replay.api.packets.PacketPlayInEvent;
+import me.lagggpixel.replay.api.packets.PacketPlayOutEvent;
 import org.bukkit.Bukkit;
 import org.bukkit.craftbukkit.v1_8_R3.entity.CraftPlayer;
 import org.bukkit.entity.Player;
@@ -29,7 +29,7 @@ public class Injector {
       @Override
       public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         // Call the PacketReadEvent.
-        PacketReadEvent event = new PacketReadEvent(player, msg);
+        PacketPlayInEvent event = new PacketPlayInEvent(msg, player);
         Bukkit.getPluginManager().callEvent(event);
 
         // If the event is cancelled, the packet won't be read.
@@ -42,7 +42,7 @@ public class Injector {
       @Override
       public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
         // Call the PacketWriteEvent.
-        PacketWriteEvent event = new PacketWriteEvent(player, msg);
+        PacketPlayOutEvent event = new PacketPlayOutEvent(msg, player);
         Bukkit.getPluginManager().callEvent(event);
         Object finalPacket = getObject(msg, event);
 
@@ -53,7 +53,7 @@ public class Injector {
         super.write(ctx, finalPacket, promise);
       }
 
-      private Object getObject(Object msg, PacketWriteEvent event) {
+      private Object getObject(Object msg, PacketPlayOutEvent event) {
         Object finalPacket = event.getPacket();
 
         // If the packet is not null, set the finalPacket to the packet.
