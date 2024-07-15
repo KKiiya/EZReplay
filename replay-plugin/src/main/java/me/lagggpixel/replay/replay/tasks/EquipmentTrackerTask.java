@@ -4,8 +4,7 @@ import me.lagggpixel.replay.Replay;
 import me.lagggpixel.replay.api.replay.data.IFrame;
 import me.lagggpixel.replay.api.replay.data.IRecording;
 import me.lagggpixel.replay.api.replay.data.recordable.Recordable;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.Player;
+import org.bukkit.entity.*;
 
 public class EquipmentTrackerTask implements Runnable {
     private final IRecording replay;
@@ -16,11 +15,12 @@ public class EquipmentTrackerTask implements Runnable {
 
     @Override
     public void run() {
-        int lastTick = Math.max(replay.getFrames().size() - 1, 0);
-        IFrame lastFrame = replay.getFrame(lastTick);
+        IFrame lastFrame = replay.getLastFrame();
 
         for (Entity entity : replay.getSpawnedEntities()) {
-            Recordable equipmentRecordable = Replay.getInstance().getVersionSupport().createEquipmentRecordable(replay, entity);
+            if (!(entity instanceof LivingEntity)) continue;
+            LivingEntity livingEntity = (LivingEntity) entity;
+            Recordable equipmentRecordable = Replay.getInstance().getVersionSupport().createEquipmentRecordable(replay, livingEntity);
             lastFrame.addRecordable(equipmentRecordable);
         }
 

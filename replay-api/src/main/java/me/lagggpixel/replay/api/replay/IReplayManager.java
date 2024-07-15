@@ -5,6 +5,7 @@ import me.lagggpixel.replay.api.replay.data.IRecording;
 
 import javax.annotation.Nullable;
 import java.io.File;
+import java.util.List;
 import java.util.UUID;
 
 public interface IReplayManager {
@@ -13,6 +14,8 @@ public interface IReplayManager {
     void loadReplay(UUID id);
 
     void loadReplay(String id);
+
+    List<IRecording> getReplays();
 
     @Nullable
     IRecording getReplayByID(String uuid);

@@ -11,10 +11,6 @@ import me.lagggpixel.replay.api.utils.Vector3d;
 import me.lagggpixel.replay.support.nms.v1_8_R3;
 import org.bukkit.entity.Player;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.stream.Collectors;
-
 public class HologramAddRecordable extends Recordable implements IHologramAdd {
 
     private final String[] lines;

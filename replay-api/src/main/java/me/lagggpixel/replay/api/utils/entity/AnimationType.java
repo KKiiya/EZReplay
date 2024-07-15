@@ -1,4 +1,4 @@
-package me.lagggpixel.replay.api.replay.data.recordable.entity.player;
+package me.lagggpixel.replay.api.utils.entity;
 
 public enum AnimationType {
     SWING_MAIN_HAND(0),

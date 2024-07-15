@@ -5,20 +5,25 @@ import lombok.Getter;
 import me.lagggpixel.replay.api.replay.IReplayManager;
 import me.lagggpixel.replay.api.replay.data.IRecording;
 import me.lagggpixel.replay.replay.data.Recording;
+import me.lagggpixel.replay.utils.LogUtil;
 
 import javax.annotation.Nullable;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.UUID;
 
 public class ReplayManager implements IReplayManager {
     @Getter
     private static IReplayManager instance;
-    private final HashMap<String, IRecording> replays;
+    private final List<IRecording> replays;
+    private final HashMap<String, IRecording> replayById;
     private final HashMap<IArena, IRecording> activeReplays;
 
     public ReplayManager() {
-        this.replays = new HashMap<>();
+        this.replays = new ArrayList<>();
+        this.replayById = new HashMap<>();
         this.activeReplays = new HashMap<>();
         loadReplays();
     }
@@ -32,7 +37,7 @@ public class ReplayManager implements IReplayManager {
     }
 
     public File saveReplay(IRecording replay) {
-        replays.put(replay.getID().toString(), replay);
+        replayById.put(replay.getID().toString(), replay);
         return replay.toFile();
     }
 
@@ -46,15 +51,20 @@ public class ReplayManager implements IReplayManager {
 
     }
 
+    @Override
+    public List<IRecording> getReplays() {
+        return replays;
+    }
+
     @Nullable
     public IRecording getReplayByID(String uuid) {
-        return replays.get(uuid);
+        return replayById.get(uuid);
     }
 
     @Nullable
     @Override
     public IRecording getReplayByID(UUID uuid) {
-        return replays.get(uuid.toString());
+        return replayById.get(uuid.toString());
     }
 
     @Nullable
@@ -88,7 +98,11 @@ public class ReplayManager implements IReplayManager {
         IRecording recording = activeReplays.get(a);
         recording.stop();
         activeReplays.remove(a);
-        replays.put(recording.getID().toString(), recording);
+        replayById.put(recording.getID().toString(), recording);
+        replays.add(recording);
+        LogUtil.info(recording.getSpawnedEntities().toString());
+        LogUtil.info(replays.toString());
+        LogUtil.info(replayById.toString());
     }
 
     private void loadReplays() {

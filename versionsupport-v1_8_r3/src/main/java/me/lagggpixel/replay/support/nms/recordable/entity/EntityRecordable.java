@@ -4,13 +4,11 @@ import me.lagggpixel.replay.api.replay.content.IReplaySession;
 import me.lagggpixel.replay.api.replay.data.recordable.Recordable;
 import me.lagggpixel.replay.api.replay.data.recordable.entity.IEntityRecordable;
 import me.lagggpixel.replay.api.replay.data.IRecording;
-import me.lagggpixel.replay.api.utils.Camera;
-import me.lagggpixel.replay.api.utils.Vector3d;
-import me.lagggpixel.replay.api.utils.entity.ReplayEntity;
-import me.lagggpixel.replay.api.utils.information.IEntityInformation;
-import me.lagggpixel.replay.support.nms.utils.information.EntityInformation;
 import me.lagggpixel.replay.support.nms.v1_8_R3;
+import net.minecraft.server.v1_8_R3.PacketPlayOutEntity;
+import net.minecraft.server.v1_8_R3.PacketPlayOutEntityHeadRotation;
 import net.minecraft.server.v1_8_R3.PacketPlayOutEntityTeleport;
+import org.bukkit.Location;
 import org.bukkit.craftbukkit.v1_8_R3.entity.CraftEntity;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
@@ -23,33 +21,37 @@ import java.util.UUID;
  * @since May 01, 2024
  */
 public class EntityRecordable extends Recordable implements IEntityRecordable {
-    private final IEntityInformation entityInformation;
+
+    private final UUID uniqueId;
+    private final double x;
+    private final double y;
+    private final double z;
+    private final float yaw;
+    private final float pitch;
 
     public EntityRecordable(IRecording replay, Entity entity) {
         super(replay);
-        this.entityInformation = new EntityInformation(entity);
+        this.uniqueId = entity.getUniqueId();
+        Location location = entity.getLocation();
+        this.x = location.getX();
+        this.y = location.getY();
+        this.z = location.getZ();
+        this.yaw = location.getYaw();
+        this.pitch = location.getPitch();
     }
 
     @Override
     public void play(IReplaySession replaySession, Player player) {
-        ReplayEntity replayEntity = replaySession.getFakeEntity(getEntityId());
-        net.minecraft.server.v1_8_R3.Entity entity = ((CraftEntity) replayEntity.getAssociatedEntity()).getHandle();
+        Entity replayEntity = replaySession.getSpawnedEntities().get(getUniqueId().toString());
+        net.minecraft.server.v1_8_R3.Entity entity = ((CraftEntity) replayEntity).getHandle();
 
-        Vector3d newPosition = entityInformation.getLocation();
-        Camera newCamera = entityInformation.getCamera();
-
-        double newX = newPosition.getX();
-        double newY = newPosition.getY();
-        double newZ = newPosition.getZ();
-
-        float newYaw = newCamera.getYaw();
-        float newPitch = newCamera.getPitch();
-
-        entity.setPositionRotation(newX, newY, newZ, newYaw, newPitch);
+        entity.setPositionRotation(x, y, z, yaw, pitch);
 
         PacketPlayOutEntityTeleport positionPacket = new PacketPlayOutEntityTeleport(entity);
+        PacketPlayOutEntityHeadRotation headRotation = new PacketPlayOutEntityHeadRotation(entity, (byte) ((yaw * 256.0F) / 360.0F));
+        PacketPlayOutEntity.PacketPlayOutEntityLook entityLook = new PacketPlayOutEntity.PacketPlayOutEntityLook(entity.getId(), (byte) ((yaw * 256.0F) / 360.0F), (byte) ((pitch * 256.0F) / 360.0F), true);
 
-        v1_8_R3.sendPacket(player, positionPacket);
+        v1_8_R3.sendPackets(player, positionPacket, headRotation, entityLook);
     }
 
     @Override
@@ -58,12 +60,7 @@ public class EntityRecordable extends Recordable implements IEntityRecordable {
     }
 
     @Override
-    public int getEntityId() {
-        return 0;
-    }
-
-    @Override
     public UUID getUniqueId() {
-        return null;
+        return uniqueId;
     }
 }

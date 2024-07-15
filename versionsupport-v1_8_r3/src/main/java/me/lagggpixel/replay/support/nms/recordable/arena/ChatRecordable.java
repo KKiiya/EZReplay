@@ -6,7 +6,6 @@ import me.lagggpixel.replay.api.replay.content.IReplaySession;
 import me.lagggpixel.replay.api.replay.data.IRecording;
 import me.lagggpixel.replay.api.replay.data.recordable.Recordable;
 import me.lagggpixel.replay.api.replay.data.recordable.arena.IChat;
-import me.lagggpixel.replay.api.utils.entity.player.ReplayPlayer;
 import me.lagggpixel.replay.support.nms.v1_8_R3;
 import org.bukkit.entity.Player;
 
@@ -26,16 +25,17 @@ public class ChatRecordable extends Recordable implements IChat {
     @Override
     public void play(IReplaySession replaySession, Player player) {
         BedWars bedWars = v1_8_R3.getInstance().getPlugin().getBedWarsAPI();
-        ReplayPlayer replayPlayer = replaySession.getFakePlayer(sender.toString());
+        Player replayPlayer = (Player) replaySession.getSpawnedEntities().get(sender.toString());
         Language lang = bedWars.getPlayerLanguage(player);
 
         String format = content.startsWith("!") || content.startsWith("/shout") ? lang.getString("format-chat-global") : lang.getString("format-chat-team");
         format = format
-                .replace("%bw_level%", replayPlayer.getDisplayLevel())
-                .replace("%bw_v_prefix%", replayPlayer.getPrefix())
-                .replace("%bw_v_suffix%", replayPlayer.getSuffix())
-                .replace("%bw_player", replayPlayer.getDisplayName())
-                .replace("%bw_playername", replayPlayer.getName());
+                .replace("%bw_level%", replaySession.getLevelName(sender.toString()))
+                .replace("%bw_v_prefix%", replaySession.getPrefix(sender.toString()))
+                .replace("%bw_v_suffix%", replaySession.getSuffix(sender.toString()))
+                .replace("%bw_player%", replayPlayer.getDisplayName())
+                .replace("%bw_playername%", replayPlayer.getName())
+                .replace("%bw_message%", content);
         player.sendMessage(format);
     }
 

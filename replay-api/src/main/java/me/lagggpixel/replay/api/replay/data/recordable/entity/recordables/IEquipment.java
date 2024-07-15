@@ -1,8 +1,6 @@
-package me.lagggpixel.replay.api.replay.data.recordable.entity.player.recordables;
+package me.lagggpixel.replay.api.replay.data.recordable.entity.recordables;
 
 import org.bukkit.inventory.ItemStack;
-
-import java.util.UUID;
 
 public interface IEquipment {
 
@@ -19,4 +17,5 @@ public interface IEquipment {
     ItemStack getBoots();
 
     String getUUID();
+
 }

@@ -5,7 +5,7 @@ import com.tomkeuper.bedwars.arena.Arena;
 import me.lagggpixel.replay.Replay;
 import me.lagggpixel.replay.api.replay.data.IRecording;
 import me.lagggpixel.replay.api.replay.data.recordable.Recordable;
-import me.lagggpixel.replay.api.replay.data.recordable.entity.player.AnimationType;
+import me.lagggpixel.replay.api.utils.entity.AnimationType;
 import me.lagggpixel.replay.replay.ReplayManager;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -21,6 +21,7 @@ public class PlayerListener implements Listener {
         IArena a = Arena.getArenaByPlayer(player);
 
         if (a == null) return;
+        if (e.isCancelled()) return;
         if (e.getAction() != Action.LEFT_CLICK_AIR && e.getAction() != Action.LEFT_CLICK_BLOCK) return;
 
         IRecording recording = ReplayManager.getInstance().getActiveReplay(a);

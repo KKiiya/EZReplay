@@ -19,6 +19,5 @@ public abstract class Recordable {
         return replay;
     }
 
-
     public abstract void play(IReplaySession replaySession, Player player);
 }

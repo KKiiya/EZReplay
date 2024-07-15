@@ -1,7 +1,12 @@
 package me.lagggpixel.replay.api.replay.data;
 
 import com.tomkeuper.bedwars.api.arena.IArena;
+import com.tomkeuper.bedwars.api.arena.team.TeamColor;
+import me.lagggpixel.replay.api.replay.content.IReplaySession;
+import org.bukkit.Location;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.Item;
+import org.bukkit.entity.Player;
 
 import java.io.File;
 import java.util.List;
@@ -50,6 +55,12 @@ public interface IRecording {
     IFrame getLastFrame();
 
     /**
+     * Get the frame before the last frame
+     * @return the previous frame recorded before the last frame
+     */
+    IFrame getPreviousFrame();
+
+    /**
      * Get the frames of the replay
      * @return A list of the frames
      */
@@ -65,6 +76,49 @@ public interface IRecording {
      * Get the spawned entities during the replay
      */
     List<Entity> getSpawnedEntities();
+
+    /**
+     * Get the dropped items during the replay
+     */
+    List<Item> getDroppedItems();
+
+    /**
+     * Get the players that started playing
+     */
+    List<String> getPlayers();
+
+    /**
+     * Get the player's team color
+     */
+    TeamColor getTeamColor(String player);
+
+    /**
+     * Get the prefix of a player
+     * @param player The player to get the prefix from
+     * @return String object containing the prefix
+     */
+    String getPrefix(String player);
+
+    /**
+     * Get the suffix of a player
+     * @param player The player to get the suffix from
+     * @return String object containing the suffix
+     */
+    String getSuffix(String player);
+
+    /**
+     * Get the level name of a player
+     * @param player The player to get the level name from
+     * @return String object containing the level name
+     */
+    String getLevelName(String player);
+
+    /**
+     * Get the first location where the player spawned
+     * @param offlinePlayer The offline player to get the data from
+     * @return the location Object
+     */
+    Location getSpawnLocation(String offlinePlayer);
 
     /**
      * Start or continue recording
@@ -99,4 +153,18 @@ public interface IRecording {
      * Check if the replay has finished recording
      */
     boolean isFinished();
+
+    /**
+     * Create a replay session to replay the recording
+     * @param player The player that will be watching the replay
+     * @return The IReplaySession object
+     */
+    IReplaySession watch(Player player);
+
+    /**
+     * Create a replay session to replay the recording
+     * @param players The players that will be watching the replay
+     * @return The IReplaySession object
+     */
+    IReplaySession watch(Player... players);
 }

@@ -22,13 +22,13 @@ public class GameStateChangeListener implements Listener {
     @EventHandler
     public void onGameEndEvent(GameEndEvent e) {
         IArena a = e.getArena();
-        Bukkit.getScheduler().runTaskLater(Replay.getInstance(), () -> Replay.getInstance().getReplayManager().startRecording(a), (long) 20*9);
+        Bukkit.getScheduler().runTaskLater(Replay.getInstance(), () -> Replay.getInstance().getReplayManager().stopRecording(a), (long) 20*9);
     }
 
     @EventHandler
     public void onArenaLeave(PlayerLeaveArenaEvent e) {
         IArena a = e.getArena();
         if (a.getPlayers().size() > 2) return;
-        Bukkit.getScheduler().runTaskLater(Replay.getInstance(), () -> Replay.getInstance().getReplayManager().startRecording(a), (long) 20*3);
+        Bukkit.getScheduler().runTaskLater(Replay.getInstance(), () -> Replay.getInstance().getReplayManager().stopRecording(a), (long) 20*3);
     }
 }

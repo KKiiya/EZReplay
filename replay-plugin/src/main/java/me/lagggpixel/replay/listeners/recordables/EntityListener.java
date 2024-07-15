@@ -4,14 +4,14 @@ import com.tomkeuper.bedwars.api.arena.IArena;
 import me.lagggpixel.replay.Replay;
 import me.lagggpixel.replay.api.replay.data.IRecording;
 import me.lagggpixel.replay.api.replay.data.recordable.Recordable;
-import me.lagggpixel.replay.api.replay.data.recordable.entity.player.AnimationType;
+import me.lagggpixel.replay.api.utils.entity.AnimationType;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.Item;
+import org.bukkit.entity.Projectile;
+import org.bukkit.entity.TNTPrimed;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.entity.EntityDamageEvent;
-import org.bukkit.event.entity.EntityDeathEvent;
-import org.bukkit.event.entity.EntitySpawnEvent;
-import org.bukkit.event.entity.ProjectileLaunchEvent;
+import org.bukkit.event.entity.*;
 
 public class EntityListener implements Listener {
 
@@ -22,17 +22,56 @@ public class EntityListener implements Listener {
         IArena a = Replay.getInstance().getBedWarsAPI().getArenaUtil().getArenaByIdentifier(worldName);
 
         if (a == null) return;
+        if (e.isCancelled()) return;
+        if (entity instanceof Projectile) return;
 
         IRecording recording = Replay.getInstance().getReplayManager().getActiveReplay(a);
         if (recording == null) return;
 
         recording.getSpawnedEntities().add(entity);
-        recording.getLastFrame().addRecordable(Replay.getInstance().getVersionSupport().createEntitySpawnRecordable(recording, entity.getLocation(), entity.getType(), entity.getEntityId(), entity.getUniqueId()));
+        if (entity instanceof Item) return;
+
+        Recordable spawn = Replay.getInstance().getVersionSupport().createEntitySpawnRecordable(recording, entity);
+        recording.getLastFrame().addRecordable(spawn);
+    }
+
+    @EventHandler
+    public void onEntityDamageByEntity(EntityDamageByEntityEvent e) {
+        Entity entity = e.getDamager();
+        String worldName = entity.getWorld().getName();
+        IArena a = Replay.getInstance().getBedWarsAPI().getArenaUtil().getArenaByIdentifier(worldName);
+
+        if (a == null) return;
+        if (e.isCancelled()) return;
+
+        IRecording recording = Replay.getInstance().getReplayManager().getActiveReplay(a);
+        if (recording == null) return;
+
+        if (entity instanceof Item) return;
+        if (entity instanceof Projectile) return;
+        if (entity instanceof TNTPrimed) return;
+
+        Recordable spawn = Replay.getInstance().getVersionSupport().createAnimationRecordable(recording, entity, AnimationType.SWING_MAIN_HAND);
+        recording.getLastFrame().addRecordable(spawn);
     }
 
     @EventHandler
     public void onEntityDie(EntityDeathEvent e) {
+        Entity entity = e.getEntity();
+        String worldName = entity.getWorld().getName();
+        IArena a = Replay.getInstance().getBedWarsAPI().getArenaUtil().getArenaByIdentifier(worldName);
 
+        if (a == null) return;
+
+        IRecording recording = Replay.getInstance().getReplayManager().getActiveReplay(a);
+        if (recording == null) return;
+
+        recording.getSpawnedEntities().remove(entity);
+
+        if (entity instanceof Item) return;
+        if (entity instanceof Projectile) return;
+        Recordable recordable = Replay.getInstance().getVersionSupport().createEntityDeathRecordable(recording, entity);
+        recording.getLastFrame().addRecordable(recordable);
     }
 
     @EventHandler
@@ -42,6 +81,7 @@ public class EntityListener implements Listener {
         IArena a = Replay.getInstance().getBedWarsAPI().getArenaUtil().getArenaByIdentifier(worldName);
 
         if (a == null) return;
+        if (e.isCancelled()) return;
 
         IRecording recording = Replay.getInstance().getReplayManager().getActiveReplay(a);
         if (recording == null) return;
@@ -57,8 +97,13 @@ public class EntityListener implements Listener {
         IArena a = Replay.getInstance().getBedWarsAPI().getArenaUtil().getArenaByIdentifier(worldName);
 
         if (a == null) return;
+        if (e.isCancelled()) return;
 
         IRecording recording = Replay.getInstance().getReplayManager().getActiveReplay(a);
         if (recording == null) return;
+
+        recording.getSpawnedEntities().add(entity);
+        Recordable spawn = Replay.getInstance().getVersionSupport().createEntitySpawnRecordable(recording, entity);
+        recording.getLastFrame().addRecordable(spawn);
     }
 }

@@ -11,8 +11,6 @@ public interface IFrame {
 
     IRecording getReplay();
 
-    int getTick();
-
     void addRecordable(Recordable... recordables);
 
     void addAsList(List<Recordable> recordableList);

@@ -6,6 +6,5 @@ import java.util.UUID;
 
 public interface IEntityRecordable {
     EntityType getType();
-    int getEntityId();
     UUID getUniqueId();
 }

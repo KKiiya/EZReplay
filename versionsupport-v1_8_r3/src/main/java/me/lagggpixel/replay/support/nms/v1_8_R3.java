@@ -4,38 +4,51 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.properties.Property;
+import com.tomkeuper.bedwars.api.arena.generator.IGenerator;
+import com.tomkeuper.bedwars.api.hologram.containers.IHologram;
 import lombok.Getter;
 import me.lagggpixel.replay.api.IReplay;
 import me.lagggpixel.replay.api.replay.content.IReplaySession;
 import me.lagggpixel.replay.api.replay.data.recordable.Recordable;
 import me.lagggpixel.replay.api.replay.data.IRecording;
-import me.lagggpixel.replay.api.replay.data.recordable.entity.player.AnimationType;
+import me.lagggpixel.replay.api.utils.entity.AnimationType;
 import me.lagggpixel.replay.api.replay.data.recordable.world.block.BlockAction;
 import me.lagggpixel.replay.api.support.IVersionSupport;
-import me.lagggpixel.replay.api.utils.entity.player.ReplayPlayer;
-import me.lagggpixel.replay.support.nms.packets.InjectorHandler;
-import me.lagggpixel.replay.support.nms.recordable.arena.EggBridgeRecordable;
-import me.lagggpixel.replay.support.nms.recordable.arena.PopUpTowerRecordable;
-import me.lagggpixel.replay.support.nms.recordable.entity.recordables.AnimationRecordable;
-import me.lagggpixel.replay.support.nms.recordable.entity.player.recordables.Equipment;
-import me.lagggpixel.replay.support.nms.recordable.entity.player.recordables.PlayerStatus;
-import me.lagggpixel.replay.support.nms.recordable.entity.recordables.EntitySpawn;
-import me.lagggpixel.replay.support.nms.recordable.entity.recordables.EntityStatus;
+import me.lagggpixel.replay.support.nms.recordable.arena.*;
+import me.lagggpixel.replay.support.nms.recordable.arena.specials.EggBridgeRecordable;
+import me.lagggpixel.replay.support.nms.recordable.world.ExplosionRecordable;
+import me.lagggpixel.replay.support.nms.recordable.arena.specials.PopUpTowerRecordable;
+import me.lagggpixel.replay.support.nms.recordable.arena.specials.TntRecordable;
+import me.lagggpixel.replay.support.nms.recordable.entity.EntityRecordable;
+import me.lagggpixel.replay.support.nms.recordable.entity.EntityStatus;
+import me.lagggpixel.replay.support.nms.recordable.entity.player.recordables.status.Invisible;
+import me.lagggpixel.replay.support.nms.recordable.entity.player.recordables.status.Sneaking;
+import me.lagggpixel.replay.support.nms.recordable.entity.player.recordables.status.Sprinting;
+import me.lagggpixel.replay.support.nms.recordable.entity.player.recordables.status.SwordBlock;
+import me.lagggpixel.replay.support.nms.recordable.entity.recordables.*;
+import me.lagggpixel.replay.support.nms.recordable.entity.recordables.Equipment;
+import me.lagggpixel.replay.support.nms.recordable.entity.recordables.status.Burning;
 import me.lagggpixel.replay.support.nms.recordable.world.block.BlockRecordable;
 import net.minecraft.server.v1_8_R3.*;
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
-import org.bukkit.Location;
+import net.minecraft.server.v1_8_R3.World;
+import org.apache.commons.codec.binary.Base64;
+import org.bukkit.*;
+import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.craftbukkit.v1_8_R3.CraftServer;
 import org.bukkit.craftbukkit.v1_8_R3.CraftWorld;
 import org.bukkit.craftbukkit.v1_8_R3.entity.CraftPlayer;
+import org.bukkit.craftbukkit.v1_8_R3.inventory.CraftItemStack;
 import org.bukkit.entity.Entity;
-import org.bukkit.entity.EntityType;
+import org.bukkit.entity.Item;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.lang.reflect.Field;
 import java.net.URL;
 import java.util.UUID;
 
@@ -51,7 +64,7 @@ public class v1_8_R3 implements IVersionSupport {
         v1_8_R3.plugin = plugin;
         instance = this;
 
-        InjectorHandler.init();
+        //InjectorHandler.init();
     }
 
     public IReplay getPlugin() {
@@ -64,23 +77,23 @@ public class v1_8_R3 implements IVersionSupport {
     }
 
     @Override
-    public Recordable createEquipmentRecordable(IRecording replay, Entity entity) {
+    public Recordable createEntityStatusRecordable(IRecording replay, Entity entity) {
+        return new EntityStatus(replay, entity);
+    }
+
+    @Override
+    public Recordable createEntityMovementRecordable(IRecording replay, Entity entity) {
+        return new EntityRecordable(replay, entity);
+    }
+
+    @Override
+    public Recordable createEquipmentRecordable(IRecording replay, LivingEntity entity) {
         return new Equipment(replay, entity);
     }
 
     @Override
-    public Recordable createBlockRecordable(IRecording replay, Block block, BlockAction actionType, boolean playSound) {
-        return new BlockRecordable(replay, block, actionType, playSound);
-    }
-
-    @Override
-    public Recordable createPlayerStatusRecordable(IRecording replay, Player player) {
-        return new PlayerStatus(replay, player);
-    }
-
-    @Override
-    public Recordable createEntityStatusRecordable(IRecording replay, Entity entity) {
-        return new EntityStatus(replay, entity);
+    public Recordable createBlockRecordable(IRecording replay, org.bukkit.World world, org.bukkit.Material material, byte data, Location location, BlockAction actionType, boolean playSound) {
+        return new BlockRecordable(replay, world, material, data, location, actionType, playSound);
     }
 
     @Override
@@ -89,26 +102,91 @@ public class v1_8_R3 implements IVersionSupport {
     }
 
     @Override
-    public Recordable createEntitySpawnRecordable(IRecording replay, Location spawnLocation, EntityType entityType, int entityId, UUID uniqueId) {
-        return new EntitySpawn(replay, spawnLocation, entityType, entityId, uniqueId);
+    public Recordable createEntitySpawnRecordable(IRecording replay, Entity entity) {
+        return new EntitySpawn(replay, entity);
     }
 
     @Override
-    public Recordable createPopUpTowerRecordable(IRecording replay, Block block) {
-        return new PopUpTowerRecordable(replay, block);
+    public Recordable createEntityDeathRecordable(IRecording replay, Entity entity) {
+        return new EntityDeath(replay, entity);
     }
 
     @Override
-    public Recordable createEggBridgeRecordable(IRecording replay, Block block) {
-        return new EggBridgeRecordable(replay, block);
+    public Recordable createBurningRecordable(IRecording replay, Entity entity) {
+        return new Burning(replay, entity);
     }
 
     @Override
-    public Player createNPCCopy(IReplaySession replaySession, Player player) {
+    public Recordable createInvisibilityRecordable(IRecording replay, Player player, boolean isInvisible) {
+        return new Invisible(replay, player, isInvisible);
+    }
+
+    @Override
+    public Recordable createSneakingRecordable(IRecording replay, Player player) {
+        return new Sneaking(replay, player);
+    }
+
+    @Override
+    public Recordable createSprintRecordable(IRecording replay, Player player) {
+        return new Sprinting(replay, player);
+    }
+
+    @Override
+    public Recordable createSwordBlockRecordable(IRecording replay, Player player) {
+        return new SwordBlock(replay, player);
+    }
+
+    @Override
+    public Recordable createPopUpTowerRecordable(IRecording replay, Block block, Sound sound, float volume, float pitch) {
+        return new PopUpTowerRecordable(replay, block, sound, volume, pitch);
+    }
+
+    @Override
+    public Recordable createEggBridgeRecordable(IRecording replay, Block block, Sound sound, float volume, float pitch) {
+        return new EggBridgeRecordable(replay, block, sound, volume, pitch);
+    }
+
+    @Override
+    public Recordable createHologramRecordable(IRecording replay, IHologram hologram) {
+        return new HologramAddRecordable(replay, hologram);
+    }
+
+    @Override
+    public Recordable createGeneratorRecordable(IRecording replay, IGenerator generator) {
+        return new GeneratorAddRecordable(replay, generator);
+    }
+
+    @Override
+    public Recordable createChatRecordable(IRecording replay, UUID sender, String content) {
+        return new ChatRecordable(replay, sender, content);
+    }
+
+    @Override
+    public Recordable createItemDropRecordable(IRecording replay, Item item) {
+        return new ItemDropRecordable(replay, item);
+    }
+
+    @Override
+    public Recordable createItemPickRecordable(IRecording replay, Item item, Entity collector) {
+        return new ItemPickRecordable(replay, item, collector);
+    }
+
+    @Override
+    public Recordable createTntSpawnRecordable(IRecording recording, Location location) {
+        return new TntRecordable(recording, location);
+    }
+
+    @Override
+    public Recordable createExplosionRecordable(IRecording replay, Location location, float radius) {
+        return new ExplosionRecordable(replay, location, radius);
+    }
+
+    @Override
+    public Player createNPCCopy(IReplaySession replaySession, OfflinePlayer player) {
         CraftServer craftServer = (CraftServer) Bukkit.getServer();
         WorldServer worldServer = ((CraftWorld) replaySession.getWorld()).getHandle();
         World world = ((CraftWorld) replaySession.getWorld()).getHandle();
-        GameProfile gameProfile = new GameProfile(UUID.randomUUID(), player.getDisplayName());
+        GameProfile gameProfile = new GameProfile(UUID.randomUUID(), player.getName());
         PlayerInteractManager pim = new PlayerInteractManager(world);
         EntityPlayer entityPlayer = new EntityPlayer(craftServer.getServer(), worldServer, gameProfile, pim);
 
@@ -119,13 +197,91 @@ public class v1_8_R3 implements IVersionSupport {
     }
 
     @Override
-    public void spawnFakePlayer(ReplayPlayer replayPlayer, Player player, Location location) {
-        EntityPlayer entityPlayer = ((CraftPlayer) replayPlayer.getEntity()).getHandle();
+    public ItemStack setItemTag(ItemStack item, String key, String value) {
+        net.minecraft.server.v1_8_R3.ItemStack nmsItem = CraftItemStack.asNMSCopy(item);
+        NBTTagCompound nbt = nmsItem.getTag();
+        if (nbt == null) {
+            nbt = new NBTTagCompound();
+        }
 
-        PacketPlayOutSpawnEntity spawn = new PacketPlayOutSpawnEntity(entityPlayer, replayPlayer.getEntity().getType().getTypeId());
+        nbt.setString(key, value);
+        nmsItem.setTag(nbt);
+        return CraftItemStack.asBukkitCopy(nmsItem);
+    }
+
+    @Override
+    public String getItemTag(ItemStack item, String key) {
+        net.minecraft.server.v1_8_R3.ItemStack nmsItem = CraftItemStack.asNMSCopy(item);
+        NBTTagCompound nbt = nmsItem.getTag();
+        if (nbt == null) {
+            nbt = new NBTTagCompound();
+        }
+        nmsItem.setTag(nbt);
+        return nbt.getString(key);
+    }
+
+    @Override
+    public Material getPlayerHeadMaterial() {
+        return Material.SKULL_ITEM;
+    }
+
+    @Override
+    public ItemStack getSkull(String url) {
+        ItemStack skull = new ItemStack(getPlayerHeadMaterial(), 1, (short) 3);
+
+        if (url == null || url.isEmpty())
+            return skull;
+
+        ItemMeta skullMeta = skull.getItemMeta();
+        GameProfile profile = new GameProfile(UUID.randomUUID(), null);
+        byte[] encodedData = Base64.encodeBase64(String.format("{textures:{SKIN:{url:\"%s\"}}}", url).getBytes());
+        profile.getProperties().put("textures", new Property("textures", new String(encodedData)));
+        Field profileField;
+
+        try {
+            profileField = skullMeta.getClass().getDeclaredField("profile");
+        } catch (NoSuchFieldException | SecurityException e) {
+            throw new RuntimeException(e);
+        }
+
+        profileField.setAccessible(true);
+
+        try {
+            profileField.set(skullMeta, profile);
+        } catch (IllegalArgumentException | IllegalAccessException e) {
+            throw new RuntimeException(e);
+        }
+
+        skull.setItemMeta(skullMeta);
+        return skull;
+    }
+
+    @Override
+    public void spawnFakePlayer(Player replayPlayer, Player player, Location location) {
+        EntityPlayer entityPlayer = ((CraftPlayer) replayPlayer).getHandle();
+
+        double x = location.getX();
+        double y = location.getY();
+        double z = location.getZ();
+
+        float yaw = location.getYaw();
+        float pitch = location.getPitch();
+
+        entityPlayer.setPositionRotation(x, y, z, yaw, pitch);
+        DataWatcher watcher = entityPlayer.getDataWatcher();
+        watcher.watch(10, (byte) 127);
+
+        PacketPlayOutPlayerInfo playerInfo = new PacketPlayOutPlayerInfo(PacketPlayOutPlayerInfo.EnumPlayerInfoAction.ADD_PLAYER, entityPlayer);
+        PacketPlayOutNamedEntitySpawn spawn = new PacketPlayOutNamedEntitySpawn(entityPlayer);
         PacketPlayOutEntityMetadata metadata = new PacketPlayOutEntityMetadata(entityPlayer.getId(), entityPlayer.getDataWatcher(), true);
 
-        sendPackets(player, spawn, metadata);
+        sendPackets(player, playerInfo, spawn, metadata);
+    }
+
+    @Override
+    public void sendActionBar(Player player, String message) {
+        PacketPlayOutChat packet = new PacketPlayOutChat(IChatBaseComponent.ChatSerializer.a("{\"text\":\"" + message + "\"}"), (byte) 2);
+        sendPacket(player, packet);
     }
 
     public static void sendPacket(Player player,Packet<PacketListenerPlayOut> packet) {
@@ -152,7 +308,7 @@ public class v1_8_R3 implements IVersionSupport {
             // gets textures for the account
             URL url2 = new URL("https://sessionserver.mojang.com/session/minecraft/profile/" + uuid + "?unsigned=false");
             InputStreamReader reader2 = new InputStreamReader(url2.openStream());
-            JsonObject property = (new JsonParser().parse(reader2).getAsJsonObject().get("properties").getAsJsonArray().get(0).getAsJsonObject();
+            JsonObject property = (new JsonParser().parse(reader2).getAsJsonObject().get("properties").getAsJsonArray().get(0).getAsJsonObject());
             String texture = property.get("value").getAsString();
             String signature = property.get("signature").getAsString();
             return new String[] {texture, signature};
@@ -166,5 +322,4 @@ public class v1_8_R3 implements IVersionSupport {
         }
 
     }
-
 }
