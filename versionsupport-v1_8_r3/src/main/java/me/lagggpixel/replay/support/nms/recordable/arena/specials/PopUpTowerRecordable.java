@@ -37,12 +37,10 @@ public class PopUpTowerRecordable extends Recordable implements IPopUpTower {
         net.minecraft.server.v1_8_R3.Block nmsBlock = CraftMagicNumbers.getBlock(material);
 
         PacketPlayOutBlockChange blockChange = new PacketPlayOutBlockChange(world, blockPosition);
-        PacketPlayOutBlockChange blockChangeSecurer = new PacketPlayOutBlockChange(world, blockPosition);
         PacketPlayOutNamedSoundEffect soundEffect = new PacketPlayOutNamedSoundEffect(CraftSound.getSound(sound), blockPosition.getX(), blockPosition.getY(), blockPosition.getZ(), volume, pitch);
 
         blockChange.block = nmsBlock.fromLegacyData(data);
-        blockChangeSecurer.block = nmsBlock.fromLegacyData(data);
 
-        v1_8_R3.sendPackets(player, blockChange, blockChangeSecurer, soundEffect);
+        v1_8_R3.sendPackets(player, blockChange, soundEffect);
     }
 }

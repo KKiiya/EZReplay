@@ -1,32 +1,31 @@
 package me.lagggpixel.replay.listeners.recordables;
 
 import com.tomkeuper.bedwars.api.arena.IArena;
-import com.tomkeuper.bedwars.arena.Arena;
 import me.lagggpixel.replay.Replay;
+import me.lagggpixel.replay.api.events.block.BlockChangeEvent;
 import me.lagggpixel.replay.api.replay.data.IRecording;
 import me.lagggpixel.replay.api.replay.data.recordable.Recordable;
+import me.lagggpixel.replay.api.utils.block.BlockEventType;
 import me.lagggpixel.replay.api.utils.entity.AnimationType;
 import me.lagggpixel.replay.api.replay.data.recordable.world.block.BlockAction;
 import me.lagggpixel.replay.replay.ReplayManager;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
-import org.bukkit.event.block.BlockBreakEvent;
-import org.bukkit.event.block.BlockGrowEvent;
-import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.*;
+import org.bukkit.event.block.*;
 import org.bukkit.event.player.PlayerInteractEvent;
 
 public class BlockListener implements Listener {
 
     @EventHandler
-    public void onBlockBreak(BlockBreakEvent e) {
-        Player player = e.getPlayer();
-        IArena a = Arena.getArenaByPlayer(player);
+    public void onBlockEvent(BlockChangeEvent e) {
         Block block = e.getBlock();
+        IArena a = Replay.getInstance().getBedWarsAPI().getArenaUtil().getArenaByIdentifier(block.getWorld().getName());
 
         World world = block.getWorld();
         Material material = block.getType();
@@ -35,64 +34,179 @@ public class BlockListener implements Listener {
 
         if (a == null) return;
         if (e.isCancelled()) return;
+        if (e.getEventType() == BlockEventType.FROM_TO) return;
 
         IRecording recording = ReplayManager.getInstance().getActiveReplay(a);
         if (recording == null) return;
 
-        Recordable recordable = Replay.getInstance().getVersionSupport().createBlockRecordable(recording, world, material, data, location, BlockAction.PLACE, true);
+        BlockAction action;
+
+        if (e.getEventType() == BlockEventType.BREAK) {
+            action = BlockAction.BREAK;
+        } else if (e.getEventType() == BlockEventType.PLACE && e.getEntity() instanceof Player) {
+            action = BlockAction.PLACE;
+            Player player = (Player) e.getEntity();
+            if (block.getType() == Material.TNT) {
+                Recordable tntSpawn = Replay.getInstance().getVersionSupport().createTntSpawnRecordable(recording, e.getBlock().getLocation());
+                Recordable animation = Replay.getInstance().getVersionSupport().createAnimationRecordable(recording, player, AnimationType.SWING_MAIN_HAND);
+                recording.getLastFrame().addRecordable(tntSpawn, animation);
+                return;
+            }
+
+            Recordable animation = Replay.getInstance().getVersionSupport().createAnimationRecordable(recording, player, AnimationType.SWING_MAIN_HAND);
+            recording.getLastFrame().addRecordable(animation);
+        } else if (e.getEventType() == BlockEventType.PISTON_EXTEND ||
+                e.getEventType() == BlockEventType.PISTON_RETRACT) {
+            action = BlockAction.INTERACT;
+        }
+        else action = BlockAction.UPDATE;
+
+        Recordable recordable = Replay.getInstance().getVersionSupport().createBlockRecordable(recording, world, material, data, location, action, true);
         recording.getLastFrame().addRecordable(recordable);
+    }
+
+    @EventHandler
+    public void onBlockPhysics(BlockPhysicsEvent e) {
+        if (e.isCancelled()) return;
+        callBlockChangeEvent(null, e.getBlock(), BlockEventType.PHYSICS);
+    }
+
+    @EventHandler
+    public void onRedstone(BlockRedstoneEvent e) {
+        callBlockChangeEvent(null, e.getBlock(), BlockEventType.REDSTONE);
+    }
+
+    @EventHandler
+    public void onCanBuild(BlockCanBuildEvent e) {
+        callBlockChangeEvent(e.getPlayer(), e.getBlock(), BlockEventType.CAN_BUILD);
+    }
+
+    @EventHandler
+    public void onBlockSpread(BlockSpreadEvent e) {
+        if (e.isCancelled()) return;
+        callBlockChangeEvent(null, e.getBlock(), BlockEventType.SPREAD);
+    }
+
+    @EventHandler
+    public void onBlockForm(BlockFormEvent e) {
+        if (e.isCancelled()) return;
+        callBlockChangeEvent(null, e.getBlock(), BlockEventType.FORM);
+    }
+
+    @EventHandler
+    public void onBlockMultiPlace(BlockMultiPlaceEvent e) {
+        if (e.isCancelled()) return;
+        callBlockChangeEvent(e.getPlayer(), e.getBlock(), BlockEventType.MULTI_PLACE);
+    }
+
+    @EventHandler
+    public void onBlockFromTo(BlockFromToEvent e) {
+        if (e.isCancelled()) return;
+        callBlockChangeEvent(null, e.getBlock(), BlockEventType.FROM_TO);
+    }
+
+    @EventHandler
+    public void onEntityBlockForm(EntityBlockFormEvent e) {
+        if (e.isCancelled()) return;
+        callBlockChangeEvent(e.getEntity(), e.getBlock(), BlockEventType.ENTITY_FORM);
+    }
+
+    @EventHandler
+    public void onBlockDamage(BlockDamageEvent e) {
+        if (e.isCancelled()) return;
+        callBlockChangeEvent(e.getPlayer(), e.getBlock(), BlockEventType.DAMAGE);
+    }
+
+    @EventHandler
+    public void onBlockGrow(BlockGrowEvent e) {
+        if (e.isCancelled()) return;
+        callBlockChangeEvent(null, e.getBlock(), BlockEventType.GROW);
+    }
+
+    @EventHandler
+    public void onBlockBurn(BlockBurnEvent e) {
+        if (e.isCancelled()) return;
+        callBlockChangeEvent(null, e.getBlock(), BlockEventType.BURN);
+    }
+
+    @EventHandler
+    public void onBlockDispense(BlockDispenseEvent e) {
+        if (e.isCancelled()) return;
+        callBlockChangeEvent(null, e.getBlock(), BlockEventType.DISPENSE);
+    }
+
+    @EventHandler
+    public void onBlockExp(BlockExpEvent e) {
+        callBlockChangeEvent(null, e.getBlock(), BlockEventType.EXP);
+    }
+
+    @EventHandler
+    public void onBlockExplode(BlockExplodeEvent e) {
+        if (e.isCancelled()) return;
+        callBlockChangeEvent(null, e.getBlock(), BlockEventType.EXPLODE);
+    }
+
+    @EventHandler
+    public void onBlockFade(BlockFadeEvent e) {
+        if (e.isCancelled()) return;
+        callBlockChangeEvent(null, e.getBlock(), BlockEventType.FADE);
     }
 
     @EventHandler
     public void onBlockPlace(BlockPlaceEvent e) {
-        Player player = e.getPlayer();
-        IArena a = Arena.getArenaByPlayer(player);
-        Block block = e.getBlockPlaced();
-
-        World world = block.getWorld();
-        Material material = block.getType();
-        byte data = block.getData();
-        Location location = block.getLocation();
-
-        if (a == null) return;
-
-        IRecording recording = ReplayManager.getInstance().getActiveReplay(a);
-        if (recording == null) return;
-
-        if (e.getItemInHand().getType() == Material.TNT) {
-            Recordable tntSpawn = Replay.getInstance().getVersionSupport().createTntSpawnRecordable(recording, e.getBlockPlaced().getLocation());
-            Recordable animation = Replay.getInstance().getVersionSupport().createAnimationRecordable(recording, player, AnimationType.SWING_MAIN_HAND);
-            recording.getLastFrame().addRecordable(tntSpawn, animation);
-            return;
-        }
-
         if (e.isCancelled()) return;
+        callBlockChangeEvent(e.getPlayer(), e.getBlock(), BlockEventType.PLACE);
+    }
 
-        Recordable recordable = Replay.getInstance().getVersionSupport().createBlockRecordable(recording, world, material, data, location, BlockAction.BREAK, true);
-        Recordable animation = Replay.getInstance().getVersionSupport().createAnimationRecordable(recording, player, AnimationType.SWING_MAIN_HAND);
-        recording.getLastFrame().addRecordable(recordable, animation);
+    @EventHandler
+    public void onBlockBreak(BlockBreakEvent e) {
+        if (e.isCancelled()) return;
+        callBlockChangeEvent(e.getPlayer(), e.getBlock(), BlockEventType.BREAK);
+    }
+
+    @EventHandler
+    public void onPistonExtend(BlockPistonExtendEvent e) {
+        if (e.isCancelled()) return;
+        callBlockChangeEvent(null, e.getBlock(), BlockEventType.PISTON_EXTEND);
+    }
+
+    @EventHandler
+    public void onPistonRetract(BlockPistonRetractEvent e) {
+        if (e.isCancelled()) return;
+        callBlockChangeEvent(null, e.getBlock(), BlockEventType.PISTON_RETRACT);
+    }
+
+    @EventHandler
+    public void onBlockIgnite(BlockIgniteEvent e) {
+        if (e.isCancelled()) return;
+        callBlockChangeEvent(e.getPlayer(), e.getBlock(), BlockEventType.IGNITE);
     }
 
     @EventHandler
     public void onBlockInteract(PlayerInteractEvent e) {
-        Player player = e.getPlayer();
-        IArena a = Arena.getArenaByPlayer(player);
+        if (e.getClickedBlock() == null) return;
+
         Block block = e.getClickedBlock();
-        if (block == null) return;
-
         World world = block.getWorld();
-        Material material = block.getType();
         byte data = block.getData();
-        Location location = block.getLocation();
+        Location loc = block.getLocation();
 
+        boolean isInteractable = Replay.getInstance().getVersionSupport().isInteractable(block);
+
+        IArena a = Replay.getInstance().getBedWarsAPI().getArenaUtil().getArenaByIdentifier(world.getName());
         if (a == null) return;
 
-        if (e.isCancelled()) return;
-
-        IRecording recording = ReplayManager.getInstance().getActiveReplay(a);
+        IRecording recording = Replay.getInstance().getReplayManager().getActiveReplay(a);
         if (recording == null) return;
 
-        Recordable recordable = Replay.getInstance().getVersionSupport().createBlockRecordable(recording, world, material, data, location, BlockAction.UPDATE, true);
+        if (!isInteractable) return;
+
+        Recordable recordable = Replay.getInstance().getVersionSupport().createBlockRecordable(recording, world, block.getType(), data, loc, BlockAction.INTERACT, true);
         recording.getLastFrame().addRecordable(recordable);
+    }
+
+    private void callBlockChangeEvent(Entity entity, Block block, BlockEventType eventType) {
+        BlockChangeEvent event = new BlockChangeEvent(entity, block, eventType);
+        Bukkit.getPluginManager().callEvent(event);
     }
 }

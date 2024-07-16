@@ -284,6 +284,37 @@ public class v1_8_R3 implements IVersionSupport {
         sendPacket(player, packet);
     }
 
+    @Override
+    public boolean isInteractable(Material material) {
+        switch (material) {
+            case LEVER:
+            case STONE_BUTTON:
+            case WOOD_BUTTON:
+            case WOOD_DOOR:
+            case WOODEN_DOOR:
+            case DARK_OAK_DOOR:
+            case ACACIA_DOOR:
+            case BIRCH_DOOR:
+            case JUNGLE_DOOR:
+            case SPRUCE_DOOR:
+            case TRAP_DOOR:
+            case CHEST:
+            case ENDER_CHEST:
+            case TRAPPED_CHEST:
+            case REDSTONE_COMPARATOR:
+            case REDSTONE_WIRE:
+            case DIODE:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    @Override
+    public boolean isInteractable(Block block) {
+        return isInteractable(block.getType());
+    }
+
     public static void sendPacket(Player player,Packet<PacketListenerPlayOut> packet) {
         PlayerConnection connection = ((CraftPlayer) player).getHandle().playerConnection;
         connection.sendPacket(packet);

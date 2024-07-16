@@ -20,6 +20,7 @@ import me.lagggpixel.replay.support.nms.v1_8_R3;
 import me.lagggpixel.replay.utils.LogUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.event.Listener;
+import org.bukkit.plugin.RegisteredListener;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.Objects;
@@ -53,10 +54,9 @@ public final class Replay extends JavaPlugin implements IReplay {
 
         registerListener(
                 new InventoryListener(),
-                new BlockListener(),
                 new EntityListener(),
+                new BlockListener(),
                 new PlayerListener(),
-                new SneakSprintListener(),
                 new ArenaLeave(),
                 new ChatListener(),
                 new GameStateChangeListener(),

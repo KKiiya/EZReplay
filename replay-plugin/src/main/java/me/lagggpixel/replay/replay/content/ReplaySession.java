@@ -1,5 +1,6 @@
 package me.lagggpixel.replay.replay.content;
 
+import com.tomkeuper.bedwars.api.arena.team.TeamColor;
 import com.tomkeuper.bedwars.api.hologram.containers.IHologram;
 import lombok.Getter;
 import me.lagggpixel.replay.Replay;
@@ -8,6 +9,7 @@ import me.lagggpixel.replay.api.replay.content.IReplaySession;
 import me.lagggpixel.replay.api.replay.data.IFrame;
 import me.lagggpixel.replay.api.replay.data.IRecording;
 import me.lagggpixel.replay.api.support.IVersionSupport;
+import me.lagggpixel.replay.utils.Utils;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
@@ -16,7 +18,6 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 
-import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -38,6 +39,7 @@ public class ReplaySession implements IReplaySession {
     private final HashMap<String, String> prefixes;
     private final HashMap<String, String> suffixes;
     private final HashMap<String, String> levelNames;
+    private final HashMap<String, TeamColor> teamColor;
 
     private final List<IHologram> createdHolograms;
 
@@ -47,7 +49,6 @@ public class ReplaySession implements IReplaySession {
     private boolean isPaused = false;
     private int currentFrameIndex = 0;
     private int speedMultiplier = 20;
-    private boolean stopRecursivity = false;
 
     public ReplaySession(World world, UUID replayId, Player... players) {
         this.vs = Replay.getInstance().getVersionSupport();
@@ -62,13 +63,15 @@ public class ReplaySession implements IReplaySession {
         this.prefixes = new HashMap<>();
         this.suffixes = new HashMap<>();
         this.levelNames = new HashMap<>();
+        this.teamColor = new HashMap<>();
 
-        for (String fakePlayer : replay.getPlayers()) {
-            Player NPC = vs.createNPCCopy(this, Bukkit.getOfflinePlayer(UUID.fromString(fakePlayer)));
-            spawnedEntities.put(fakePlayer, NPC);
-            prefixes.put(fakePlayer, replay.getPrefix(fakePlayer));
-            suffixes.put(fakePlayer, replay.getSuffix(fakePlayer));
-            levelNames.put(fakePlayer, replay.getLevelName(fakePlayer));
+        for (String player : replay.getPlayers()) {
+            Player NPC = vs.createNPCCopy(this, Bukkit.getOfflinePlayer(UUID.fromString(player)));
+            spawnedEntities.put(player, NPC);
+            prefixes.put(player, replay.getPrefix(player));
+            suffixes.put(player, replay.getSuffix(player));
+            levelNames.put(player, replay.getLevelName(player));
+            teamColor.put(player, replay.getTeamColor(player));
         }
 
         this.startedTasks = new ArrayList<>();
@@ -99,13 +102,15 @@ public class ReplaySession implements IReplaySession {
         this.prefixes = new HashMap<>();
         this.suffixes = new HashMap<>();
         this.levelNames = new HashMap<>();
+        this.teamColor = new HashMap<>();
 
-        for (String fakePlayer : replay.getPlayers()) {
-            Player NPC = vs.createNPCCopy(this, Bukkit.getOfflinePlayer(UUID.fromString(fakePlayer)));
-            spawnedEntities.put(fakePlayer, NPC);
-            prefixes.put(fakePlayer, replay.getPrefix(fakePlayer));
-            suffixes.put(fakePlayer, replay.getSuffix(fakePlayer));
-            levelNames.put(fakePlayer, replay.getLevelName(fakePlayer));
+        for (String player : replay.getPlayers()) {
+            Player NPC = vs.createNPCCopy(this, Bukkit.getOfflinePlayer(UUID.fromString(player)));
+            spawnedEntities.put(player, NPC);
+            prefixes.put(player, replay.getPrefix(player));
+            suffixes.put(player, replay.getSuffix(player));
+            levelNames.put(player, replay.getLevelName(player));
+            teamColor.put(player, replay.getTeamColor(player));
         }
 
         this.startedTasks = new ArrayList<>();
@@ -136,13 +141,15 @@ public class ReplaySession implements IReplaySession {
         this.prefixes = new HashMap<>();
         this.suffixes = new HashMap<>();
         this.levelNames = new HashMap<>();
+        this.teamColor = new HashMap<>();
 
-        for (String fakePlayer : replay.getPlayers()) {
-            Player NPC = vs.createNPCCopy(this, Bukkit.getOfflinePlayer(UUID.fromString(fakePlayer)));
-            spawnedEntities.put(fakePlayer, NPC);
-            prefixes.put(fakePlayer, replay.getPrefix(fakePlayer));
-            suffixes.put(fakePlayer, replay.getSuffix(fakePlayer));
-            levelNames.put(fakePlayer, replay.getLevelName(fakePlayer));
+        for (String player : replay.getPlayers()) {
+            Player NPC = vs.createNPCCopy(this, Bukkit.getOfflinePlayer(UUID.fromString(player)));
+            spawnedEntities.put(player, NPC);
+            prefixes.put(player, replay.getPrefix(player));
+            suffixes.put(player, replay.getSuffix(player));
+            levelNames.put(player, replay.getLevelName(player));
+            teamColor.put(player, replay.getTeamColor(player));
         }
 
         this.startedTasks = new ArrayList<>();
@@ -189,6 +196,11 @@ public class ReplaySession implements IReplaySession {
     @Override
     public String getLevelName(String UUID) {
         return levelNames.get(UUID);
+    }
+
+    @Override
+    public TeamColor getTeamColor(String UUID) {
+        return teamColor.get(UUID);
     }
 
     @Override
@@ -245,7 +257,7 @@ public class ReplaySession implements IReplaySession {
             }
         }
 
-        resume();
+        Bukkit.getScheduler().runTaskLater(Replay.getInstance(), this::resume, 20L);
     }
 
     @Override
@@ -261,7 +273,7 @@ public class ReplaySession implements IReplaySession {
             }
         }
 
-        resume();
+        Bukkit.getScheduler().runTaskLater(Replay.getInstance(), this::resume, 20L);
     }
 
 
@@ -271,23 +283,29 @@ public class ReplaySession implements IReplaySession {
     }
 
     @Override
-    public float getSpeedAsFloat() {
-        float speed = speedMultiplier / 20.0f;
-        DecimalFormat df = new DecimalFormat();
-        df.setMaximumFractionDigits(2);
-        return Float.parseFloat(df.format(speed));
+    public double getSpeedAsDouble() {
+        double speed = speedMultiplier / 20.0f;
+        return Utils.round(speed, 2);
     }
 
 
     @Override
     public void setSpeed(int multiplier) {
-        if (multiplier > 0) this.speedMultiplier = multiplier;
-        else this.speedMultiplier = 1;
+        if (speedMultiplier >= 40) return;
+        this.speedMultiplier = Math.max(multiplier, 5);
     }
 
     @Override
     public void resetSpeed() {
         this.speedMultiplier = 20;
+    }
+
+    @Override
+    public void reset() {
+        pause();
+        this.currentFrameIndex = 0;
+
+        Bukkit.getScheduler().runTaskLater(Replay.getInstance(), this::resume, 20L);
     }
 
     @Override
@@ -308,6 +326,8 @@ public class ReplaySession implements IReplaySession {
 
             for (Player p : getViewers()) {
                 frame.play(this, p);
+                p.setLevel(currentFrameIndex/20);
+                p.setExp((float) currentFrameIndex/replay.getFrames().size());
             }
 
             currentFrameIndex++;

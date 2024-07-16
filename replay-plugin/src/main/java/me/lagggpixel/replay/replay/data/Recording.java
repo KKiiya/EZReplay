@@ -20,6 +20,7 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Projectile;
+import org.bukkit.potion.PotionEffectType;
 
 import java.io.File;
 import java.util.*;
@@ -161,10 +162,8 @@ public class Recording implements IRecording {
             frames.add(new Frame(this));
 
             for (Player player : arena.getPlayers()) {
-                if (!player.isBlocking()) getLastFrame().addRecordable(vs.createSwordBlockRecordable(this, player));
                 getLastFrame().addRecordable(vs.createEntityMovementRecordable(this, player));
-                getLastFrame().addRecordable(vs.createSneakingRecordable(this, player));
-                getLastFrame().addRecordable(vs.createSprintRecordable(this, player));
+                if (player.hasPotionEffect(PotionEffectType.INVISIBILITY)) getLastFrame().addRecordable(vs.createInvisibilityRecordable(this, player, true));
             }
 
             List<Entity> deadEntities = new ArrayList<>();
@@ -183,7 +182,7 @@ public class Recording implements IRecording {
                 if (gen.getHologramHolder() == null) continue;
                 getLastFrame().addRecordable(vs.createGeneratorRecordable(this, gen));
             }
-        }, 40L);
+        }, 60L);
 
         for (ITeam team : arena.getTeams()) {
             if (!team.isShopSpawned()) continue;

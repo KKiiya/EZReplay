@@ -260,6 +260,12 @@ public interface IVersionSupport {
      */
     Material getPlayerHeadMaterial();
 
+    /**
+     * Get the skull of a player using the
+     * minecraft texture URL
+     * @param url The url of the skull
+     * @return The item stack of the generated skull
+     */
     ItemStack getSkull(String url);
 
     /**
@@ -275,4 +281,18 @@ public interface IVersionSupport {
      * @param message The message being sent
      */
     void sendActionBar(Player player, String message);
+
+    /**
+     * Check if a material can be interacted with (e.g: Doors, buttons, ...)
+     * @param material The material to check
+     * @return Whether the material is interactable
+     */
+    boolean isInteractable(Material material);
+
+    /**
+     * Check if a block can be interacted with (e.g: Doors, buttons, ...)
+     * @param block The block to check
+     * @return Whether the block is interactable
+     */
+    boolean isInteractable(Block block);
 }

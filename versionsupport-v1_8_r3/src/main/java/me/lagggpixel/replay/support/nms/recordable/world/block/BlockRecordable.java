@@ -42,21 +42,26 @@ public class BlockRecordable extends Recordable implements IBlockRecordable {
         net.minecraft.server.v1_8_R3.Block nmsBlock = CraftMagicNumbers.getBlock(material);
         net.minecraft.server.v1_8_R3.Block.StepSound stepSounds = nmsBlock.stepSound;
 
-        PacketPlayOutBlockChange blockChange = new PacketPlayOutBlockChange(world, blockPosition);
-        blockChange.block = nmsBlock.fromLegacyData(data);
+        if (actionType == BlockAction.INTERACT) {
+            PacketPlayOutBlockAction blockAction = new PacketPlayOutBlockAction(blockPosition, nmsBlock, 1, 1);
+            v1_8_R3.sendPackets(player, blockAction);
+        } else {
+            PacketPlayOutBlockChange blockChange = new PacketPlayOutBlockChange(world, blockPosition);
+            blockChange.block = nmsBlock.fromLegacyData(data);
 
-        v1_8_R3.sendPacket(player, blockChange);
-        if (playSound) {
-            PacketPlayOutNamedSoundEffect soundEffect = new PacketPlayOutNamedSoundEffect("", blockPosition.getX(), blockPosition.getY(), blockPosition.getZ(), 0, 0);
-            switch (actionType) {
-                case BREAK:
-                    soundEffect = new PacketPlayOutNamedSoundEffect(stepSounds.getBreakSound(), blockPosition.getX(), blockPosition.getY(), blockPosition.getZ(), stepSounds.getVolume1(), (float) (stepSounds.getVolume2()/1.15));
-                    break;
-                case PLACE:
-                    soundEffect = new PacketPlayOutNamedSoundEffect(stepSounds.getPlaceSound(), blockPosition.getX(), blockPosition.getY(), blockPosition.getZ(), stepSounds.getVolume1(), (float) (stepSounds.getVolume2()/1.15));
-                    break;
+            v1_8_R3.sendPacket(player, blockChange);
+            if (playSound) {
+                PacketPlayOutNamedSoundEffect soundEffect = new PacketPlayOutNamedSoundEffect("", blockPosition.getX(), blockPosition.getY(), blockPosition.getZ(), 0, 0);
+                switch (actionType) {
+                    case BREAK:
+                        soundEffect = new PacketPlayOutNamedSoundEffect(stepSounds.getBreakSound(), blockPosition.getX(), blockPosition.getY(), blockPosition.getZ(), stepSounds.getVolume1(), (float) (stepSounds.getVolume2()/1.15));
+                        break;
+                    case PLACE:
+                        soundEffect = new PacketPlayOutNamedSoundEffect(stepSounds.getPlaceSound(), blockPosition.getX(), blockPosition.getY(), blockPosition.getZ(), stepSounds.getVolume1(), (float) (stepSounds.getVolume2()/1.15));
+                        break;
+                }
+                v1_8_R3.sendPacket(player, soundEffect);
             }
-            v1_8_R3.sendPacket(player, soundEffect);
         }
     }
 
