@@ -124,16 +124,17 @@ public interface IVersionSupport {
      * @param player The player to gather the data from
      * @return The recordable generated for containing the player sneaking data
      */
-    Recordable createSneakingRecordable(IRecording replay, Player player);
+    Recordable createSneakingRecordable(IRecording replay, UUID player, boolean isSneaking);
 
     /**
      * Create a recordable for a player sprinting
      *
      * @param replay The replay where it is recorded
      * @param player The player to gather the data from
+     * @param isSprinting Whether the player is sprinting
      * @return The recordable generated for containing the player sprinting data
      */
-    Recordable createSprintRecordable(IRecording replay, Player player);
+    Recordable createSprintRecordable(IRecording replay, UUID player, boolean isSprinting);
 
     /**
      * Create a recordable for a player blocking with a sword

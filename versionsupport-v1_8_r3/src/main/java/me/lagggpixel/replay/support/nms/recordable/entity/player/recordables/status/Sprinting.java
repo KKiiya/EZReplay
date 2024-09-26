@@ -16,10 +16,10 @@ public class Sprinting extends Recordable {
     private final UUID uniqueId;
     private final boolean isSprinting;
 
-    public Sprinting(IRecording replay, Player player) {
+    public Sprinting(IRecording replay, UUID player, boolean isSprinting) {
         super(replay);
-        this.uniqueId = player.getUniqueId();
-        this.isSprinting = player.isSprinting();
+        this.uniqueId = player;
+        this.isSprinting = isSprinting;
     }
 
     @Override

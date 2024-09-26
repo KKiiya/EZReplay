@@ -2,6 +2,6 @@ package me.lagggpixel.replay.api.replay.data.recordable.entity.recordables;
 
 import me.lagggpixel.replay.api.replay.data.recordable.entity.IEntityRecordable;
 
-public interface IEntityDeath extends IEntityRecordable {
+public interface IEntityDeath {
 
 }

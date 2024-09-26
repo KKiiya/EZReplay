@@ -291,7 +291,6 @@ public class ReplaySession implements IReplaySession {
 
     @Override
     public void setSpeed(int multiplier) {
-        if (speedMultiplier >= 40) return;
         this.speedMultiplier = Math.max(multiplier, 5);
     }
 

@@ -11,6 +11,7 @@ import me.lagggpixel.replay.Replay;
 import me.lagggpixel.replay.api.replay.content.IReplaySession;
 import me.lagggpixel.replay.api.replay.data.IFrame;
 import me.lagggpixel.replay.api.replay.data.IRecording;
+import me.lagggpixel.replay.api.replay.data.recordable.world.block.BlockAction;
 import me.lagggpixel.replay.api.support.IVersionSupport;
 import me.lagggpixel.replay.replay.content.ReplaySession;
 import me.lagggpixel.replay.replay.tasks.EquipmentTrackerTask;
@@ -163,6 +164,7 @@ public class Recording implements IRecording {
 
             for (Player player : arena.getPlayers()) {
                 getLastFrame().addRecordable(vs.createEntityMovementRecordable(this, player));
+                getLastFrame().addRecordable(vs.createSwordBlockRecordable(this, player));
                 if (player.hasPotionEffect(PotionEffectType.INVISIBILITY)) getLastFrame().addRecordable(vs.createInvisibilityRecordable(this, player, true));
             }
 
@@ -175,6 +177,8 @@ public class Recording implements IRecording {
                 getLastFrame().addRecordable(vs.createEntityStatusRecordable(this, entity));
             }
             getSpawnedEntities().removeAll(deadEntities);
+
+            getLastFrame().addRecordable(vs.createBlockRecordable(this, null, Material.AIR, (byte) 0, new Location(arena.getWorld(), 0, 0, 0), BlockAction.UPDATE, false));
         }, 0, 1L).getTaskId();
 
         Bukkit.getScheduler().runTaskLater(Replay.getInstance(), () -> {

@@ -1,5 +1,6 @@
 package me.lagggpixel.replay.menu;
 
+import com.tomkeuper.bedwars.api.arena.team.TeamColor;
 import me.lagggpixel.replay.Replay;
 import me.lagggpixel.replay.api.replay.content.IReplaySession;
 import me.lagggpixel.replay.api.support.IVersionSupport;
@@ -41,7 +42,8 @@ public class TrackerMenu implements IMenu {
             if (!(entity instanceof Player)) continue;
 
             Player player = (Player) replaySession.getSpawnedEntities().get(uuid);
-            ChatColor color = replaySession.getTeamColor(uuid).chat();
+            TeamColor teamColor = replaySession.getTeamColor(uuid);
+            ChatColor color = teamColor.chat();
 
             ItemStack stack = new ItemStack(vs.getPlayerHeadMaterial());
             stack.setDurability((short) 3);
@@ -49,8 +51,8 @@ public class TrackerMenu implements IMenu {
             skullMeta.setOwner(player.getName());
             skullMeta.setDisplayName(color + player.getDisplayName());
             skullMeta.setLore(Arrays.asList(
-                    "Team: " + color.toString(),
-                    "Health: " + ChatColor.GREEN + player.getHealth()
+                    ChatColor.GRAY + " Team:" + teamColor,
+                    ChatColor.GRAY + "Health: " + ChatColor.GREEN + player.getHealth()
             ));
             stack.setItemMeta(skullMeta);
 

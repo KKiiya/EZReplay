@@ -36,16 +36,6 @@ public class EntitySpawn extends Recordable implements IEntitySpawn {
     }
 
     @Override
-    public EntityType getType() {
-        return entityType;
-    }
-
-    @Override
-    public UUID getUniqueId() {
-        return uniqueId;
-    }
-
-    @Override
     public void play(IReplaySession replaySession, Player player) {
         CraftWorld world = ((CraftWorld) replaySession.getWorld());
         net.minecraft.server.v1_8_R3.Entity entity = world.createEntity(spawnLocation, entityType.getEntityClass());

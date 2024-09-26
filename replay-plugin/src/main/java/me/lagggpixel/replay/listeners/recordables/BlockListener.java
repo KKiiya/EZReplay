@@ -34,7 +34,7 @@ public class BlockListener implements Listener {
 
         if (a == null) return;
         if (e.isCancelled()) return;
-        if (e.getEventType() == BlockEventType.FROM_TO) return;
+        if ((e.getEventType() == BlockEventType.FROM_TO || e.getEventType() == BlockEventType.PHYSICS) && (material == Material.WATER || material == Material.LAVA)) return;
 
         IRecording recording = ReplayManager.getInstance().getActiveReplay(a);
         if (recording == null) return;
@@ -68,7 +68,7 @@ public class BlockListener implements Listener {
     @EventHandler
     public void onBlockPhysics(BlockPhysicsEvent e) {
         if (e.isCancelled()) return;
-        callBlockChangeEvent(null, e.getBlock(), BlockEventType.PHYSICS);
+        e.setCancelled(callBlockChangeEvent(null, e.getBlock(), BlockEventType.PHYSICS));
     }
 
     @EventHandler
@@ -78,61 +78,61 @@ public class BlockListener implements Listener {
 
     @EventHandler
     public void onCanBuild(BlockCanBuildEvent e) {
-        callBlockChangeEvent(e.getPlayer(), e.getBlock(), BlockEventType.CAN_BUILD);
+        callBlockChangeEvent(null, e.getBlock(), BlockEventType.CAN_BUILD);
     }
 
     @EventHandler
     public void onBlockSpread(BlockSpreadEvent e) {
         if (e.isCancelled()) return;
-        callBlockChangeEvent(null, e.getBlock(), BlockEventType.SPREAD);
+        e.setCancelled(callBlockChangeEvent(null, e.getBlock(), BlockEventType.SPREAD));
     }
 
     @EventHandler
     public void onBlockForm(BlockFormEvent e) {
         if (e.isCancelled()) return;
-        callBlockChangeEvent(null, e.getBlock(), BlockEventType.FORM);
+        e.setCancelled(callBlockChangeEvent(null, e.getBlock(), BlockEventType.FORM));
     }
 
     @EventHandler
     public void onBlockMultiPlace(BlockMultiPlaceEvent e) {
         if (e.isCancelled()) return;
-        callBlockChangeEvent(e.getPlayer(), e.getBlock(), BlockEventType.MULTI_PLACE);
+        e.setCancelled(callBlockChangeEvent(e.getPlayer(), e.getBlock(), BlockEventType.MULTI_PLACE));
     }
 
     @EventHandler
     public void onBlockFromTo(BlockFromToEvent e) {
         if (e.isCancelled()) return;
-        callBlockChangeEvent(null, e.getBlock(), BlockEventType.FROM_TO);
+        e.setCancelled(callBlockChangeEvent(null, e.getBlock(), BlockEventType.FROM_TO));
     }
 
     @EventHandler
     public void onEntityBlockForm(EntityBlockFormEvent e) {
         if (e.isCancelled()) return;
-        callBlockChangeEvent(e.getEntity(), e.getBlock(), BlockEventType.ENTITY_FORM);
+        e.setCancelled(callBlockChangeEvent(e.getEntity(), e.getBlock(), BlockEventType.ENTITY_FORM));
     }
 
     @EventHandler
     public void onBlockDamage(BlockDamageEvent e) {
         if (e.isCancelled()) return;
-        callBlockChangeEvent(e.getPlayer(), e.getBlock(), BlockEventType.DAMAGE);
+        e.setCancelled(callBlockChangeEvent(e.getPlayer(), e.getBlock(), BlockEventType.DAMAGE));
     }
 
     @EventHandler
     public void onBlockGrow(BlockGrowEvent e) {
         if (e.isCancelled()) return;
-        callBlockChangeEvent(null, e.getBlock(), BlockEventType.GROW);
+        e.setCancelled(callBlockChangeEvent(null, e.getBlock(), BlockEventType.GROW));
     }
 
     @EventHandler
     public void onBlockBurn(BlockBurnEvent e) {
         if (e.isCancelled()) return;
-        callBlockChangeEvent(null, e.getBlock(), BlockEventType.BURN);
+        e.setCancelled(callBlockChangeEvent(null, e.getBlock(), BlockEventType.BURN));
     }
 
     @EventHandler
     public void onBlockDispense(BlockDispenseEvent e) {
         if (e.isCancelled()) return;
-        callBlockChangeEvent(null, e.getBlock(), BlockEventType.DISPENSE);
+        e.setCancelled(callBlockChangeEvent(null, e.getBlock(), BlockEventType.DISPENSE));
     }
 
     @EventHandler
@@ -143,49 +143,50 @@ public class BlockListener implements Listener {
     @EventHandler
     public void onBlockExplode(BlockExplodeEvent e) {
         if (e.isCancelled()) return;
-        callBlockChangeEvent(null, e.getBlock(), BlockEventType.EXPLODE);
+        e.setCancelled(callBlockChangeEvent(null, e.getBlock(), BlockEventType.EXPLODE));
     }
 
     @EventHandler
     public void onBlockFade(BlockFadeEvent e) {
         if (e.isCancelled()) return;
-        callBlockChangeEvent(null, e.getBlock(), BlockEventType.FADE);
+        e.setCancelled(callBlockChangeEvent(null, e.getBlock(), BlockEventType.FADE));
     }
 
     @EventHandler
     public void onBlockPlace(BlockPlaceEvent e) {
         if (e.isCancelled()) return;
-        callBlockChangeEvent(e.getPlayer(), e.getBlock(), BlockEventType.PLACE);
+        e.setCancelled(callBlockChangeEvent(e.getPlayer(), e.getBlock(), BlockEventType.PLACE));
     }
 
     @EventHandler
     public void onBlockBreak(BlockBreakEvent e) {
         if (e.isCancelled()) return;
-        callBlockChangeEvent(e.getPlayer(), e.getBlock(), BlockEventType.BREAK);
+        e.setCancelled(callBlockChangeEvent(e.getPlayer(), e.getBlock(), BlockEventType.BREAK));
     }
 
     @EventHandler
     public void onPistonExtend(BlockPistonExtendEvent e) {
         if (e.isCancelled()) return;
-        callBlockChangeEvent(null, e.getBlock(), BlockEventType.PISTON_EXTEND);
+        e.setCancelled(callBlockChangeEvent(null, e.getBlock(), BlockEventType.PISTON_EXTEND));
     }
 
     @EventHandler
     public void onPistonRetract(BlockPistonRetractEvent e) {
         if (e.isCancelled()) return;
-        callBlockChangeEvent(null, e.getBlock(), BlockEventType.PISTON_RETRACT);
+        e.setCancelled(callBlockChangeEvent(null, e.getBlock(), BlockEventType.PISTON_RETRACT));
     }
 
     @EventHandler
     public void onBlockIgnite(BlockIgniteEvent e) {
         if (e.isCancelled()) return;
-        callBlockChangeEvent(e.getPlayer(), e.getBlock(), BlockEventType.IGNITE);
+        e.setCancelled(callBlockChangeEvent(e.getPlayer(), e.getBlock(), BlockEventType.IGNITE));
     }
 
     @EventHandler
     public void onBlockInteract(PlayerInteractEvent e) {
         if (e.getClickedBlock() == null) return;
 
+        Player player = e.getPlayer();
         Block block = e.getClickedBlock();
         World world = block.getWorld();
         byte data = block.getData();
@@ -202,11 +203,13 @@ public class BlockListener implements Listener {
         if (!isInteractable) return;
 
         Recordable recordable = Replay.getInstance().getVersionSupport().createBlockRecordable(recording, world, block.getType(), data, loc, BlockAction.INTERACT, true);
-        recording.getLastFrame().addRecordable(recordable);
+        Recordable animation = Replay.getInstance().getVersionSupport().createAnimationRecordable(recording, player, AnimationType.SWING_MAIN_HAND);
+        recording.getLastFrame().addRecordable(recordable, animation);
     }
 
-    private void callBlockChangeEvent(Entity entity, Block block, BlockEventType eventType) {
+    private boolean callBlockChangeEvent(Entity entity, Block block, BlockEventType eventType) {
         BlockChangeEvent event = new BlockChangeEvent(entity, block, eventType);
         Bukkit.getPluginManager().callEvent(event);
+        return event.isCancelled();
     }
 }

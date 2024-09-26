@@ -12,7 +12,6 @@ import org.bukkit.craftbukkit.v1_8_R3.entity.CraftEntity;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
-
 import java.util.UUID;
 
 public class EntityDeath extends Recordable implements IEntityDeath {
@@ -39,15 +38,5 @@ public class EntityDeath extends Recordable implements IEntityDeath {
             PacketPlayOutEntityDestroy destroy = new PacketPlayOutEntityDestroy(fakeEntity.getId());
             v1_8_R3.sendPacket(player, destroy);
         }, 20L);
-    }
-
-    @Override
-    public EntityType getType() {
-        return type;
-    }
-
-    @Override
-    public UUID getUniqueId() {
-        return uniqueId;
     }
 }

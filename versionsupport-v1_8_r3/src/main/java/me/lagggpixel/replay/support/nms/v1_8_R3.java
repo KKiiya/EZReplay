@@ -28,7 +28,7 @@ import me.lagggpixel.replay.support.nms.recordable.entity.player.recordables.sta
 import me.lagggpixel.replay.support.nms.recordable.entity.recordables.*;
 import me.lagggpixel.replay.support.nms.recordable.entity.recordables.Equipment;
 import me.lagggpixel.replay.support.nms.recordable.entity.recordables.status.Burning;
-import me.lagggpixel.replay.support.nms.recordable.world.block.BlockRecordable;
+import me.lagggpixel.replay.support.nms.recordable.world.block.BlockInteractRecordable;
 import net.minecraft.server.v1_8_R3.*;
 import net.minecraft.server.v1_8_R3.World;
 import org.apache.commons.codec.binary.Base64;
@@ -53,8 +53,10 @@ import java.net.URL;
 import java.util.UUID;
 
 public class v1_8_R3 implements IVersionSupport {
+
     @Getter
     private static v1_8_R3 instance;
+
     private static IReplay plugin;
     @Getter
     private final CraftServer server;
@@ -65,6 +67,10 @@ public class v1_8_R3 implements IVersionSupport {
         instance = this;
 
         //InjectorHandler.init();
+    }
+
+    public static v1_8_R3 getInstance() {
+        return instance;
     }
 
     public IReplay getPlugin() {
@@ -93,7 +99,7 @@ public class v1_8_R3 implements IVersionSupport {
 
     @Override
     public Recordable createBlockRecordable(IRecording replay, org.bukkit.World world, org.bukkit.Material material, byte data, Location location, BlockAction actionType, boolean playSound) {
-        return new BlockRecordable(replay, world, material, data, location, actionType, playSound);
+        return new BlockInteractRecordable(replay, world, material, data, location, actionType, playSound);
     }
 
     @Override
@@ -122,13 +128,13 @@ public class v1_8_R3 implements IVersionSupport {
     }
 
     @Override
-    public Recordable createSneakingRecordable(IRecording replay, Player player) {
-        return new Sneaking(replay, player);
+    public Recordable createSneakingRecordable(IRecording replay, UUID player, boolean isSneaking) {
+        return new Sneaking(replay, player, isSneaking);
     }
 
     @Override
-    public Recordable createSprintRecordable(IRecording replay, Player player) {
-        return new Sprinting(replay, player);
+    public Recordable createSprintRecordable(IRecording replay, UUID player, boolean isSprinting) {
+        return new Sprinting(replay, player, isSprinting);
     }
 
     @Override
@@ -322,6 +328,13 @@ public class v1_8_R3 implements IVersionSupport {
 
     @SafeVarargs
     public static void sendPackets(Player player, Packet<PacketListenerPlayOut>... packets) {
+        PlayerConnection connection = ((CraftPlayer) player).getHandle().playerConnection;
+        for (Packet<PacketListenerPlayOut> packet : packets) {
+            connection.sendPacket(packet);
+        }
+    }
+
+    public static void sendPackets(Player player, Iterable<Packet<PacketListenerPlayOut>> packets) {
         PlayerConnection connection = ((CraftPlayer) player).getHandle().playerConnection;
         for (Packet<PacketListenerPlayOut> packet : packets) {
             connection.sendPacket(packet);

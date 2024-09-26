@@ -44,7 +44,7 @@ public class PlayerListener implements Listener {
         IRecording recording = ReplayManager.getInstance().getActiveReplay(a);
         if (recording == null) return;
 
-        Recordable animation = Replay.getInstance().getVersionSupport().createSneakingRecordable(recording, player);
+        Recordable animation = Replay.getInstance().getVersionSupport().createSneakingRecordable(recording, player.getUniqueId(), e.isSneaking());
         recording.getLastFrame().addRecordable(animation);
     }
 
@@ -59,7 +59,7 @@ public class PlayerListener implements Listener {
         IRecording recording = ReplayManager.getInstance().getActiveReplay(a);
         if (recording == null) return;
 
-        Recordable animation = Replay.getInstance().getVersionSupport().createSprintRecordable(recording, player);
+        Recordable animation = Replay.getInstance().getVersionSupport().createSprintRecordable(recording, player.getUniqueId(), e.isSprinting());
         recording.getLastFrame().addRecordable(animation);
     }
 }

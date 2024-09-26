@@ -16,16 +16,15 @@ public class Sneaking extends Recordable {
     private final UUID uniqueId;
     private final boolean isSneaking;
 
-    public Sneaking(IRecording replay, Player player) {
+    public Sneaking(IRecording replay, UUID player, boolean isSneaking) {
         super(replay);
-        this.uniqueId = player.getUniqueId();
-        this.isSneaking = player.isSneaking();
+        this.uniqueId = player;
+        this.isSneaking = isSneaking;
     }
 
     @Override
     public void play(IReplaySession replaySession, Player player) {
         EntityPlayer fakePlayer = (EntityPlayer) ((CraftEntity) replaySession.getSpawnedEntities().get(uniqueId.toString())).getHandle();
-
         fakePlayer.setSneaking(isSneaking);
 
         PacketPlayOutEntityMetadata playerMetadata = new PacketPlayOutEntityMetadata(fakePlayer.getId(), fakePlayer.getDataWatcher(), true);
