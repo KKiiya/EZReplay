@@ -25,8 +25,17 @@ public class Sprinting extends Recordable {
     @Override
     public void play(IReplaySession replaySession, Player player) {
         EntityPlayer fakePlayer = (EntityPlayer) ((CraftEntity) replaySession.getSpawnedEntities().get(uniqueId.toString())).getHandle();
-
         fakePlayer.setSprinting(isSprinting);
+
+        PacketPlayOutEntityMetadata playerMetadata = new PacketPlayOutEntityMetadata(fakePlayer.getId(), fakePlayer.getDataWatcher(), true);
+
+        v1_8_R3.sendPacket(player, playerMetadata);
+    }
+
+    @Override
+    public void unplay(IReplaySession replaySession, Player player) {
+        EntityPlayer fakePlayer = (EntityPlayer) ((CraftEntity) replaySession.getSpawnedEntities().get(uniqueId.toString())).getHandle();
+        fakePlayer.setSprinting(!isSprinting);
 
         PacketPlayOutEntityMetadata playerMetadata = new PacketPlayOutEntityMetadata(fakePlayer.getId(), fakePlayer.getDataWatcher(), true);
 

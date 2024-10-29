@@ -5,5 +5,5 @@ import java.util.UUID;
 public interface IChat {
     UUID getSender();
 
-    String getContent();
+    String getFormat();
 }

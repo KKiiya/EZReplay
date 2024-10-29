@@ -1,5 +1,6 @@
 package me.lagggpixel.replay.replay;
 
+import com.tomkeuper.bedwars.api.arena.GameState;
 import com.tomkeuper.bedwars.api.arena.IArena;
 import lombok.Getter;
 import me.lagggpixel.replay.api.replay.IReplayManager;
@@ -19,12 +20,12 @@ public class ReplayManager implements IReplayManager {
     private static IReplayManager instance;
     private final List<IRecording> replays;
     private final HashMap<String, IRecording> replayById;
-    private final HashMap<IArena, IRecording> activeReplays;
+    private final HashMap<IArena, IRecording> activeRecordings;
 
     public ReplayManager() {
         this.replays = new ArrayList<>();
         this.replayById = new HashMap<>();
-        this.activeReplays = new HashMap<>();
+        this.activeRecordings = new HashMap<>();
         loadReplays();
     }
 
@@ -68,40 +69,39 @@ public class ReplayManager implements IReplayManager {
     }
 
     @Nullable
-    public IRecording getActiveReplay(IArena a) {
-        return activeReplays.get(a);
+    public IRecording getActiveRecording(IArena a) {
+        return activeRecordings.get(a);
     }
 
     @Override
     public void removeFromActiveReplays(IArena a) {
-        activeReplays.remove(a);
+        activeRecordings.remove(a);
     }
 
     @Override
     public void startRecording(IArena a) {
-        if (activeReplays.containsKey(a)) return;
+        if (activeRecordings.containsKey(a)) return;
+        if (a.getStatus() != GameState.playing) return;
         IRecording recording = new Recording(a);
-        activeReplays.put(a, recording);
+        activeRecordings.put(a, recording);
         recording.start();
     }
 
     @Override
     public void pauseRecording(IArena a) {
-        if (!activeReplays.containsKey(a)) return;
-        IRecording recording = activeReplays.get(a);
+        if (!activeRecordings.containsKey(a)) return;
+        IRecording recording = activeRecordings.get(a);
         recording.pause();
     }
 
     @Override
     public void stopRecording(IArena a) {
-        if (!activeReplays.containsKey(a)) return;
-        IRecording recording = activeReplays.get(a);
+        if (!activeRecordings.containsKey(a)) return;
+        IRecording recording = activeRecordings.get(a);
         recording.stop();
-        activeReplays.remove(a);
+        activeRecordings.remove(a);
         replayById.put(recording.getID().toString(), recording);
         replays.add(recording);
-        LogUtil.info(recording.getSpawnedEntities().toString());
-        LogUtil.info(replays.toString());
         LogUtil.info(replayById.toString());
     }
 

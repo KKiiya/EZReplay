@@ -15,4 +15,9 @@ public class BlockBreakPlaceRecordable extends Recordable {
     public void play(IReplaySession replaySession, Player player) {
 
     }
+
+    @Override
+    public void unplay(IReplaySession replaySession, Player player) {
+
+    }
 }

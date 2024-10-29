@@ -25,11 +25,15 @@ public class Burning extends Recordable {
     @Override
     public void play(IReplaySession replaySession, Player player) {
         Entity fakeEntity = ((CraftEntity) replaySession.getSpawnedEntities().get(uniqueId.toString())).getHandle();
-
         fakeEntity.setOnFire(fireTicks);
 
         PacketPlayOutEntityMetadata entityMetadata = new PacketPlayOutEntityMetadata(fakeEntity.getId(), fakeEntity.getDataWatcher(), true);
 
         v1_8_R3.sendPacket(player, entityMetadata);
+    }
+
+    @Override
+    public void unplay(IReplaySession replaySession, Player player) {
+
     }
 }

@@ -11,6 +11,7 @@ import me.lagggpixel.replay.api.IReplay;
 import me.lagggpixel.replay.api.replay.content.IReplaySession;
 import me.lagggpixel.replay.api.replay.data.recordable.Recordable;
 import me.lagggpixel.replay.api.replay.data.IRecording;
+import me.lagggpixel.replay.api.utils.block.BlockCache;
 import me.lagggpixel.replay.api.utils.entity.AnimationType;
 import me.lagggpixel.replay.api.replay.data.recordable.world.block.BlockAction;
 import me.lagggpixel.replay.api.support.IVersionSupport;
@@ -29,11 +30,13 @@ import me.lagggpixel.replay.support.nms.recordable.entity.recordables.*;
 import me.lagggpixel.replay.support.nms.recordable.entity.recordables.Equipment;
 import me.lagggpixel.replay.support.nms.recordable.entity.recordables.status.Burning;
 import me.lagggpixel.replay.support.nms.recordable.world.block.BlockInteractRecordable;
+import me.lagggpixel.replay.support.nms.recordable.world.block.BlockUpdateRecordable;
 import net.minecraft.server.v1_8_R3.*;
 import net.minecraft.server.v1_8_R3.World;
 import org.apache.commons.codec.binary.Base64;
 import org.bukkit.*;
 import org.bukkit.Material;
+import org.bukkit.WorldType;
 import org.bukkit.block.Block;
 import org.bukkit.craftbukkit.v1_8_R3.CraftServer;
 import org.bukkit.craftbukkit.v1_8_R3.CraftWorld;
@@ -54,7 +57,6 @@ import java.util.UUID;
 
 public class v1_8_R3 implements IVersionSupport {
 
-    @Getter
     private static v1_8_R3 instance;
 
     private static IReplay plugin;
@@ -98,8 +100,13 @@ public class v1_8_R3 implements IVersionSupport {
     }
 
     @Override
-    public Recordable createBlockRecordable(IRecording replay, org.bukkit.World world, org.bukkit.Material material, byte data, Location location, BlockAction actionType, boolean playSound) {
-        return new BlockInteractRecordable(replay, world, material, data, location, actionType, playSound);
+    public Recordable createBlockUpdateRecordable(IRecording recording, BlockCache cache) {
+        return new BlockUpdateRecordable(recording, cache);
+    }
+
+    @Override
+    public Recordable createBlockRecordable(IRecording replay, BlockCache cache, BlockAction actionType, boolean playSound) {
+        return new BlockInteractRecordable(replay, cache, actionType, playSound);
     }
 
     @Override
@@ -163,8 +170,8 @@ public class v1_8_R3 implements IVersionSupport {
     }
 
     @Override
-    public Recordable createChatRecordable(IRecording replay, UUID sender, String content) {
-        return new ChatRecordable(replay, sender, content);
+    public Recordable createChatRecordable(IRecording replay, UUID sender, String format, String content) {
+        return new ChatRecordable(replay, sender, format, content);
     }
 
     @Override
@@ -178,13 +185,13 @@ public class v1_8_R3 implements IVersionSupport {
     }
 
     @Override
-    public Recordable createTntSpawnRecordable(IRecording recording, Location location) {
-        return new TntRecordable(recording, location);
+    public Recordable createTntSpawnRecordable(IRecording recording, Entity entity, Location location) {
+        return new TntRecordable(recording, entity, location);
     }
 
     @Override
-    public Recordable createExplosionRecordable(IRecording replay, Location location, float radius) {
-        return new ExplosionRecordable(replay, location, radius);
+    public Recordable createExplosionRecordable(IRecording replay, Location location, Entity entity, float radius) {
+        return new ExplosionRecordable(replay, location, entity, radius);
     }
 
     @Override
@@ -260,6 +267,16 @@ public class v1_8_R3 implements IVersionSupport {
 
         skull.setItemMeta(skullMeta);
         return skull;
+    }
+
+    @Override
+    public org.bukkit.World setStatic(WorldCreator creator) {
+        creator.type(WorldType.FLAT);
+        creator.generatorSettings("2;0;1;");
+        org.bukkit.World world = creator.createWorld();
+        world.setDifficulty(Difficulty.PEACEFUL);
+        world.setGameRuleValue("doDaylightCycle", "false");
+        return world;
     }
 
     @Override

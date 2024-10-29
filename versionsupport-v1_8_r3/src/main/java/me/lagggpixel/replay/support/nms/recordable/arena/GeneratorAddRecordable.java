@@ -35,6 +35,11 @@ public class GeneratorAddRecordable extends Recordable implements IGeneratorAdd 
         replaySession.startedTasks().add(animTask);
     }
 
+    @Override
+    public void unplay(IReplaySession replaySession, Player player) {
+
+    }
+
     private static class AnimationTask extends BukkitRunnable {
 
         private final IGeneratorAnimation animation;

@@ -28,9 +28,14 @@ public class EntityStatus extends Recordable {
         net.minecraft.server.v1_8_R3.Entity nmsEntity = ((CraftEntity) entity).getHandle();
 
         if (isDead) {
-            PacketPlayOutEntityDestroy destroy = new PacketPlayOutEntityDestroy(nmsEntity.getId());
             nmsEntity.dead = true;
+            PacketPlayOutEntityDestroy destroy = new PacketPlayOutEntityDestroy(nmsEntity.getId());
             v1_8_R3.sendPacket(player, destroy);
         }
+    }
+
+    @Override
+    public void unplay(IReplaySession replaySession, Player player) {
+
     }
 }

@@ -4,6 +4,7 @@ import com.tomkeuper.bedwars.api.arena.IArena;
 import me.lagggpixel.replay.Replay;
 import me.lagggpixel.replay.api.replay.data.IRecording;
 import me.lagggpixel.replay.api.replay.data.recordable.Recordable;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -19,10 +20,10 @@ public class ChatListener implements Listener {
         if (a == null) return;
         if (e.isCancelled()) return;
 
-        IRecording recording = Replay.getInstance().getReplayManager().getActiveReplay(a);
+        IRecording recording = Replay.getInstance().getReplayManager().getActiveRecording(a);
         if (recording == null) return;
 
-        Recordable recordable = Replay.getInstance().getVersionSupport().createChatRecordable(recording, player.getUniqueId(), e.getMessage());
+        Recordable recordable = Replay.getInstance().getVersionSupport().createChatRecordable(recording, player.getUniqueId(), e.getFormat(), e.getMessage());
         recording.getLastFrame().addRecordable(recordable);
     }
 }

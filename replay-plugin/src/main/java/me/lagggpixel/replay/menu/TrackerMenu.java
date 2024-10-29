@@ -51,7 +51,7 @@ public class TrackerMenu implements IMenu {
             skullMeta.setOwner(player.getName());
             skullMeta.setDisplayName(color + player.getDisplayName());
             skullMeta.setLore(Arrays.asList(
-                    ChatColor.GRAY + " Team:" + teamColor,
+                    ChatColor.GRAY + "Team: " + teamColor,
                     ChatColor.GRAY + "Health: " + ChatColor.GREEN + player.getHealth()
             ));
             stack.setItemMeta(skullMeta);

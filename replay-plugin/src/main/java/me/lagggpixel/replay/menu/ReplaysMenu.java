@@ -48,7 +48,7 @@ public class ReplaysMenu implements IMenu {
         IRecording recording = Replay.getInstance().getReplayManager().getReplayByID(ID);
         if (recording == null) return;
 
-        recording.watch(player);
+        Bukkit.getScheduler().runTaskLater(Replay.getInstance(), () -> recording.watch(player), 5L);
     }
 
     @NotNull

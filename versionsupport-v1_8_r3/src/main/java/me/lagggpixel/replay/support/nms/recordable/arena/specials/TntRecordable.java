@@ -11,16 +11,19 @@ import net.minecraft.server.v1_8_R3.PacketPlayOutSpawnEntity;
 import net.minecraft.server.v1_8_R3.World;
 import org.bukkit.Location;
 import org.bukkit.craftbukkit.v1_8_R3.CraftWorld;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 
 public class TntRecordable extends Recordable {
 
+    private final String uuid;
     private final double x;
     private final double y;
     private final double z;
 
-    public TntRecordable(IRecording replay, Location location) {
+    public TntRecordable(IRecording replay, Entity entity, Location location) {
         super(replay);
+        this.uuid = entity.getUniqueId().toString();
         this.x = location.getBlockX();
         this.y = location.getBlockY();
         this.z = location.getBlockZ();
@@ -35,6 +38,12 @@ public class TntRecordable extends Recordable {
         PacketPlayOutSpawnEntity spawn = new PacketPlayOutSpawnEntity(entity, EntityTypes.ACTIVATED_TNT);
         PacketPlayOutEntityMetadata metadata = new PacketPlayOutEntityMetadata(entity.getId(), entity.getDataWatcher(), true);
 
+        replaySession.getSpawnedEntities().put(uuid, entity.getBukkitEntity());
         v1_8_R3.sendPackets(player, spawn, metadata);
+    }
+
+    @Override
+    public void unplay(IReplaySession replaySession, Player player) {
+
     }
 }

@@ -1,6 +1,7 @@
 package me.lagggpixel.replay;
 
 import com.tomkeuper.bedwars.api.BedWars;
+import com.tomkeuper.bedwars.api.arena.IArena;
 import lombok.Getter;
 import me.lagggpixel.replay.api.IReplay;
 import me.lagggpixel.replay.api.replay.IReplayManager;
@@ -8,10 +9,7 @@ import me.lagggpixel.replay.api.replay.IReplaySessionManager;
 import me.lagggpixel.replay.api.support.IVersionSupport;
 import me.lagggpixel.replay.commands.ReplayMenu;
 import me.lagggpixel.replay.listeners.InventoryListener;
-import me.lagggpixel.replay.listeners.arena.ArenaLeave;
-import me.lagggpixel.replay.listeners.arena.ChatListener;
-import me.lagggpixel.replay.listeners.arena.GameStateChangeListener;
-import me.lagggpixel.replay.listeners.arena.SpecialItemsListener;
+import me.lagggpixel.replay.listeners.arena.*;
 import me.lagggpixel.replay.listeners.recordables.*;
 import me.lagggpixel.replay.listeners.replaysession.SessionListener;
 import me.lagggpixel.replay.replay.ReplayManager;
@@ -20,7 +18,6 @@ import me.lagggpixel.replay.support.nms.v1_8_R3;
 import me.lagggpixel.replay.utils.LogUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.event.Listener;
-import org.bukkit.plugin.RegisteredListener;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.Objects;
@@ -60,12 +57,15 @@ public final class Replay extends JavaPlugin implements IReplay {
                 new ArenaLeave(),
                 new ChatListener(),
                 new GameStateChangeListener(),
-                new ChatListener(),
                 new SpecialItemsListener(),
                 new SessionListener());
 
         if (versionSupport.getVersion() <= 2) registerListener(new ItemListener.LegacyDropPick());
         else registerListener(new ItemListener.NewDropPick());
+
+        for (IArena arena : getBedWarsAPI().getArenaUtil().getArenas()) {
+
+        }
 
         Objects.requireNonNull(getCommand("replay")).setExecutor(new ReplayMenu());
     }

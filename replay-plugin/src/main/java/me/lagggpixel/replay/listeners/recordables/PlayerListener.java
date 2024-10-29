@@ -26,7 +26,7 @@ public class PlayerListener implements Listener {
         if (e.isCancelled()) return;
         if (e.getAction() != Action.LEFT_CLICK_AIR && e.getAction() != Action.LEFT_CLICK_BLOCK) return;
 
-        IRecording recording = ReplayManager.getInstance().getActiveReplay(a);
+        IRecording recording = ReplayManager.getInstance().getActiveRecording(a);
         if (recording == null) return;
 
         Recordable animation = Replay.getInstance().getVersionSupport().createAnimationRecordable(recording, player, AnimationType.SWING_MAIN_HAND);
@@ -41,7 +41,7 @@ public class PlayerListener implements Listener {
         if (a == null) return;
         if (e.isCancelled()) return;
 
-        IRecording recording = ReplayManager.getInstance().getActiveReplay(a);
+        IRecording recording = ReplayManager.getInstance().getActiveRecording(a);
         if (recording == null) return;
 
         Recordable animation = Replay.getInstance().getVersionSupport().createSneakingRecordable(recording, player.getUniqueId(), e.isSneaking());
@@ -56,7 +56,7 @@ public class PlayerListener implements Listener {
         if (a == null) return;
         if (e.isCancelled()) return;
 
-        IRecording recording = ReplayManager.getInstance().getActiveReplay(a);
+        IRecording recording = ReplayManager.getInstance().getActiveRecording(a);
         if (recording == null) return;
 
         Recordable animation = Replay.getInstance().getVersionSupport().createSprintRecordable(recording, player.getUniqueId(), e.isSprinting());

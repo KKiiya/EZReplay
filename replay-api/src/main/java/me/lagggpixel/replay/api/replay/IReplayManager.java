@@ -24,7 +24,7 @@ public interface IReplayManager {
     IRecording getReplayByID(UUID uuid);
 
     @Nullable
-    IRecording getActiveReplay(IArena a);
+    IRecording getActiveRecording(IArena a);
 
     void removeFromActiveReplays(IArena a);
 

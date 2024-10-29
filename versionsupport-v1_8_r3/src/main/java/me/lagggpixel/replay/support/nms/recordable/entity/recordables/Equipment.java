@@ -106,6 +106,11 @@ public class Equipment extends Recordable implements IEquipment {
     }
 
     @Override
+    public void unplay(IReplaySession replaySession, Player player) {
+
+    }
+
+    @Override
     public String getUUID() {
         return UUID;
     }

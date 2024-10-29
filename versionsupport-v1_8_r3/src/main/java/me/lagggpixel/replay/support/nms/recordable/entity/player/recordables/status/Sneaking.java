@@ -31,4 +31,14 @@ public class Sneaking extends Recordable {
 
         v1_8_R3.sendPacket(player, playerMetadata);
     }
+
+    @Override
+    public void unplay(IReplaySession replaySession, Player player) {
+        EntityPlayer fakePlayer = (EntityPlayer) ((CraftEntity) replaySession.getSpawnedEntities().get(uniqueId.toString())).getHandle();
+        fakePlayer.setSneaking(!isSneaking);
+
+        PacketPlayOutEntityMetadata playerMetadata = new PacketPlayOutEntityMetadata(fakePlayer.getId(), fakePlayer.getDataWatcher(), true);
+
+        v1_8_R3.sendPacket(player, playerMetadata);
+    }
 }

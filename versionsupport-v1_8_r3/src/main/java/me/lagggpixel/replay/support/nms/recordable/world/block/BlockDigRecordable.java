@@ -32,6 +32,11 @@ public class BlockDigRecordable extends Recordable implements IBlockDigRecordabl
     }
 
     @Override
+    public void unplay(IReplaySession replaySession, Player player) {
+
+    }
+
+    @Override
     public String getUUID() {
         return blockBreaker.getEntity().getUniqueId().toString();
     }

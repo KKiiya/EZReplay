@@ -38,6 +38,11 @@ public class AnimationRecordable extends Recordable implements IAnimationRecorda
     }
 
     @Override
+    public void unplay(IReplaySession replaySession, Player player) {
+
+    }
+
+    @Override
     public String getUUID() {
         return animatedEntity;
     }

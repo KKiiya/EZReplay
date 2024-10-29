@@ -78,7 +78,7 @@ public class ReplaySession implements IReplaySession {
         this.createdHolograms = new ArrayList<>();
 
         for (Player p : players) {
-            p.teleport(new Location(world, 0, 100, 0));
+            Bukkit.getScheduler().runTask(Replay.getInstance(), () -> p.teleport(new Location(world, 0, 180, 0)));
             Replay.getInstance().getReplaySessionManager().setReplaySessionByPlayer(p, this);
             Bukkit.getScheduler().runTaskLater(Replay.getInstance(), () -> {
                 p.setGameMode(GameMode.ADVENTURE);
@@ -117,7 +117,7 @@ public class ReplaySession implements IReplaySession {
         this.createdHolograms = new ArrayList<>();
 
         for (Player p : players) {
-            p.teleport(new Location(world, 0, 100, 0));
+            Bukkit.getScheduler().runTask(Replay.getInstance(), () -> p.teleport(new Location(world, 0, 180, 0)));
             Replay.getInstance().getReplaySessionManager().setReplaySessionByPlayer(p, this);
             Bukkit.getScheduler().runTaskLater(Replay.getInstance(), () -> {
                 p.setGameMode(GameMode.ADVENTURE);
@@ -156,7 +156,7 @@ public class ReplaySession implements IReplaySession {
         this.createdHolograms = new ArrayList<>();
 
         for (Player p : players) {
-            p.teleport(new Location(world, 0, 100, 0));
+            Bukkit.getScheduler().runTask(Replay.getInstance(), () -> p.teleport(new Location(world, 0, 180, 0)));
             Replay.getInstance().getReplaySessionManager().setReplaySessionByPlayer(p, this);
             Bukkit.getScheduler().runTaskLater(Replay.getInstance(), () -> {
                 p.setGameMode(GameMode.ADVENTURE);
@@ -214,7 +214,13 @@ public class ReplaySession implements IReplaySession {
     }
 
     @Override
+    public int getCurrentTick() {
+        return currentFrameIndex;
+    }
+
+    @Override
     public void start() {
+        System.out.println(getViewers());
         for (Player p : getViewers()) {
             playerControls.put(p, new Controls(this, p));
         }

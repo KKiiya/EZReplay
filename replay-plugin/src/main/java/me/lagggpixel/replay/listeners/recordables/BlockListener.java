@@ -5,6 +5,7 @@ import me.lagggpixel.replay.Replay;
 import me.lagggpixel.replay.api.events.block.BlockChangeEvent;
 import me.lagggpixel.replay.api.replay.data.IRecording;
 import me.lagggpixel.replay.api.replay.data.recordable.Recordable;
+import me.lagggpixel.replay.api.utils.block.BlockCache;
 import me.lagggpixel.replay.api.utils.block.BlockEventType;
 import me.lagggpixel.replay.api.utils.entity.AnimationType;
 import me.lagggpixel.replay.api.replay.data.recordable.world.block.BlockAction;
@@ -34,22 +35,30 @@ public class BlockListener implements Listener {
 
         if (a == null) return;
         if (e.isCancelled()) return;
+        if (material == Material.AIR) return;
         if ((e.getEventType() == BlockEventType.FROM_TO || e.getEventType() == BlockEventType.PHYSICS) && (material == Material.WATER || material == Material.LAVA)) return;
 
-        IRecording recording = ReplayManager.getInstance().getActiveReplay(a);
+        IRecording recording = ReplayManager.getInstance().getActiveRecording(a);
         if (recording == null) return;
+
+        BlockCache cache = new BlockCache(world, material, data, location);
 
         BlockAction action;
 
         if (e.getEventType() == BlockEventType.BREAK) {
             action = BlockAction.BREAK;
+
+            if (e.getEntity() instanceof Player) {
+                Player player = (Player) e.getEntity();
+                Recordable animation = Replay.getInstance().getVersionSupport().createAnimationRecordable(recording, player, AnimationType.SWING_MAIN_HAND);
+                recording.getLastFrame().addRecordable(animation);
+            }
         } else if (e.getEventType() == BlockEventType.PLACE && e.getEntity() instanceof Player) {
             action = BlockAction.PLACE;
             Player player = (Player) e.getEntity();
             if (block.getType() == Material.TNT) {
-                Recordable tntSpawn = Replay.getInstance().getVersionSupport().createTntSpawnRecordable(recording, e.getBlock().getLocation());
                 Recordable animation = Replay.getInstance().getVersionSupport().createAnimationRecordable(recording, player, AnimationType.SWING_MAIN_HAND);
-                recording.getLastFrame().addRecordable(tntSpawn, animation);
+                recording.getLastFrame().addRecordable(animation);
                 return;
             }
 
@@ -61,8 +70,10 @@ public class BlockListener implements Listener {
         }
         else action = BlockAction.UPDATE;
 
-        Recordable recordable = Replay.getInstance().getVersionSupport().createBlockRecordable(recording, world, material, data, location, action, true);
-        recording.getLastFrame().addRecordable(recordable);
+
+        Recordable blockUpdate = Replay.getInstance().getVersionSupport().createBlockUpdateRecordable(recording, cache);
+        Recordable recordable = Replay.getInstance().getVersionSupport().createBlockRecordable(recording, cache, action, true);
+        recording.getLastFrame().addRecordable(blockUpdate, recordable);
     }
 
     @EventHandler
@@ -184,6 +195,7 @@ public class BlockListener implements Listener {
 
     @EventHandler
     public void onBlockInteract(PlayerInteractEvent e) {
+        /*
         if (e.getClickedBlock() == null) return;
 
         Player player = e.getPlayer();
@@ -191,6 +203,8 @@ public class BlockListener implements Listener {
         World world = block.getWorld();
         byte data = block.getData();
         Location loc = block.getLocation();
+
+        BlockCache cache = new BlockCache(world, block.getType(), data, loc);
 
         boolean isInteractable = Replay.getInstance().getVersionSupport().isInteractable(block);
 
@@ -202,9 +216,10 @@ public class BlockListener implements Listener {
 
         if (!isInteractable) return;
 
-        Recordable recordable = Replay.getInstance().getVersionSupport().createBlockRecordable(recording, world, block.getType(), data, loc, BlockAction.INTERACT, true);
+        Recordable recordable = Replay.getInstance().getVersionSupport().createBlockRecordable(recording, cache, BlockAction.INTERACT, true);
         Recordable animation = Replay.getInstance().getVersionSupport().createAnimationRecordable(recording, player, AnimationType.SWING_MAIN_HAND);
         recording.getLastFrame().addRecordable(recordable, animation);
+         */
     }
 
     private boolean callBlockChangeEvent(Entity entity, Block block, BlockEventType eventType) {

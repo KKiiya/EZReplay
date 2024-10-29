@@ -54,4 +54,9 @@ public class EntityRecordable extends Recordable implements IEntityRecordable {
 
         v1_8_R3.sendPackets(player, positionPacket, headRotation, entityLook);
     }
+
+    @Override
+    public void unplay(IReplaySession replaySession, Player player) {
+
+    }
 }

@@ -11,10 +11,10 @@ import me.lagggpixel.replay.Replay;
 import me.lagggpixel.replay.api.replay.content.IReplaySession;
 import me.lagggpixel.replay.api.replay.data.IFrame;
 import me.lagggpixel.replay.api.replay.data.IRecording;
-import me.lagggpixel.replay.api.replay.data.recordable.world.block.BlockAction;
 import me.lagggpixel.replay.api.support.IVersionSupport;
 import me.lagggpixel.replay.replay.content.ReplaySession;
 import me.lagggpixel.replay.replay.tasks.EquipmentTrackerTask;
+import me.lagggpixel.replay.utils.FileUtils;
 import me.lagggpixel.replay.utils.LogUtil;
 import org.bukkit.*;
 import org.bukkit.entity.Entity;
@@ -49,7 +49,7 @@ public class Recording implements IRecording {
     private boolean finished = false;
 
     public Recording(IArena arena) {
-        this.worldCloneName = arena.getWorldName();
+        this.worldCloneName = arena.getDisplayName()+"-Replay";
         this.frames = new ArrayList<>();
         this.id = UUID.randomUUID();
         this.arena = arena;
@@ -164,7 +164,9 @@ public class Recording implements IRecording {
 
             for (Player player : arena.getPlayers()) {
                 getLastFrame().addRecordable(vs.createEntityMovementRecordable(this, player));
-                getLastFrame().addRecordable(vs.createSwordBlockRecordable(this, player));
+                if (player.isSneaking()) getLastFrame().addRecordable(vs.createSneakingRecordable(this, player.getUniqueId(), true));
+                if (player.isSprinting()) getLastFrame().addRecordable(vs.createSprintRecordable(this, player.getUniqueId(), true));
+                if (player.isBlocking()) getLastFrame().addRecordable(vs.createSwordBlockRecordable(this, player));
                 if (player.hasPotionEffect(PotionEffectType.INVISIBILITY)) getLastFrame().addRecordable(vs.createInvisibilityRecordable(this, player, true));
             }
 
@@ -176,9 +178,10 @@ public class Recording implements IRecording {
                 }
                 getLastFrame().addRecordable(vs.createEntityStatusRecordable(this, entity));
             }
+            for (Entity entity : deadEntities) {
+                getLastFrame().addRecordable(vs.createEntityDeathRecordable(this, entity));
+            }
             getSpawnedEntities().removeAll(deadEntities);
-
-            getLastFrame().addRecordable(vs.createBlockRecordable(this, null, Material.AIR, (byte) 0, new Location(arena.getWorld(), 0, 0, 0), BlockAction.UPDATE, false));
         }, 0, 1L).getTaskId();
 
         Bukkit.getScheduler().runTaskLater(Replay.getInstance(), () -> {
@@ -186,10 +189,11 @@ public class Recording implements IRecording {
                 if (gen.getHologramHolder() == null) continue;
                 getLastFrame().addRecordable(vs.createGeneratorRecordable(this, gen));
             }
-        }, 60L);
+        }, 5L);
 
         for (ITeam team : arena.getTeams()) {
             if (!team.isShopSpawned()) continue;
+
 
         }
 
@@ -237,15 +241,19 @@ public class Recording implements IRecording {
 
     @Override
     public IReplaySession watch(Player player) {
-        WorldCreator creator = new WorldCreator(worldCloneName);
-        World worldClone = Bukkit.createWorld(creator);
+        WorldCreator creator;
+        if (!FileUtils.isWorldCached(arena)) FileUtils.saveArenaWorldToCache(arena);
+        creator = new WorldCreator(worldCloneName);
+        World worldClone = Replay.getInstance().getVersionSupport().setStatic(creator);
         return new ReplaySession(worldClone, id, player);
     }
 
     @Override
     public IReplaySession watch(Player... players) {
-        WorldCreator creator = new WorldCreator(worldCloneName);
-        World worldClone = Bukkit.createWorld(creator);
+        WorldCreator creator;
+        if (!FileUtils.isWorldCached(arena)) FileUtils.saveArenaWorldToCache(arena);
+        creator = new WorldCreator(worldCloneName);
+        World worldClone = Replay.getInstance().getVersionSupport().setStatic(creator);
         return new ReplaySession(worldClone, id, players);
     }
 }

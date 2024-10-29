@@ -42,7 +42,7 @@ public class PacketListener implements Listener {
         IArena a = v1_8_R3.getInstance().getPlugin().getBedWarsAPI().getArenaUtil().getArenaByPlayer(p);
         if (a == null) return;
 
-        IRecording recording = v1_8_R3.getInstance().getPlugin().getReplayManager().getActiveReplay(a);
+        IRecording recording = v1_8_R3.getInstance().getPlugin().getReplayManager().getActiveRecording(a);
         if (recording == null) return;
 
         BlockPosition position = packet.a();

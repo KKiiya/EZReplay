@@ -6,5 +6,6 @@ import org.bukkit.entity.Player;
 public interface IReplaySessionManager {
 
     void setReplaySessionByPlayer(Player player, IReplaySession replaySession);
+
     IReplaySession getSessionByPlayer(Player player);
 }

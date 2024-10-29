@@ -27,6 +27,8 @@ public interface IReplaySession {
     List<BukkitRunnable> startedTasks();
     List<IHologram> createdHolograms();
 
+    int getCurrentTick();
+
     void start();
     void pause();
     void resume();

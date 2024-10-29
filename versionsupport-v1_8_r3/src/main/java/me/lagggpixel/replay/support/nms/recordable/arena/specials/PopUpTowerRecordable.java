@@ -32,4 +32,9 @@ public class PopUpTowerRecordable extends Recordable implements IPopUpTower {
 
         v1_8_R3.sendPackets(player, soundEffect);
     }
+
+    @Override
+    public void unplay(IReplaySession replaySession, Player player) {
+
+    }
 }

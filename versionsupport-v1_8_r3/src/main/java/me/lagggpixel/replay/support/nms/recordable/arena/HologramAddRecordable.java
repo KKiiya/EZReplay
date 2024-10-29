@@ -30,4 +30,9 @@ public class HologramAddRecordable extends Recordable implements IHologramAdd {
         IHologram holo = vs.createHologram(player, location.toBukkitLocation(), lines);
         holo.setGap(gap);
     }
+
+    @Override
+    public void unplay(IReplaySession replaySession, Player player) {
+
+    }
 }

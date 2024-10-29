@@ -19,7 +19,7 @@ public class SpecialItemsListener implements Listener {
 
     @EventHandler
     public void onEggBridgeBuild(EggBridgeBuildEvent e) {
-        IRecording replay = Replay.getInstance().getReplayManager().getActiveReplay(e.getArena());
+        IRecording replay = Replay.getInstance().getReplayManager().getActiveRecording(e.getArena());
         if (replay == null) return;
 
         ConfigManager sounds = Sounds.getSounds();
@@ -35,7 +35,7 @@ public class SpecialItemsListener implements Listener {
 
     @EventHandler
     public void onPopUpTowerBuild(PopUpTowerBuildEvent e) {
-        IRecording replay = Replay.getInstance().getReplayManager().getActiveReplay(e.getArena());
+        IRecording replay = Replay.getInstance().getReplayManager().getActiveRecording(e.getArena());
         if (replay == null) return;
 
         ConfigManager sounds = Sounds.getSounds();
@@ -57,10 +57,10 @@ public class SpecialItemsListener implements Listener {
 
         if (e.isCancelled()) return;
 
-        IRecording replay = Replay.getInstance().getReplayManager().getActiveReplay(a);
+        IRecording replay = Replay.getInstance().getReplayManager().getActiveRecording(a);
         if (replay == null) return;
 
-        Recordable recordable = Replay.getInstance().getVersionSupport().createExplosionRecordable(replay, loc, e.getRadius());
+        Recordable recordable = Replay.getInstance().getVersionSupport().createExplosionRecordable(replay, loc, e.getEntity(), e.getRadius());
         replay.getLastFrame().addRecordable(recordable);
     }
 }

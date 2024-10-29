@@ -29,6 +29,18 @@ public class SwordBlock extends Recordable implements IBlocking {
     public void play(IReplaySession replaySession, Player player) {
         EntityPlayer fakePlayer = (EntityPlayer) ((CraftEntity) replaySession.getSpawnedEntities().get(uniqueId.toString())).getHandle();
 
+        byte blocking = (byte) (isBlocking ? 0 : 16);
+        fakePlayer.getDataWatcher().watch(0, blocking);
+
+        PacketPlayOutEntityMetadata playerMetadata = new PacketPlayOutEntityMetadata(fakePlayer.getId(), fakePlayer.getDataWatcher(), true);
+
+        v1_8_R3.sendPacket(player, playerMetadata);
+    }
+
+    @Override
+    public void unplay(IReplaySession replaySession, Player player) {
+        EntityPlayer fakePlayer = (EntityPlayer) ((CraftEntity) replaySession.getSpawnedEntities().get(uniqueId.toString())).getHandle();
+
         byte blocking = (byte) (isBlocking ? 16 : 0);
         fakePlayer.getDataWatcher().watch(0, blocking);
 

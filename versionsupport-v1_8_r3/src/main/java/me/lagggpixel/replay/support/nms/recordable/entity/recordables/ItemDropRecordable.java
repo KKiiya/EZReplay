@@ -8,6 +8,7 @@ import me.lagggpixel.replay.api.utils.entity.EntityTypes;
 import me.lagggpixel.replay.support.nms.v1_8_R3;
 import net.minecraft.server.v1_8_R3.*;
 import org.bukkit.craftbukkit.v1_8_R3.CraftWorld;
+import org.bukkit.craftbukkit.v1_8_R3.entity.CraftEntity;
 import org.bukkit.craftbukkit.v1_8_R3.inventory.CraftItemStack;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
@@ -50,5 +51,15 @@ public class ItemDropRecordable extends Recordable {
 
         replaySession.getSpawnedEntities().put(uuid.toString(), item.getBukkitEntity());
         v1_8_R3.sendPackets(player, spawn, metadata, entityVelocity, movement);
+    }
+
+    @Override
+    public void unplay(IReplaySession replaySession, Player player) {
+        Entity entity = ((CraftEntity)  replaySession.getSpawnedEntities().get(uuid.toString())).getHandle();
+
+        replaySession.getSpawnedEntities().remove(uuid.toString());
+        PacketPlayOutEntityDestroy destroy = new PacketPlayOutEntityDestroy(entity.getId());
+
+        v1_8_R3.sendPacket(player, destroy);
     }
 }

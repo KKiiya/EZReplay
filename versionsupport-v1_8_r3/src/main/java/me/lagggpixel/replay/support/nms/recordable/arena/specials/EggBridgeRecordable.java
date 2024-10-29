@@ -34,4 +34,9 @@ public class EggBridgeRecordable extends Recordable implements IEggBridge {
         v1_8_R3.sendPackets(player, particles, soundEffect);
     }
 
+    @Override
+    public void unplay(IReplaySession replaySession, Player player) {
+
+    }
+
 }

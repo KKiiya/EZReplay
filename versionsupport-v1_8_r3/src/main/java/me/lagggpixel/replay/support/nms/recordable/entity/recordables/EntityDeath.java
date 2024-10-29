@@ -5,8 +5,7 @@ import me.lagggpixel.replay.api.replay.data.IRecording;
 import me.lagggpixel.replay.api.replay.data.recordable.Recordable;
 import me.lagggpixel.replay.api.replay.data.recordable.entity.recordables.IEntityDeath;
 import me.lagggpixel.replay.support.nms.v1_8_R3;
-import net.minecraft.server.v1_8_R3.PacketPlayOutEntityDestroy;
-import net.minecraft.server.v1_8_R3.PacketPlayOutEntityMetadata;
+import net.minecraft.server.v1_8_R3.*;
 import org.bukkit.Bukkit;
 import org.bukkit.craftbukkit.v1_8_R3.entity.CraftEntity;
 import org.bukkit.entity.Entity;
@@ -28,15 +27,25 @@ public class EntityDeath extends Recordable implements IEntityDeath {
     @Override
     public void play(IReplaySession replaySession, Player player) {
         net.minecraft.server.v1_8_R3.Entity fakeEntity = ((CraftEntity) replaySession.getSpawnedEntities().get(uniqueId.toString())).getHandle();
-        fakeEntity.getDataWatcher().watch(20, 7);
-
-        PacketPlayOutEntityMetadata metadata = new PacketPlayOutEntityMetadata(fakeEntity.getId(), fakeEntity.getDataWatcher(), true);
         fakeEntity.dead = true;
-        v1_8_R3.sendPacket(player, metadata);
+
+        PacketPlayOutEntityStatus status = new PacketPlayOutEntityStatus(fakeEntity, (byte) 3);
+        v1_8_R3.sendPacket(player, status);
 
         Bukkit.getScheduler().runTaskLater(v1_8_R3.getInstance().getPlugin(), () -> {
             PacketPlayOutEntityDestroy destroy = new PacketPlayOutEntityDestroy(fakeEntity.getId());
             v1_8_R3.sendPacket(player, destroy);
         }, 20L);
+    }
+
+    @Override
+    public void unplay(IReplaySession replaySession, Player player) {
+        net.minecraft.server.v1_8_R3.Entity fakeEntity = ((CraftEntity) replaySession.getSpawnedEntities().get(uniqueId.toString())).getHandle();
+        fakeEntity.dead = false;
+
+        PacketPlayOutSpawnEntityLiving spawn = new PacketPlayOutSpawnEntityLiving((EntityLiving) fakeEntity);
+        PacketPlayOutEntityMetadata metadata = new PacketPlayOutEntityMetadata(fakeEntity.getId(), fakeEntity.getDataWatcher(), true);
+
+        v1_8_R3.sendPackets(player, spawn, metadata);
     }
 }

@@ -9,6 +9,7 @@ import me.lagggpixel.replay.support.nms.v1_8_R3;
 import net.minecraft.server.v1_8_R3.*;
 import org.bukkit.Location;
 import org.bukkit.craftbukkit.v1_8_R3.CraftWorld;
+import org.bukkit.craftbukkit.v1_8_R3.entity.CraftEntity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
@@ -60,5 +61,14 @@ public class EntitySpawn extends Recordable implements IEntitySpawn {
         PacketPlayOutEntity.PacketPlayOutRelEntityMove movement = new PacketPlayOutEntity.PacketPlayOutRelEntityMove(entity.getId(), (byte) motX, (byte) motY, (byte) motZ, false);
 
         v1_8_R3.sendPackets(player, headRotation, entityLook, metadata, velocity, movement);
+    }
+
+    @Override
+    public void unplay(IReplaySession replaySession, Player player) {
+        Entity entity = ((CraftEntity)  replaySession.getSpawnedEntities().get(uniqueId.toString())).getHandle();
+
+        PacketPlayOutEntityDestroy destroy = new PacketPlayOutEntityDestroy(entity.getId());
+
+        v1_8_R3.sendPacket(player, destroy);
     }
 }

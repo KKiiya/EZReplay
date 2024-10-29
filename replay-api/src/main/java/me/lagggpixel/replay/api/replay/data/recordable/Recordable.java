@@ -20,4 +20,6 @@ public abstract class Recordable {
     }
 
     public abstract void play(IReplaySession replaySession, Player player);
+
+    public abstract void unplay(IReplaySession replaySession, Player player);
 }

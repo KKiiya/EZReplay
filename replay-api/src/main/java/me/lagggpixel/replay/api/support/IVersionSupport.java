@@ -4,6 +4,7 @@ import com.tomkeuper.bedwars.api.arena.generator.IGenerator;
 import com.tomkeuper.bedwars.api.hologram.containers.IHologram;
 import me.lagggpixel.replay.api.replay.content.IReplaySession;
 import me.lagggpixel.replay.api.replay.data.recordable.Recordable;
+import me.lagggpixel.replay.api.utils.block.BlockCache;
 import me.lagggpixel.replay.api.utils.entity.AnimationType;
 import me.lagggpixel.replay.api.replay.data.IRecording;
 import me.lagggpixel.replay.api.replay.data.recordable.world.block.BlockAction;
@@ -57,18 +58,23 @@ public interface IVersionSupport {
     Recordable createEquipmentRecordable(IRecording replay, LivingEntity entity);
 
     /**
+     *
+     * @param recording - The replay where it is recorded
+     * @param cache - The new block cache object
+     * @return Recordable object generated containing multiblock info
+     */
+    Recordable createBlockUpdateRecordable(IRecording recording, BlockCache cache);
+
+    /**
      * Create a recordable for a block
      *
      * @param replay The replay where it is recorded
-     * @param world The world where the block is located
-     * @param material The material of the block
-     * @param data The data value of the block
-     * @param location The location of the block
+     * @param cache - The new block cache object
      * @param actionType The action type associated with the block
      * @param playSound Whether to play a sound associated with the block action
      * @return The recordable generated containing the block data
      */
-    Recordable createBlockRecordable(IRecording replay, World world, org.bukkit.Material material, byte data, Location location, BlockAction actionType, boolean playSound);
+    Recordable createBlockRecordable(IRecording replay, BlockCache cache, BlockAction actionType, boolean playSound);
 
 
     /**
@@ -190,10 +196,11 @@ public interface IVersionSupport {
      * Crate a recordable for chat messages
      * @param replay The replay where it is recorded
      * @param sender The sender of the message
+     * @param format The format of the message to send
      * @param content The content message
      * @return The recordable generated for containing the message sent
      */
-    Recordable createChatRecordable(IRecording replay, UUID sender, String content);
+    Recordable createChatRecordable(IRecording replay, UUID sender, String format, String content);
 
     /**
      * Create a recordable for item drops
@@ -218,7 +225,7 @@ public interface IVersionSupport {
      * @param location The location where the TNT spawns
      * @return The recordable generated for containing the tnt spawn
      */
-    Recordable createTntSpawnRecordable(IRecording recording, Location location);
+    Recordable createTntSpawnRecordable(IRecording recording, Entity entity, Location location);
 
     /**
      * Create a recordable for a explosion
@@ -226,7 +233,7 @@ public interface IVersionSupport {
      * @param location The location where the explosion occurs
      * @return The recordable generated for containing the explosion information
      */
-    Recordable createExplosionRecordable(IRecording replay, Location location, float radius);
+    Recordable createExplosionRecordable(IRecording replay, Location location, Entity entity, float radius);
 
     /**
      * Create a copy of a player, to then spawn it as a NPC
@@ -268,6 +275,14 @@ public interface IVersionSupport {
      * @return The item stack of the generated skull
      */
     ItemStack getSkull(String url);
+
+    /**
+     * Make the world not update (no light cycle and no generation)
+     * and peaceful
+     * @param creator - The WorldCreator to set to static
+     * @return The world with the applied changes
+     */
+    World setStatic(WorldCreator creator);
 
     /**
      * Spawn the ReplayPlayer (fake player)

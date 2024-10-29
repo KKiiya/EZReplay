@@ -21,7 +21,7 @@ public class EntityListener implements Listener {
         if (a == null) return;
         if (e.isCancelled()) return;
 
-        IRecording recording = Replay.getInstance().getReplayManager().getActiveReplay(a);
+        IRecording recording = Replay.getInstance().getReplayManager().getActiveRecording(a);
         if (recording == null) return;
 
         recording.getSpawnedEntities().add(entity);
@@ -40,7 +40,7 @@ public class EntityListener implements Listener {
         if (a == null) return;
         if (e.isCancelled()) return;
 
-        IRecording recording = Replay.getInstance().getReplayManager().getActiveReplay(a);
+        IRecording recording = Replay.getInstance().getReplayManager().getActiveRecording(a);
         if (recording == null) return;
 
         if (!(entity instanceof LivingEntity)) return;
@@ -57,13 +57,11 @@ public class EntityListener implements Listener {
 
         if (a == null) return;
 
-        IRecording recording = Replay.getInstance().getReplayManager().getActiveReplay(a);
+        IRecording recording = Replay.getInstance().getReplayManager().getActiveRecording(a);
         if (recording == null) return;
 
         recording.getSpawnedEntities().remove(entity);
 
-        if (entity instanceof Item) return;
-        if (entity instanceof Projectile) return;
         Recordable recordable = Replay.getInstance().getVersionSupport().createEntityDeathRecordable(recording, entity);
         recording.getLastFrame().addRecordable(recordable);
     }
@@ -78,10 +76,29 @@ public class EntityListener implements Listener {
         if (e.isCancelled()) return;
         if (!(entity instanceof LivingEntity)) return;
 
-        IRecording recording = Replay.getInstance().getReplayManager().getActiveReplay(a);
+        IRecording recording = Replay.getInstance().getReplayManager().getActiveRecording(a);
         if (recording == null) return;
 
         Recordable damage = Replay.getInstance().getVersionSupport().createAnimationRecordable(recording, entity, AnimationType.HURT);
         recording.getLastFrame().addRecordable(damage);
+    }
+
+    @EventHandler
+    public void onTnt(EntitySpawnEvent e) {
+        Entity entity = e.getEntity();
+        String worldName = entity.getWorld().getName();
+        IArena a = Replay.getInstance().getBedWarsAPI().getArenaUtil().getArenaByIdentifier(worldName);
+
+        if (a == null) return;
+        if (e.isCancelled()) return;
+
+        IRecording recording = Replay.getInstance().getReplayManager().getActiveRecording(a);
+        if (recording == null) return;
+
+        recording.getSpawnedEntities().add(entity);
+        if (!(entity instanceof TNTPrimed)) return;
+
+        Recordable spawn = Replay.getInstance().getVersionSupport().createTntSpawnRecordable(recording, entity, e.getLocation());
+        recording.getLastFrame().addRecordable(spawn);
     }
 }

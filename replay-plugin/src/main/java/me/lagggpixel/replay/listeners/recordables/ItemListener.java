@@ -28,7 +28,7 @@ public class ItemListener {
             if (e.isCancelled()) return;
             Item item = (Item) entity;
 
-            IRecording recording = Replay.getInstance().getReplayManager().getActiveReplay(a);
+            IRecording recording = Replay.getInstance().getReplayManager().getActiveRecording(a);
             if (recording == null) return;
 
             Recordable recordable = Replay.getInstance().getVersionSupport().createItemDropRecordable(recording, item);
@@ -44,7 +44,7 @@ public class ItemListener {
             if (a == null) return;
             if (e.isCancelled()) return;
 
-            IRecording recording = Replay.getInstance().getReplayManager().getActiveReplay(a);
+            IRecording recording = Replay.getInstance().getReplayManager().getActiveRecording(a);
             if (recording == null) return;
 
             recording.getSpawnedEntities().remove(item);
@@ -66,7 +66,7 @@ public class ItemListener {
             if (e.isCancelled()) return;
             Item item = (Item) entity;
 
-            IRecording recording = Replay.getInstance().getReplayManager().getActiveReplay(a);
+            IRecording recording = Replay.getInstance().getReplayManager().getActiveRecording(a);
             if (recording == null) return;
 
             Recordable recordable = Replay.getInstance().getVersionSupport().createItemDropRecordable(recording, item);
@@ -83,7 +83,7 @@ public class ItemListener {
             if (a == null) return;
             if (e.isCancelled()) return;
 
-            IRecording recording = Replay.getInstance().getReplayManager().getActiveReplay(a);
+            IRecording recording = Replay.getInstance().getReplayManager().getActiveRecording(a);
             if (recording == null) return;
 
             recording.getSpawnedEntities().remove(item);
