@@ -1,7 +1,5 @@
 package me.lagggpixel.replay.api.support;
 
-import com.tomkeuper.bedwars.api.arena.generator.IGenerator;
-import com.tomkeuper.bedwars.api.hologram.containers.IHologram;
 import me.lagggpixel.replay.api.replay.content.IReplaySession;
 import me.lagggpixel.replay.api.replay.data.recordable.Recordable;
 import me.lagggpixel.replay.api.utils.block.BlockCache;
@@ -15,6 +13,7 @@ import org.bukkit.entity.Item;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.UUID;
 
@@ -97,6 +96,15 @@ public interface IVersionSupport {
     Recordable createEntitySpawnRecordable(IRecording replay, Entity entity);
 
     /**
+     * Create a recordable for a spawned entity
+     *
+     * @param replay The replay where it is recorded
+     * @param player The entity to gather the data from
+     * @return The recordable generated for containing the player respawn data
+     */
+    Recordable createPlayerRespawnRecordable(IRecording replay, Player player);
+
+    /**
      * Create a recordable for a dying entity
      *
      * @param replay The replay where it is recorded
@@ -152,88 +160,39 @@ public interface IVersionSupport {
     Recordable createSwordBlockRecordable(IRecording replay, Player player);
 
     /**
-     * Create a recordable for a placed block via pop up tower
-     *
-     * @param replay The replay where it is recorded
-     * @param block The block placed
-     * @param sound The sound associated with the block placement
-     * @param volume The volume of the sound
-     * @param pitch The pitch of the sound
-     * @return The recordable generated for containing the placed block data
-     */
-    Recordable createPopUpTowerRecordable(IRecording replay, Block block, Sound sound, float volume, float pitch);
-
-
-    /**
-     * Create a recordable for a placed block via pop up tower
-     *
-     * @param replay The replay where it is recorded
-     * @param block The block placed
-     * @param sound The sound associated with the block placement
-     * @param volume The volume of the sound
-     * @param pitch The pitch of the sound
-     * @return The recordable generated for containing the placed block data
-     */
-    Recordable createEggBridgeRecordable(IRecording replay, Block block, Sound sound, float volume, float pitch);
-
-    /**
-     * The hologram to create the recordable for
-     * @param replay The replay where it is recorded
-     * @param hologram The hologram spawned
-     * @return The recordable generated for containing the created hologram data
-     */
-    Recordable createHologramRecordable(IRecording replay, IHologram hologram);
-
-    /**
-     * The generator to create the recordable for
-     * @param replay The replay where it is recorded
-     * @param generator The generator created
-     * @return The recordable generated for containing the created generator data
-     */
-    Recordable createGeneratorRecordable(IRecording replay, IGenerator generator);
-
-    /**
      * Crate a recordable for chat messages
-     * @param replay The replay where it is recorded
+     * @param recording The recording where it is recorded
      * @param sender The sender of the message
      * @param format The format of the message to send
      * @param content The content message
      * @return The recordable generated for containing the message sent
      */
-    Recordable createChatRecordable(IRecording replay, UUID sender, String format, String content);
+    Recordable createChatRecordable(IRecording recording, UUID sender, String format, String content);
 
     /**
      * Create a recordable for item drops
-     * @param replay The replay where it is recorded
+     * @param recording The recording where it is recorded
      * @param item The item dropped
      * @return The recordable generated for containing the item drop
      */
-    Recordable createItemDropRecordable(IRecording replay, Item item);
+    Recordable createItemDropRecordable(IRecording recording, Item item);
 
     /**
      * Create a recordable for item pickups
-     * @param replay The replay where it is recorded
+     * @param recording The recording where it is recorded
      * @param item The item picked
      * @param collector The entity collecting the item
      * @return The recordable generated for containing the item pick
      */
-    Recordable createItemPickRecordable(IRecording replay, Item item, Entity collector);
-
-    /**
-     * Create a recordable for a TNT spawn
-     * @param recording The replay where it is recorded
-     * @param location The location where the TNT spawns
-     * @return The recordable generated for containing the tnt spawn
-     */
-    Recordable createTntSpawnRecordable(IRecording recording, Entity entity, Location location);
+    Recordable createItemPickRecordable(IRecording recording, Item item, Entity collector);
 
     /**
      * Create a recordable for a explosion
-     * @param replay The replay where it is recorded
+     * @param recording The recording where it is recorded
      * @param location The location where the explosion occurs
      * @return The recordable generated for containing the explosion information
      */
-    Recordable createExplosionRecordable(IRecording replay, Location location, Entity entity, float radius);
+    Recordable createExplosionRecordable(IRecording recording, Location location, Entity entity, float radius);
 
     /**
      * Create a copy of a player, to then spawn it as a NPC
@@ -311,4 +270,20 @@ public interface IVersionSupport {
      * @return Whether the block is interactable
      */
     boolean isInteractable(Block block);
+
+    /**
+     * Get the item in the main hand of a specified player
+     * @param p - The player to get the item from
+     * @return the item in the main hand
+     */
+    @Nullable
+    ItemStack getItemInMainHand(Player p);
+
+    /**
+     * Get the item in the offhand of a specified player
+     * @param p - The player to get the item from
+     * @return the item in the main hand
+     */
+    @Nullable
+    ItemStack getItemInOffHand(Player p);
 }

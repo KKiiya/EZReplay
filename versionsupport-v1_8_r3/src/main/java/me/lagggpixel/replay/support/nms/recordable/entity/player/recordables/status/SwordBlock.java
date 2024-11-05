@@ -9,6 +9,7 @@ import me.lagggpixel.replay.support.nms.v1_8_R3;
 import net.minecraft.server.v1_8_R3.EntityPlayer;
 import net.minecraft.server.v1_8_R3.PacketPlayOutEntityMetadata;
 import org.bukkit.craftbukkit.v1_8_R3.entity.CraftEntity;
+import org.bukkit.craftbukkit.v1_8_R3.entity.CraftPlayer;
 import org.bukkit.entity.Player;
 
 import java.util.UUID;
@@ -17,20 +18,18 @@ public class SwordBlock extends Recordable implements IBlocking {
 
     @Getter
     private final UUID uniqueId;
-    private final boolean isBlocking;
+    private final byte value;
 
     public SwordBlock(IRecording replay, Player playerBlocking) {
         super(replay);
         this.uniqueId = playerBlocking.getUniqueId();
-        this.isBlocking = playerBlocking.isBlocking();
+        this.value = (byte) (playerBlocking.isBlocking() ? 0x10 : 0x00);
     }
 
     @Override
     public void play(IReplaySession replaySession, Player player) {
         EntityPlayer fakePlayer = (EntityPlayer) ((CraftEntity) replaySession.getSpawnedEntities().get(uniqueId.toString())).getHandle();
-
-        byte blocking = (byte) (isBlocking ? 0 : 16);
-        fakePlayer.getDataWatcher().watch(0, blocking);
+        fakePlayer.getDataWatcher().watch(0, value);
 
         PacketPlayOutEntityMetadata playerMetadata = new PacketPlayOutEntityMetadata(fakePlayer.getId(), fakePlayer.getDataWatcher(), true);
 
@@ -39,13 +38,6 @@ public class SwordBlock extends Recordable implements IBlocking {
 
     @Override
     public void unplay(IReplaySession replaySession, Player player) {
-        EntityPlayer fakePlayer = (EntityPlayer) ((CraftEntity) replaySession.getSpawnedEntities().get(uniqueId.toString())).getHandle();
 
-        byte blocking = (byte) (isBlocking ? 16 : 0);
-        fakePlayer.getDataWatcher().watch(0, blocking);
-
-        PacketPlayOutEntityMetadata playerMetadata = new PacketPlayOutEntityMetadata(fakePlayer.getId(), fakePlayer.getDataWatcher(), true);
-
-        v1_8_R3.sendPacket(player, playerMetadata);
     }
 }

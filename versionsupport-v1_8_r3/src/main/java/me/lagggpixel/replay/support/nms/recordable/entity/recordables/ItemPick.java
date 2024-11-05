@@ -13,7 +13,7 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
 
-public class ItemPickRecordable extends Recordable {
+public class ItemPick extends Recordable {
 
     private final String itemUUID;
     private final String collectorUUID;
@@ -21,7 +21,7 @@ public class ItemPickRecordable extends Recordable {
     private final double y;
     private final double z;
 
-    public ItemPickRecordable(IRecording replay, Item item, Entity collector) {
+    public ItemPick(IRecording replay, Item item, Entity collector) {
         super(replay);
         this.itemUUID = item.getUniqueId().toString();
         this.collectorUUID = collector.getUniqueId().toString();
@@ -36,10 +36,10 @@ public class ItemPickRecordable extends Recordable {
         int collectorId = replaySession.getSpawnedEntities().get(collectorUUID).getEntityId();
 
         PacketPlayOutCollect collect = new PacketPlayOutCollect(itemId, collectorId);
-        PacketPlayOutNamedSoundEffect pickUpSound = new PacketPlayOutNamedSoundEffect(CraftSound.getSound(Sound.ITEM_PICKUP), x, y, z, 1.0f, 1.4f);
+        PacketPlayOutNamedSoundEffect pickUpSound = new PacketPlayOutNamedSoundEffect(CraftSound.getSound(Sound.ITEM_PICKUP), x, y, z, 0.7f, 1.4f);
         PacketPlayOutEntityDestroy destroy = new PacketPlayOutEntityDestroy(itemId);
 
-        v1_8_R3.sendPackets(player, collect, destroy, pickUpSound);
+        v1_8_R3.sendPackets(player, collect, pickUpSound, destroy);
     }
 
     @Override

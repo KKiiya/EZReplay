@@ -16,7 +16,7 @@ import org.bukkit.inventory.ItemStack;
 
 import java.util.UUID;
 
-public class ItemDropRecordable extends Recordable {
+public class ItemDrop extends Recordable {
 
     private final Vector3d location;
     private final double motX;
@@ -25,7 +25,7 @@ public class ItemDropRecordable extends Recordable {
     private final UUID uuid;
     private final ItemStack itemStack;
 
-    public ItemDropRecordable(IRecording replay, Item item) {
+    public ItemDrop(IRecording replay, Item item) {
         super(replay);
         this.location = Vector3d.fromBukkitLocation(item.getLocation());
         this.uuid = item.getUniqueId();
@@ -57,7 +57,6 @@ public class ItemDropRecordable extends Recordable {
     public void unplay(IReplaySession replaySession, Player player) {
         Entity entity = ((CraftEntity)  replaySession.getSpawnedEntities().get(uuid.toString())).getHandle();
 
-        replaySession.getSpawnedEntities().remove(uuid.toString());
         PacketPlayOutEntityDestroy destroy = new PacketPlayOutEntityDestroy(entity.getId());
 
         v1_8_R3.sendPacket(player, destroy);

@@ -1,6 +1,5 @@
-package me.lagggpixel.replay.listeners.recordables;
+package me.lagggpixel.replay.listeners.world;
 
-import com.tomkeuper.bedwars.api.arena.IArena;
 import me.lagggpixel.replay.Replay;
 import me.lagggpixel.replay.api.events.block.BlockChangeEvent;
 import me.lagggpixel.replay.api.replay.data.IRecording;
@@ -26,19 +25,17 @@ public class BlockListener implements Listener {
     @EventHandler
     public void onBlockEvent(BlockChangeEvent e) {
         Block block = e.getBlock();
-        IArena a = Replay.getInstance().getBedWarsAPI().getArenaUtil().getArenaByIdentifier(block.getWorld().getName());
 
         World world = block.getWorld();
         Material material = block.getType();
         byte data = block.getData();
         Location location = block.getLocation();
 
-        if (a == null) return;
         if (e.isCancelled()) return;
         if (material == Material.AIR) return;
         if ((e.getEventType() == BlockEventType.FROM_TO || e.getEventType() == BlockEventType.PHYSICS) && (material == Material.WATER || material == Material.LAVA)) return;
 
-        IRecording recording = ReplayManager.getInstance().getActiveRecording(a);
+        IRecording recording = ReplayManager.getInstance().getActiveRecording(world);
         if (recording == null) return;
 
         BlockCache cache = new BlockCache(world, material, data, location);

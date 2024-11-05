@@ -18,6 +18,8 @@ import java.util.UUID;
 public class EntitySpawn extends Recordable implements IEntitySpawn {
 
     private final EntityType entityType;
+    private final String customName;
+    private final boolean isCustomNameVisible;
     private final Location spawnLocation;
     private final double motX;
     private final double motY;
@@ -28,6 +30,8 @@ public class EntitySpawn extends Recordable implements IEntitySpawn {
     public EntitySpawn(IRecording replay, org.bukkit.entity.Entity entity) {
         super(replay);
         this.spawnLocation = entity.getLocation();
+        this.customName = entity.getCustomName();
+        this.isCustomNameVisible = entity.isCustomNameVisible();
         this.entityType = entity.getType();
         this.uniqueId = entity.getUniqueId();
         this.motX = entity.getVelocity().getX();
@@ -40,9 +44,12 @@ public class EntitySpawn extends Recordable implements IEntitySpawn {
     public void play(IReplaySession replaySession, Player player) {
         CraftWorld world = ((CraftWorld) replaySession.getWorld());
         net.minecraft.server.v1_8_R3.Entity entity = world.createEntity(spawnLocation, entityType.getEntityClass());
+        if (customName != null) entity.setCustomName(customName);
+        if (isCustomNameVisible && customName != null) entity.setCustomNameVisible(true);
         entity.motX = this.motX;
         entity.motY = this.motY;
         entity.motZ = this.motZ;
+        entity.velocityChanged = true;
 
         if (isLiving) {
             EntityLiving livingEntity = (EntityLiving) entity;

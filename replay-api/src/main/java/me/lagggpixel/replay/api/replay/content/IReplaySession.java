@@ -1,7 +1,5 @@
 package me.lagggpixel.replay.api.replay.content;
 
-import com.tomkeuper.bedwars.api.arena.team.TeamColor;
-import com.tomkeuper.bedwars.api.hologram.containers.IHologram;
 import me.lagggpixel.replay.api.replay.data.IRecording;
 import org.bukkit.World;
 import org.bukkit.entity.Entity;
@@ -19,13 +17,7 @@ public interface IReplaySession {
     World getWorld();
     HashMap<String, Entity> getSpawnedEntities();
 
-    String getPrefix(String UUID);
-    String getSuffix(String UUID);
-    String getLevelName(String UUID);
-    TeamColor getTeamColor(String UUID);
-
     List<BukkitRunnable> startedTasks();
-    List<IHologram> createdHolograms();
 
     int getCurrentTick();
 

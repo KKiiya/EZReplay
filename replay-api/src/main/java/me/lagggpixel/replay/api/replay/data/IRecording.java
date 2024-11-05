@@ -1,9 +1,8 @@
 package me.lagggpixel.replay.api.replay.data;
 
-import com.tomkeuper.bedwars.api.arena.IArena;
-import com.tomkeuper.bedwars.api.arena.team.TeamColor;
 import me.lagggpixel.replay.api.replay.content.IReplaySession;
 import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
@@ -24,10 +23,10 @@ public interface IRecording {
     UUID getID();
 
     /**
-     * Get the arena being recorded
-     * @return the arena object
+     * Get the world being recorded
+     * @return the world object
      */
-    IArena getArena();
+    World getWorld();
 
     /**
      * Add multiple frames to the replay
@@ -88,32 +87,6 @@ public interface IRecording {
     List<String> getPlayers();
 
     /**
-     * Get the player's team color
-     */
-    TeamColor getTeamColor(String player);
-
-    /**
-     * Get the prefix of a player
-     * @param player The player to get the prefix from
-     * @return String object containing the prefix
-     */
-    String getPrefix(String player);
-
-    /**
-     * Get the suffix of a player
-     * @param player The player to get the suffix from
-     * @return String object containing the suffix
-     */
-    String getSuffix(String player);
-
-    /**
-     * Get the level name of a player
-     * @param player The player to get the level name from
-     * @return String object containing the level name
-     */
-    String getLevelName(String player);
-
-    /**
      * Get the first location where the player spawned
      * @param offlinePlayer The offline player to get the data from
      * @return the location Object
@@ -153,6 +126,17 @@ public interface IRecording {
      * Check if the replay has finished recording
      */
     boolean isFinished();
+
+    /**
+     * Check if the chat is currently being recorded
+     */
+    boolean isRecordingChat();
+
+    /**
+     * Toggle chat recording
+     * @param value - The new value
+     */
+    void setRecordingChat(boolean value);
 
     /**
      * Create a replay session to replay the recording

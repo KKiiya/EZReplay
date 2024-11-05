@@ -1,8 +1,7 @@
 package me.lagggpixel.replay.replay.content;
 
-import com.tomkeuper.bedwars.api.arena.team.TeamColor;
-import com.tomkeuper.bedwars.api.hologram.containers.IHologram;
 import lombok.Getter;
+import lombok.NonNull;
 import me.lagggpixel.replay.Replay;
 import me.lagggpixel.replay.api.replay.content.IControls;
 import me.lagggpixel.replay.api.replay.content.IReplaySession;
@@ -36,13 +35,6 @@ public class ReplaySession implements IReplaySession {
     @Getter
     private final HashMap<String, Entity> spawnedEntities;
 
-    private final HashMap<String, String> prefixes;
-    private final HashMap<String, String> suffixes;
-    private final HashMap<String, String> levelNames;
-    private final HashMap<String, TeamColor> teamColor;
-
-    private final List<IHologram> createdHolograms;
-
     private final List<BukkitRunnable> startedTasks;
 
     @Getter
@@ -50,35 +42,30 @@ public class ReplaySession implements IReplaySession {
     private int currentFrameIndex = 0;
     private int speedMultiplier = 20;
 
-    public ReplaySession(World world, UUID replayId, Player... players) {
+    public ReplaySession(World world, UUID replayId, @NonNull Location spawnLocation, Player... players) {
+        this(world, replayId.toString(), spawnLocation, players);
+    }
+
+    public ReplaySession(World world, String replayId, Location spawnLocation, Player... players) {
         this.vs = Replay.getInstance().getVersionSupport();
         this.world = world;
         this.playersWatching = new ArrayList<>();
         this.playerControls = new HashMap<>();
         playersWatching.addAll(List.of(players));
         this.replay = Replay.getInstance().getReplayManager().getReplayByID(replayId);
+        if (replay == null) throw new NullPointerException("Tried loading replay with ID '" + replayId + "'. Replay doesn't exist");
 
         this.spawnedEntities = new HashMap<>();
-
-        this.prefixes = new HashMap<>();
-        this.suffixes = new HashMap<>();
-        this.levelNames = new HashMap<>();
-        this.teamColor = new HashMap<>();
 
         for (String player : replay.getPlayers()) {
             Player NPC = vs.createNPCCopy(this, Bukkit.getOfflinePlayer(UUID.fromString(player)));
             spawnedEntities.put(player, NPC);
-            prefixes.put(player, replay.getPrefix(player));
-            suffixes.put(player, replay.getSuffix(player));
-            levelNames.put(player, replay.getLevelName(player));
-            teamColor.put(player, replay.getTeamColor(player));
         }
 
         this.startedTasks = new ArrayList<>();
-        this.createdHolograms = new ArrayList<>();
 
         for (Player p : players) {
-            Bukkit.getScheduler().runTask(Replay.getInstance(), () -> p.teleport(new Location(world, 0, 180, 0)));
+            Bukkit.getScheduler().runTask(Replay.getInstance(), () -> p.teleport(spawnLocation));
             Replay.getInstance().getReplaySessionManager().setReplaySessionByPlayer(p, this);
             Bukkit.getScheduler().runTaskLater(Replay.getInstance(), () -> {
                 p.setGameMode(GameMode.ADVENTURE);
@@ -89,46 +76,7 @@ public class ReplaySession implements IReplaySession {
         Bukkit.getScheduler().runTaskLater(Replay.getInstance(), this::start, 40L);
     }
 
-    public ReplaySession(World world, String replayId, Player... players) throws Exception {
-        this.vs = Replay.getInstance().getVersionSupport();
-        this.world = world;
-        this.playersWatching = new ArrayList<>();
-        this.playerControls = new HashMap<>();
-        playersWatching.addAll(List.of(players));
-        this.replay = Replay.getInstance().getReplayManager().getReplayByID(replayId);
-
-        this.spawnedEntities = new HashMap<>();
-
-        this.prefixes = new HashMap<>();
-        this.suffixes = new HashMap<>();
-        this.levelNames = new HashMap<>();
-        this.teamColor = new HashMap<>();
-
-        for (String player : replay.getPlayers()) {
-            Player NPC = vs.createNPCCopy(this, Bukkit.getOfflinePlayer(UUID.fromString(player)));
-            spawnedEntities.put(player, NPC);
-            prefixes.put(player, replay.getPrefix(player));
-            suffixes.put(player, replay.getSuffix(player));
-            levelNames.put(player, replay.getLevelName(player));
-            teamColor.put(player, replay.getTeamColor(player));
-        }
-
-        this.startedTasks = new ArrayList<>();
-        this.createdHolograms = new ArrayList<>();
-
-        for (Player p : players) {
-            Bukkit.getScheduler().runTask(Replay.getInstance(), () -> p.teleport(new Location(world, 0, 180, 0)));
-            Replay.getInstance().getReplaySessionManager().setReplaySessionByPlayer(p, this);
-            Bukkit.getScheduler().runTaskLater(Replay.getInstance(), () -> {
-                p.setGameMode(GameMode.ADVENTURE);
-                p.setAllowFlight(true);
-                p.setFlying(true);
-            }, 20L);
-        }
-        Bukkit.getScheduler().runTaskLater(Replay.getInstance(), this::start, 40L);
-    }
-
-    public ReplaySession(World world, IRecording replay, Player... players) throws Exception {
+    public ReplaySession(World world, IRecording replay, Player... players) {
         this.vs = Replay.getInstance().getVersionSupport();
         this.world = world;
         this.playersWatching = new ArrayList<>();
@@ -138,22 +86,12 @@ public class ReplaySession implements IReplaySession {
 
         this.spawnedEntities = new HashMap<>();
 
-        this.prefixes = new HashMap<>();
-        this.suffixes = new HashMap<>();
-        this.levelNames = new HashMap<>();
-        this.teamColor = new HashMap<>();
-
         for (String player : replay.getPlayers()) {
             Player NPC = vs.createNPCCopy(this, Bukkit.getOfflinePlayer(UUID.fromString(player)));
             spawnedEntities.put(player, NPC);
-            prefixes.put(player, replay.getPrefix(player));
-            suffixes.put(player, replay.getSuffix(player));
-            levelNames.put(player, replay.getLevelName(player));
-            teamColor.put(player, replay.getTeamColor(player));
         }
 
         this.startedTasks = new ArrayList<>();
-        this.createdHolograms = new ArrayList<>();
 
         for (Player p : players) {
             Bukkit.getScheduler().runTask(Replay.getInstance(), () -> p.teleport(new Location(world, 0, 180, 0)));
@@ -184,33 +122,8 @@ public class ReplaySession implements IReplaySession {
     }
 
     @Override
-    public String getPrefix(String UUID) {
-        return prefixes.get(UUID);
-    }
-
-    @Override
-    public String getSuffix(String UUID) {
-        return suffixes.get(UUID);
-    }
-
-    @Override
-    public String getLevelName(String UUID) {
-        return levelNames.get(UUID);
-    }
-
-    @Override
-    public TeamColor getTeamColor(String UUID) {
-        return teamColor.get(UUID);
-    }
-
-    @Override
     public List<BukkitRunnable> startedTasks() {
         return startedTasks;
-    }
-
-    @Override
-    public List<IHologram> createdHolograms() {
-        return createdHolograms;
     }
 
     @Override
@@ -220,7 +133,6 @@ public class ReplaySession implements IReplaySession {
 
     @Override
     public void start() {
-        System.out.println(getViewers());
         for (Player p : getViewers()) {
             playerControls.put(p, new Controls(this, p));
         }
@@ -259,7 +171,7 @@ public class ReplaySession implements IReplaySession {
         while (currentFrameIndex > targetFrameIndex) {
             IFrame frame = replay.getFrames().get(--currentFrameIndex);
             for (Player p : getViewers()) {
-                frame.play(this, p);
+                frame.unplay(this, p);
             }
         }
 

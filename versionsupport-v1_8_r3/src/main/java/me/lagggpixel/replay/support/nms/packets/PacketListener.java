@@ -1,6 +1,5 @@
 package me.lagggpixel.replay.support.nms.packets;
 
-import com.tomkeuper.bedwars.api.arena.IArena;
 import me.lagggpixel.replay.api.packets.PacketPlayInEvent;
 import me.lagggpixel.replay.api.replay.data.IRecording;
 import me.lagggpixel.replay.api.utils.block.AbstractBlockBreaker;
@@ -39,10 +38,7 @@ public class PacketListener implements Listener {
         if (!(pac instanceof PacketPlayInBlockDig)) return;
         PacketPlayInBlockDig packet = (PacketPlayInBlockDig) event.getPacket();
 
-        IArena a = v1_8_R3.getInstance().getPlugin().getBedWarsAPI().getArenaUtil().getArenaByPlayer(p);
-        if (a == null) return;
-
-        IRecording recording = v1_8_R3.getInstance().getPlugin().getReplayManager().getActiveRecording(a);
+        IRecording recording = v1_8_R3.getInstance().getPlugin().getReplayManager().getActiveRecording(p.getWorld());
         if (recording == null) return;
 
         BlockPosition position = packet.a();

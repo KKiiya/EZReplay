@@ -2,7 +2,11 @@ name: replay-plugin
 version: '${project.version}'
 main: me.lagggpixel.replay.Replay
 authors: [lagggpixel, Kiiya, agentnoobff]
-softdepend: [ BedWars2023, BWProxy2023, PlaceholderAPI ]
+softdepend: [ PlaceholderAPI ]
 commands:
   replay:
     description: Open the replays menu
+  startrecording:
+    description: Starts recording the current world
+  stoprecording:
+    description: Stops recording the current world

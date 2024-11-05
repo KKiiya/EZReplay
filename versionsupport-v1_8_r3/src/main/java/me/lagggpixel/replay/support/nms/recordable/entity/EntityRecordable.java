@@ -5,14 +5,10 @@ import me.lagggpixel.replay.api.replay.data.recordable.Recordable;
 import me.lagggpixel.replay.api.replay.data.recordable.entity.IEntityRecordable;
 import me.lagggpixel.replay.api.replay.data.IRecording;
 import me.lagggpixel.replay.support.nms.v1_8_R3;
-import net.minecraft.server.v1_8_R3.PacketPlayOutEntity;
-import net.minecraft.server.v1_8_R3.PacketPlayOutEntityHeadRotation;
-import net.minecraft.server.v1_8_R3.PacketPlayOutEntityTeleport;
-import net.minecraft.server.v1_8_R3.PacketPlayOutPosition;
+import net.minecraft.server.v1_8_R3.*;
 import org.bukkit.Location;
 import org.bukkit.craftbukkit.v1_8_R3.entity.CraftEntity;
 import org.bukkit.entity.Entity;
-import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 
 import java.util.UUID;
@@ -45,14 +41,13 @@ public class EntityRecordable extends Recordable implements IEntityRecordable {
     public void play(IReplaySession replaySession, Player player) {
         Entity replayEntity = replaySession.getSpawnedEntities().get(uniqueId.toString());
         net.minecraft.server.v1_8_R3.Entity entity = ((CraftEntity) replayEntity).getHandle();
-
         entity.setPositionRotation(x, y, z, yaw, pitch);
 
         PacketPlayOutEntityTeleport positionPacket = new PacketPlayOutEntityTeleport(entity);
         PacketPlayOutEntityHeadRotation headRotation = new PacketPlayOutEntityHeadRotation(entity, (byte) ((yaw * 256.0F) / 360.0F));
         PacketPlayOutEntity.PacketPlayOutEntityLook entityLook = new PacketPlayOutEntity.PacketPlayOutEntityLook(entity.getId(), (byte) ((yaw * 256.0F) / 360.0F), (byte) ((pitch * 256.0F) / 360.0F), true);
-
-        v1_8_R3.sendPackets(player, positionPacket, headRotation, entityLook);
+        PacketPlayOutEntityMetadata metadata = new PacketPlayOutEntityMetadata(entity.getId(), entity.getDataWatcher(), true);
+        v1_8_R3.sendPackets(player, positionPacket, headRotation, entityLook, metadata);
     }
 
     @Override

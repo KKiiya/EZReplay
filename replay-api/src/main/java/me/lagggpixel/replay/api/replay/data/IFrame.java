@@ -16,4 +16,6 @@ public interface IFrame {
     void addAsList(List<Recordable> recordableList);
 
     void play(IReplaySession replaySession, Player player);
+
+    void unplay(IReplaySession replaySession, Player player);
 }

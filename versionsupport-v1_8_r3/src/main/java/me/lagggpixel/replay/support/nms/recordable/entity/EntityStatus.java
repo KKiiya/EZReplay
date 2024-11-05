@@ -7,6 +7,7 @@ import me.lagggpixel.replay.support.nms.v1_8_R3;
 import net.minecraft.server.v1_8_R3.PacketPlayOutEntityDestroy;
 import org.bukkit.craftbukkit.v1_8_R3.entity.CraftEntity;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 
 import java.util.UUID;
@@ -27,8 +28,7 @@ public class EntityStatus extends Recordable {
         Entity entity = replaySession.getSpawnedEntities().get(uuid.toString());
         net.minecraft.server.v1_8_R3.Entity nmsEntity = ((CraftEntity) entity).getHandle();
 
-        if (isDead) {
-            nmsEntity.dead = true;
+        if (!(entity instanceof LivingEntity) && isDead) {
             PacketPlayOutEntityDestroy destroy = new PacketPlayOutEntityDestroy(nmsEntity.getId());
             v1_8_R3.sendPacket(player, destroy);
         }

@@ -1,22 +1,24 @@
 package me.lagggpixel.replay;
 
-import com.tomkeuper.bedwars.api.BedWars;
-import com.tomkeuper.bedwars.api.arena.IArena;
 import lombok.Getter;
 import me.lagggpixel.replay.api.IReplay;
 import me.lagggpixel.replay.api.replay.IReplayManager;
 import me.lagggpixel.replay.api.replay.IReplaySessionManager;
 import me.lagggpixel.replay.api.support.IVersionSupport;
 import me.lagggpixel.replay.commands.ReplayMenu;
+import me.lagggpixel.replay.commands.Startrecording;
+import me.lagggpixel.replay.commands.Stoprecording;
 import me.lagggpixel.replay.listeners.InventoryListener;
-import me.lagggpixel.replay.listeners.arena.*;
-import me.lagggpixel.replay.listeners.recordables.*;
+import me.lagggpixel.replay.listeners.player.ChatListener;
+import me.lagggpixel.replay.listeners.player.PlayerListener;
+import me.lagggpixel.replay.listeners.world.*;
 import me.lagggpixel.replay.listeners.replaysession.SessionListener;
 import me.lagggpixel.replay.replay.ReplayManager;
 import me.lagggpixel.replay.replay.ReplaySessionManager;
 import me.lagggpixel.replay.support.nms.v1_8_R3;
-import me.lagggpixel.replay.utils.LogUtil;
+import me.lagggpixel.replay.utils.FileUtils;
 import org.bukkit.Bukkit;
+import org.bukkit.World;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -28,7 +30,6 @@ public final class Replay extends JavaPlugin implements IReplay {
     private static String VERSION;
     @Getter
     private IVersionSupport versionSupport;
-    private static BedWars bedWars;
     @Getter
     private IReplayManager replayManager;
     @Getter
@@ -37,12 +38,6 @@ public final class Replay extends JavaPlugin implements IReplay {
     @Override
     public void onEnable() {
         instance = this;
-        if (!Bukkit.getPluginManager().isPluginEnabled("BedWars2023")) {
-            LogUtil.warn("BedWars2023 was not found! Disabling...");
-            Bukkit.getPluginManager().disablePlugin(this);
-            return;
-        }
-        bedWars = Objects.requireNonNull(Bukkit.getServicesManager().getRegistration(BedWars.class)).getProvider();
 
         VERSION = Bukkit.getServer().getClass().getPackage().getName().split("\\.")[3];
         loadVersionSupport();
@@ -54,29 +49,24 @@ public final class Replay extends JavaPlugin implements IReplay {
                 new EntityListener(),
                 new BlockListener(),
                 new PlayerListener(),
-                new ArenaLeave(),
                 new ChatListener(),
-                new GameStateChangeListener(),
-                new SpecialItemsListener(),
                 new SessionListener());
 
         if (versionSupport.getVersion() <= 2) registerListener(new ItemListener.LegacyDropPick());
         else registerListener(new ItemListener.NewDropPick());
 
-        for (IArena arena : getBedWarsAPI().getArenaUtil().getArenas()) {
-
+        for (World world : getServer().getWorlds()) {
+            FileUtils.saveWorldToCache(world);
         }
 
         Objects.requireNonNull(getCommand("replay")).setExecutor(new ReplayMenu());
+        Objects.requireNonNull(getCommand("startrecording")).setExecutor(new Startrecording());
+        Objects.requireNonNull(getCommand("stoprecording")).setExecutor(new Stoprecording());
     }
 
     @Override
     public void onDisable() {
 
-    }
-
-    public BedWars getBedWarsAPI() {
-        return bedWars;
     }
 
     private void loadVersionSupport() {

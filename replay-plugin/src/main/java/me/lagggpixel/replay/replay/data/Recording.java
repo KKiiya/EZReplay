@@ -1,11 +1,5 @@
 package me.lagggpixel.replay.replay.data;
 
-import com.tomkeuper.bedwars.api.arena.IArena;
-import com.tomkeuper.bedwars.api.arena.generator.IGenerator;
-import com.tomkeuper.bedwars.api.arena.team.ITeam;
-import com.tomkeuper.bedwars.api.arena.team.TeamColor;
-import com.tomkeuper.bedwars.api.chat.IChat;
-import com.tomkeuper.bedwars.api.levels.Level;
 import lombok.Getter;
 import me.lagggpixel.replay.Replay;
 import me.lagggpixel.replay.api.replay.content.IReplaySession;
@@ -15,13 +9,13 @@ import me.lagggpixel.replay.api.support.IVersionSupport;
 import me.lagggpixel.replay.replay.content.ReplaySession;
 import me.lagggpixel.replay.replay.tasks.EquipmentTrackerTask;
 import me.lagggpixel.replay.utils.FileUtils;
-import me.lagggpixel.replay.utils.LogUtil;
 import org.bukkit.*;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Projectile;
 import org.bukkit.potion.PotionEffectType;
+import org.bukkit.scheduler.BukkitRunnable;
 
 import java.io.File;
 import java.util.*;
@@ -31,45 +25,31 @@ public class Recording implements IRecording {
     @Getter
     public final UUID id;
     @Getter
-    public final IArena arena;
+    public final World world;
 
     private final List<IFrame> frames;
     private final List<Entity> spawnedEntities;
     private final List<Item> droppedItems;
     private final List<String> playersThatPlayed;
-    private final String worldCloneName;
-    private final HashMap<String, TeamColor> playersTeamColor;
-    private final HashMap<String, String> playersPrefix;
-    private final HashMap<String, String> playersSuffix;
-    private final HashMap<String, String> playersLevelName;
     private final HashMap<String, Location> spawnLocations;
+    private final HashMap<String, Object> customData;
+    private final String worldCloneName;
     private int frameGeneratorTaskId = -1;
     private int equipmentTrackerTaskId = -1;
     private boolean isRecording = false;
+    private boolean isRecordingChat = false;
     private boolean finished = false;
 
-    public Recording(IArena arena) {
-        this.worldCloneName = arena.getDisplayName()+"-Replay";
-        this.frames = new ArrayList<>();
+    public Recording(World world) {
         this.id = UUID.randomUUID();
-        this.arena = arena;
+        this.worldCloneName = world.getName()+"-"+id;
+        this.frames = new ArrayList<>();
+        this.world = world;
         this.spawnedEntities = new ArrayList<>();
         this.droppedItems = new ArrayList<>();
-        this.playersThatPlayed = arena.getPlayers().stream().map(p -> p.getUniqueId().toString()).collect(Collectors.toList());
-        this.playersTeamColor = new HashMap<>();
-        this.playersPrefix = new HashMap<>();
-        this.playersSuffix = new HashMap<>();
-        this.playersLevelName = new HashMap<>();
+        this.playersThatPlayed = world.getPlayers().stream().map(p -> p.getUniqueId().toString()).collect(Collectors.toList());
         this.spawnLocations = new HashMap<>();
-
-        IChat chatUtil = Replay.getInstance().getBedWarsAPI().getChatUtil();
-        Level levelUtil = Replay.getInstance().getBedWarsAPI().getLevelsUtil();
-        for (Player player : arena.getPlayers()) {
-            playersTeamColor.put(player.getUniqueId().toString(), arena.getTeam(player).getColor());
-            playersPrefix.put(player.getUniqueId().toString(), chatUtil.getPrefix(player));
-            playersSuffix.put(player.getUniqueId().toString(), chatUtil.getSuffix(player));
-            playersLevelName.put(player.getUniqueId().toString(), levelUtil.getLevel(player));
-        }
+        this.customData = new HashMap<>();
     }
 
     @Override
@@ -89,6 +69,9 @@ public class Recording implements IRecording {
 
     @Override
     public IFrame getFrame(int tick) {
+        if (tick < 0 || tick >= frames.size()) {
+            throw new IllegalArgumentException("Tick index out of bounds");
+        }
         return frames.get(tick);
     }
 
@@ -128,26 +111,6 @@ public class Recording implements IRecording {
     }
 
     @Override
-    public TeamColor getTeamColor(String player) {
-        return playersTeamColor.get(player);
-    }
-
-    @Override
-    public String getPrefix(String player) {
-        return playersPrefix.get(player);
-    }
-
-    @Override
-    public String getSuffix(String player) {
-        return playersSuffix.get(player);
-    }
-
-    @Override
-    public String getLevelName(String player) {
-        return playersLevelName.get(player);
-    }
-
-    @Override
     public Location getSpawnLocation(String offlinePlayer) {
         return spawnLocations.get(offlinePlayer);
     }
@@ -155,18 +118,17 @@ public class Recording implements IRecording {
     @Override
     public void start() {
         IVersionSupport vs = Replay.getInstance().getVersionSupport();
-        LogUtil.info("STARTED RECORDING REPLAY WITH ID " + id.toString());
         isRecording = true;
         if (finished) throw new UnsupportedOperationException("Tried resuming replay with ID '" + id + "' while finished");
 
         frameGeneratorTaskId = Bukkit.getScheduler().runTaskTimer(Replay.getInstance(), () -> {
             frames.add(new Frame(this));
 
-            for (Player player : arena.getPlayers()) {
+            for (Player player : world.getPlayers()) {
                 getLastFrame().addRecordable(vs.createEntityMovementRecordable(this, player));
+                getLastFrame().addRecordable(vs.createSwordBlockRecordable(this, player));
                 if (player.isSneaking()) getLastFrame().addRecordable(vs.createSneakingRecordable(this, player.getUniqueId(), true));
                 if (player.isSprinting()) getLastFrame().addRecordable(vs.createSprintRecordable(this, player.getUniqueId(), true));
-                if (player.isBlocking()) getLastFrame().addRecordable(vs.createSwordBlockRecordable(this, player));
                 if (player.hasPotionEffect(PotionEffectType.INVISIBILITY)) getLastFrame().addRecordable(vs.createInvisibilityRecordable(this, player, true));
             }
 
@@ -185,19 +147,14 @@ public class Recording implements IRecording {
         }, 0, 1L).getTaskId();
 
         Bukkit.getScheduler().runTaskLater(Replay.getInstance(), () -> {
-            for (IGenerator gen : arena.getOreGenerators()) {
-                if (gen.getHologramHolder() == null) continue;
-                getLastFrame().addRecordable(vs.createGeneratorRecordable(this, gen));
+            for (Entity entity : world.getEntities()) {
+                if (entity instanceof Player) continue;
+                spawnedEntities.add(entity);
+                getLastFrame().addRecordable(vs.createEntitySpawnRecordable(this, entity));
             }
         }, 5L);
 
-        for (ITeam team : arena.getTeams()) {
-            if (!team.isShopSpawned()) continue;
-
-
-        }
-
-        for (Player p : arena.getPlayers()) {
+        for (Player p : world.getPlayers()) {
             spawnLocations.put(p.getUniqueId().toString(), p.getLocation());
         }
         equipmentTrackerTaskId = Bukkit.getScheduler().runTaskTimer(Replay.getInstance(), new EquipmentTrackerTask(this), 0, 1L).getTaskId();
@@ -214,19 +171,22 @@ public class Recording implements IRecording {
 
     @Override
     public void stop() {
-        LogUtil.info("FINISHED RECORDING WITH ID " + id.toString());
         isRecording = false;
         finished = true;
         Bukkit.getScheduler().cancelTask(frameGeneratorTaskId);
         Bukkit.getScheduler().cancelTask(equipmentTrackerTaskId);
         frameGeneratorTaskId = -1;
+        equipmentTrackerTaskId = -1;
         Replay.getInstance().getReplayManager().getReplays().add(this);
-        Replay.getInstance().getReplayManager().removeFromActiveReplays(arena);
+        Replay.getInstance().getReplayManager().removeFromActiveRecordings(world);
     }
 
     @Override
     public Entity getSpawnedEntity(int id) {
-        return spawnedEntities.stream().filter(e -> e.getEntityId() == id).collect(Collectors.toList()).get(0);
+        return spawnedEntities.stream()
+                .filter(e -> e.getEntityId() == id)
+                .findFirst()
+                .orElseThrow(() -> new NoSuchElementException("Entity with ID " + id + " not found"));
     }
 
     @Override
@@ -240,20 +200,56 @@ public class Recording implements IRecording {
     }
 
     @Override
+    public boolean isRecordingChat() {
+        return isRecordingChat;
+    }
+
+    @Override
+    public void setRecordingChat(boolean value) {
+        this.isRecordingChat = value;
+    }
+
+    @Override
     public IReplaySession watch(Player player) {
-        WorldCreator creator;
-        if (!FileUtils.isWorldCached(arena)) FileUtils.saveArenaWorldToCache(arena);
-        creator = new WorldCreator(worldCloneName);
-        World worldClone = Replay.getInstance().getVersionSupport().setStatic(creator);
-        return new ReplaySession(worldClone, id, player);
+        if (!FileUtils.isWorldCached(world)) {
+            FileUtils.saveWorldToCache(world);  // Ensure the world is saved to cache
+        }
+        loadWorldAsyncAndTeleport(player);
+        return null;  // Returning null initially, as the actual session will start post-load.
     }
 
     @Override
     public IReplaySession watch(Player... players) {
-        WorldCreator creator;
-        if (!FileUtils.isWorldCached(arena)) FileUtils.saveArenaWorldToCache(arena);
-        creator = new WorldCreator(worldCloneName);
-        World worldClone = Replay.getInstance().getVersionSupport().setStatic(creator);
-        return new ReplaySession(worldClone, id, players);
+        if (!FileUtils.isWorldCached(world)) {
+            FileUtils.saveWorldToCache(world);  // Ensure the world is saved to cache
+        }
+        loadWorldAsyncAndTeleport(players);
+        return null;
+    }
+
+    private void loadWorldAsyncAndTeleport(Player... players) {
+        // Asynchronous task for unzipping
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                FileUtils.decompressWorldFromCache(world, world.getName() + "-" + id);  // Decompress asynchronously
+
+                // Back to main thread to load the world and teleport players
+                new BukkitRunnable() {
+                    @Override
+                    public void run() {
+                        WorldCreator creator = new WorldCreator(worldCloneName);
+                        World worldClone = Replay.getInstance().getVersionSupport().setStatic(creator);
+                        worldClone.setAutoSave(false);
+                        worldClone.getEntities().forEach(Entity::remove);
+
+                        for (Player player : players) {
+                            new ReplaySession(worldClone, id, worldClone.getSpawnLocation(), player);
+                        }
+                    }
+
+                }.runTask(Replay.getInstance()); // Run on the main server thread
+            }
+        }.runTaskAsynchronously(Replay.getInstance());
     }
 }

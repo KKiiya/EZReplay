@@ -58,4 +58,15 @@ public class Frame implements IFrame {
             }
         }
     }
+
+    @Override
+    public void unplay(IReplaySession replaySession, Player player) {
+        for (Recordable recordable : recordables) {
+            try {
+                recordable.unplay(replaySession, player);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
 }

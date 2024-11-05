@@ -24,7 +24,7 @@ public class EquipmentTrackerTask implements Runnable {
             lastFrame.addRecordable(equipmentRecordable);
         }
 
-        for (Player p : replay.getArena().getPlayers()) {
+        for (Player p : replay.getWorld().getPlayers()) {
             Recordable equipmentRecordable = Replay.getInstance().getVersionSupport().createEquipmentRecordable(replay, p);
             lastFrame.addRecordable(equipmentRecordable);
         }

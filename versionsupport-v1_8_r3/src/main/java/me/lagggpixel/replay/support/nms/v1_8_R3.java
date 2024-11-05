@@ -4,8 +4,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.properties.Property;
-import com.tomkeuper.bedwars.api.arena.generator.IGenerator;
-import com.tomkeuper.bedwars.api.hologram.containers.IHologram;
 import lombok.Getter;
 import me.lagggpixel.replay.api.IReplay;
 import me.lagggpixel.replay.api.replay.content.IReplaySession;
@@ -15,11 +13,9 @@ import me.lagggpixel.replay.api.utils.block.BlockCache;
 import me.lagggpixel.replay.api.utils.entity.AnimationType;
 import me.lagggpixel.replay.api.replay.data.recordable.world.block.BlockAction;
 import me.lagggpixel.replay.api.support.IVersionSupport;
-import me.lagggpixel.replay.support.nms.recordable.arena.*;
-import me.lagggpixel.replay.support.nms.recordable.arena.specials.EggBridgeRecordable;
+import me.lagggpixel.replay.support.nms.recordable.entity.player.recordables.Respawn;
+import me.lagggpixel.replay.support.nms.recordable.player.ChatRecordable;
 import me.lagggpixel.replay.support.nms.recordable.world.ExplosionRecordable;
-import me.lagggpixel.replay.support.nms.recordable.arena.specials.PopUpTowerRecordable;
-import me.lagggpixel.replay.support.nms.recordable.arena.specials.TntRecordable;
 import me.lagggpixel.replay.support.nms.recordable.entity.EntityRecordable;
 import me.lagggpixel.replay.support.nms.recordable.entity.EntityStatus;
 import me.lagggpixel.replay.support.nms.recordable.entity.player.recordables.status.Invisible;
@@ -36,7 +32,6 @@ import net.minecraft.server.v1_8_R3.World;
 import org.apache.commons.codec.binary.Base64;
 import org.bukkit.*;
 import org.bukkit.Material;
-import org.bukkit.WorldType;
 import org.bukkit.block.Block;
 import org.bukkit.craftbukkit.v1_8_R3.CraftServer;
 import org.bukkit.craftbukkit.v1_8_R3.CraftWorld;
@@ -48,6 +43,7 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -57,6 +53,7 @@ import java.util.UUID;
 
 public class v1_8_R3 implements IVersionSupport {
 
+    @Getter
     private static v1_8_R3 instance;
 
     private static IReplay plugin;
@@ -69,10 +66,6 @@ public class v1_8_R3 implements IVersionSupport {
         instance = this;
 
         //InjectorHandler.init();
-    }
-
-    public static v1_8_R3 getInstance() {
-        return instance;
     }
 
     public IReplay getPlugin() {
@@ -111,12 +104,17 @@ public class v1_8_R3 implements IVersionSupport {
 
     @Override
     public Recordable createAnimationRecordable(IRecording replay, Entity entity, AnimationType animationType) {
-        return new AnimationRecordable(replay, entity, animationType);
+        return new Animation(replay, entity, animationType);
     }
 
     @Override
     public Recordable createEntitySpawnRecordable(IRecording replay, Entity entity) {
         return new EntitySpawn(replay, entity);
+    }
+
+    @Override
+    public Recordable createPlayerRespawnRecordable(IRecording replay, Player player) {
+        return new Respawn(replay, player);
     }
 
     @Override
@@ -150,48 +148,23 @@ public class v1_8_R3 implements IVersionSupport {
     }
 
     @Override
-    public Recordable createPopUpTowerRecordable(IRecording replay, Block block, Sound sound, float volume, float pitch) {
-        return new PopUpTowerRecordable(replay, block, sound, volume, pitch);
+    public Recordable createChatRecordable(IRecording recording, UUID sender, String format, String content) {
+        return new ChatRecordable(recording, sender, format, content);
     }
 
     @Override
-    public Recordable createEggBridgeRecordable(IRecording replay, Block block, Sound sound, float volume, float pitch) {
-        return new EggBridgeRecordable(replay, block, sound, volume, pitch);
+    public Recordable createItemDropRecordable(IRecording recording, Item item) {
+        return new ItemDrop(recording, item);
     }
 
     @Override
-    public Recordable createHologramRecordable(IRecording replay, IHologram hologram) {
-        return new HologramAddRecordable(replay, hologram);
+    public Recordable createItemPickRecordable(IRecording recording, Item item, Entity collector) {
+        return new ItemPick(recording, item, collector);
     }
 
     @Override
-    public Recordable createGeneratorRecordable(IRecording replay, IGenerator generator) {
-        return new GeneratorAddRecordable(replay, generator);
-    }
-
-    @Override
-    public Recordable createChatRecordable(IRecording replay, UUID sender, String format, String content) {
-        return new ChatRecordable(replay, sender, format, content);
-    }
-
-    @Override
-    public Recordable createItemDropRecordable(IRecording replay, Item item) {
-        return new ItemDropRecordable(replay, item);
-    }
-
-    @Override
-    public Recordable createItemPickRecordable(IRecording replay, Item item, Entity collector) {
-        return new ItemPickRecordable(replay, item, collector);
-    }
-
-    @Override
-    public Recordable createTntSpawnRecordable(IRecording recording, Entity entity, Location location) {
-        return new TntRecordable(recording, entity, location);
-    }
-
-    @Override
-    public Recordable createExplosionRecordable(IRecording replay, Location location, Entity entity, float radius) {
-        return new ExplosionRecordable(replay, location, entity, radius);
+    public Recordable createExplosionRecordable(IRecording recording, Location location, Entity entity, float radius) {
+        return new ExplosionRecordable(recording, location, entity, radius);
     }
 
     @Override
@@ -271,11 +244,14 @@ public class v1_8_R3 implements IVersionSupport {
 
     @Override
     public org.bukkit.World setStatic(WorldCreator creator) {
-        creator.type(WorldType.FLAT);
-        creator.generatorSettings("2;0;1;");
+        creator.type(creator.type());
         org.bukkit.World world = creator.createWorld();
         world.setDifficulty(Difficulty.PEACEFUL);
-        world.setGameRuleValue("doDaylightCycle", "false");
+        world.setGameRuleValue("doDaylightCycle", world.getGameRuleValue("doDaylightCycle"));
+        World nmsWorld = ((CraftWorld) world).getHandle();
+        nmsWorld.allowAnimals = false;
+        nmsWorld.allowMonsters = false;
+        nmsWorld.pvpMode = false;
         return world;
     }
 
@@ -336,6 +312,18 @@ public class v1_8_R3 implements IVersionSupport {
     @Override
     public boolean isInteractable(Block block) {
         return isInteractable(block.getType());
+    }
+
+    @Nullable
+    @Override
+    public ItemStack getItemInMainHand(Player p) {
+        return p.getItemInHand();
+    }
+
+    @Nullable
+    @Override
+    public ItemStack getItemInOffHand(Player p) {
+        return null;
     }
 
     public static void sendPacket(Player player,Packet<PacketListenerPlayOut> packet) {

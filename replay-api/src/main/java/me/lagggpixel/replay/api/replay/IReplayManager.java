@@ -1,9 +1,9 @@
 package me.lagggpixel.replay.api.replay;
 
-import com.tomkeuper.bedwars.api.arena.IArena;
 import me.lagggpixel.replay.api.replay.data.IRecording;
+import org.bukkit.World;
+import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Nullable;
 import java.io.File;
 import java.util.List;
 import java.util.UUID;
@@ -24,13 +24,13 @@ public interface IReplayManager {
     IRecording getReplayByID(UUID uuid);
 
     @Nullable
-    IRecording getActiveRecording(IArena a);
+    IRecording getActiveRecording(World world);
 
-    void removeFromActiveReplays(IArena a);
+    void removeFromActiveRecordings(World world);
 
-    void startRecording(IArena a);
+    void startRecording(World world);
 
-    void pauseRecording(IArena a);
+    void pauseRecording(World world);
 
-    void stopRecording(IArena a);
+    void stopRecording(World world);
 }

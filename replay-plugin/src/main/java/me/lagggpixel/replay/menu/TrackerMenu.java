@@ -1,11 +1,10 @@
 package me.lagggpixel.replay.menu;
 
-import com.tomkeuper.bedwars.api.arena.team.TeamColor;
 import me.lagggpixel.replay.Replay;
 import me.lagggpixel.replay.api.replay.content.IReplaySession;
 import me.lagggpixel.replay.api.support.IVersionSupport;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
+import org.bukkit.GameMode;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
@@ -15,6 +14,8 @@ import org.bukkit.inventory.meta.SkullMeta;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
+
+import static me.lagggpixel.replay.utils.Utils.c;
 
 public class TrackerMenu implements IMenu {
 
@@ -42,17 +43,17 @@ public class TrackerMenu implements IMenu {
             if (!(entity instanceof Player)) continue;
 
             Player player = (Player) replaySession.getSpawnedEntities().get(uuid);
-            TeamColor teamColor = replaySession.getTeamColor(uuid);
-            ChatColor color = teamColor.chat();
 
             ItemStack stack = new ItemStack(vs.getPlayerHeadMaterial());
             stack.setDurability((short) 3);
             SkullMeta skullMeta = (SkullMeta) stack.getItemMeta();
             skullMeta.setOwner(player.getName());
-            skullMeta.setDisplayName(color + player.getDisplayName());
+            skullMeta.setDisplayName(player.getDisplayName());
             skullMeta.setLore(Arrays.asList(
-                    ChatColor.GRAY + "Team: " + teamColor,
-                    ChatColor.GRAY + "Health: " + ChatColor.GREEN + player.getHealth()
+                    c("&7Health: " + "&a" + player.getHealth()),
+                    "",
+                    c("&eLeft Click to teleport!"),
+                    c("&eRight Click for first person!")
             ));
             stack.setItemMeta(skullMeta);
 
@@ -65,8 +66,16 @@ public class TrackerMenu implements IMenu {
         ItemStack item = e.getCurrentItem();
         String uuid = vs.getItemTag(item, "player");
         if (uuid == null) return;
-        Player teleportingTo = (Player) replaySession.getSpawnedEntities().get(uuid);
-        player.teleport(teleportingTo);
+        Player target = (Player) replaySession.getSpawnedEntities().get(uuid);
+        switch (e.getClick()) {
+            case RIGHT:
+            case SHIFT_RIGHT:
+                player.setGameMode(GameMode.SPECTATOR);
+                player.setSpectatorTarget(target);
+                break;
+            default:
+                player.teleport(target);
+        }
         player.closeInventory();
     }
 
