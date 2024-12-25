@@ -21,7 +21,7 @@ public class ReplayManager implements IReplayManager {
     private final HashMap<String, IRecording> replayById;
     private final HashMap<World, IRecording> activeRecordings;
 
-    public ReplayManager() {
+    private ReplayManager() {
         this.replays = new ArrayList<>();
         this.replayById = new HashMap<>();
         this.activeRecordings = new HashMap<>();
