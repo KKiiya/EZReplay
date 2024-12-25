@@ -6,7 +6,7 @@
 
     <parent>
         <groupId>me.lagggpixel</groupId>
-        <artifactId>BedWars2023-Replay</artifactId>
+        <artifactId>EasyReplay</artifactId>
         <version>1.0-SNAPSHOT</version>
     </parent>
     <artifactId>replay-api</artifactId>

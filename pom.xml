@@ -5,11 +5,11 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>me.lagggpixel</groupId>
-    <artifactId>BedWars2023-Replay</artifactId>
+    <artifactId>EasyReplay</artifactId>
     <version>1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
-    <name>BedWars2023-Replay</name>
+    <name>EasyReplay</name>
 
     <modules>
         <module>replay-plugin</module>
