@@ -44,6 +44,8 @@ public class Animation extends Recordable implements IAnimationRecordable {
                 Sound hurtSound = type == EntityType.PLAYER ? Sound.HURT_FLESH : Sound.valueOf(type.toString() + "_HURT");
                 PacketPlayOutNamedSoundEffect sound = new PacketPlayOutNamedSoundEffect(CraftSound.getSound(hurtSound), fakeEntity.locX, fakeEntity.locY, fakeEntity.locZ, 1.0F, 1.0F);
                 v1_8_R3.sendPacket(player, sound);
+            } catch (IllegalArgumentException ex) {
+                v1_8_R3.getInstance().getPlugin().getLogger().warning("Sound " + type + "_HURT" + " not found.");
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
