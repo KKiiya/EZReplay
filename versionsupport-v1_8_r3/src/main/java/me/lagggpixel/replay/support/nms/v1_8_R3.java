@@ -163,6 +163,11 @@ public class v1_8_R3 implements IVersionSupport {
     }
 
     @Override
+    public Recordable createItemMergeRecordable(IRecording recording, Item entity, Item target) {
+        return new ItemMerge(recording, entity, target);
+    }
+
+    @Override
     public Recordable createExplosionRecordable(IRecording recording, Location location, Entity entity, float radius) {
         return new ExplosionRecordable(recording, location, entity, radius);
     }

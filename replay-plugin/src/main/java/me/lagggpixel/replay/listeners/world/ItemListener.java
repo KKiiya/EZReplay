@@ -10,6 +10,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityPickupItemEvent;
 import org.bukkit.event.entity.EntitySpawnEvent;
+import org.bukkit.event.entity.ItemMergeEvent;
 import org.bukkit.event.player.PlayerPickupItemEvent;
 
 public class ItemListener {
@@ -45,6 +46,20 @@ public class ItemListener {
             Recordable recordable = Replay.getInstance().getVersionSupport().createItemPickRecordable(recording, item, p);
             recording.getLastFrame().addRecordable(recordable);
         }
+
+        @EventHandler
+        public void onMerge(ItemMergeEvent e) {
+            Item entity = e.getEntity();
+            Item target = e.getTarget();
+
+            if (e.isCancelled()) return;
+            IRecording recording = Replay.getInstance().getReplayManager().getActiveRecording(entity.getWorld());
+            if (recording == null) return;
+
+            recording.getSpawnedEntities().remove(entity);
+            Recordable recordable = Replay.getInstance().getVersionSupport().createItemMergeRecordable(recording, entity, target);
+            recording.getLastFrame().addRecordable(recordable);
+        }
     }
 
     public static class NewDropPick implements Listener {
@@ -76,6 +91,20 @@ public class ItemListener {
 
             recording.getSpawnedEntities().remove(item);
             Recordable recordable = Replay.getInstance().getVersionSupport().createItemPickRecordable(recording, item, entity);
+            recording.getLastFrame().addRecordable(recordable);
+        }
+
+        @EventHandler
+        public void onMerge(ItemMergeEvent e) {
+            Item entity = e.getEntity();
+            Item target = e.getTarget();
+
+            if (e.isCancelled()) return;
+            IRecording recording = Replay.getInstance().getReplayManager().getActiveRecording(entity.getWorld());
+            if (recording == null) return;
+
+            recording.getSpawnedEntities().remove(entity);
+            Recordable recordable = Replay.getInstance().getVersionSupport().createItemMergeRecordable(recording, entity, target);
             recording.getLastFrame().addRecordable(recordable);
         }
     }
