@@ -1,6 +1,7 @@
 package me.lagggpixel.replay.commands;
 
 import me.lagggpixel.replay.Replay;
+import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -17,6 +18,7 @@ public class Startrecording implements CommandExecutor {
         }
         Player player = ((Player) commandSender).getPlayer();
         Replay.getInstance().getReplayManager().startRecording(player.getWorld());
+        player.sendMessage(ChatColor.GREEN + "Recording started.");
         return false;
     }
 }
