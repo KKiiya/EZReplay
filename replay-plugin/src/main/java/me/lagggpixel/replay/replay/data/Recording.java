@@ -149,6 +149,7 @@ public class Recording implements IRecording {
         Bukkit.getScheduler().runTaskLater(Replay.getInstance(), () -> {
             for (Entity entity : world.getEntities()) {
                 if (entity instanceof Player) continue;
+                if (entity instanceof Item) continue;
                 spawnedEntities.add(entity);
                 getLastFrame().addRecordable(vs.createEntitySpawnRecordable(this, entity));
             }
