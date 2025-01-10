@@ -1,10 +1,9 @@
-package me.lagggpixel.replay.support.nms.recordable.entity.recordables;
+package me.lagggpixel.replay.support.nms.recordable.entity.entity;
 
 import me.lagggpixel.replay.api.replay.content.IReplaySession;
 import me.lagggpixel.replay.api.replay.data.IRecording;
 import me.lagggpixel.replay.api.replay.data.recordable.Recordable;
 import me.lagggpixel.replay.api.replay.data.recordable.entity.recordables.IEntityDeath;
-import me.lagggpixel.replay.support.nms.recordable.entity.EntityStatus;
 import me.lagggpixel.replay.support.nms.v1_8_R3;
 import net.minecraft.server.v1_8_R3.*;
 import org.bukkit.Bukkit;

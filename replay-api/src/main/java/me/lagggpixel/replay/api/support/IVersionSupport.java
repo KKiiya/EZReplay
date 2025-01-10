@@ -187,6 +187,15 @@ public interface IVersionSupport {
     Recordable createItemPickRecordable(IRecording recording, Item item, Entity collector);
 
     /**
+     * Create a recordable for item merge
+     * @param recording The recording where it is recorded
+     * @param entity The item being merged
+     * @param target The main stack of items
+     * @return The recordable generated for containing the item merge
+     */
+    Recordable createItemMergeRecordable(IRecording recording, Item entity, Item target);
+
+    /**
      * Create a recordable for a explosion
      * @param recording The recording where it is recorded
      * @param location The location where the explosion occurs
