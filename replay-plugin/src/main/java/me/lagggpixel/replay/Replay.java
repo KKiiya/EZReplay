@@ -74,6 +74,9 @@ public final class Replay extends JavaPlugin implements IReplay {
             case "v1_8_R3":
                 versionSupport = new v1_8_R3(this);
                 break;
+            default:
+                getLogger().severe("Your version " + VERSION + " is not supported, the plugin will not be loaded!");
+                onDisable();
         }
     }
 
