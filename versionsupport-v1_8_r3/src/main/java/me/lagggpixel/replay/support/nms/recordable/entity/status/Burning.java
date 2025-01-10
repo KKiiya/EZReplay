@@ -1,4 +1,4 @@
-package me.lagggpixel.replay.support.nms.recordable.entity.recordables.status;
+package me.lagggpixel.replay.support.nms.recordable.entity.status;
 
 import me.lagggpixel.replay.api.replay.content.IReplaySession;
 import me.lagggpixel.replay.api.replay.data.IRecording;

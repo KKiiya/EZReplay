@@ -1,31 +1,35 @@
-package me.lagggpixel.replay.support.nms.recordable.entity.player.recordables.status;
+package me.lagggpixel.replay.support.nms.recordable.entity.player.status;
 
+import lombok.Getter;
 import me.lagggpixel.replay.api.replay.content.IReplaySession;
 import me.lagggpixel.replay.api.replay.data.IRecording;
 import me.lagggpixel.replay.api.replay.data.recordable.Recordable;
+import me.lagggpixel.replay.api.replay.data.recordable.entity.player.recordables.status.IBlocking;
 import me.lagggpixel.replay.support.nms.v1_8_R3;
 import net.minecraft.server.v1_8_R3.EntityPlayer;
 import net.minecraft.server.v1_8_R3.PacketPlayOutEntityMetadata;
 import org.bukkit.craftbukkit.v1_8_R3.entity.CraftEntity;
+import org.bukkit.craftbukkit.v1_8_R3.entity.CraftPlayer;
 import org.bukkit.entity.Player;
 
 import java.util.UUID;
 
-public class Invisible extends Recordable {
+public class SwordBlock extends Recordable implements IBlocking {
 
+    @Getter
     private final UUID uniqueId;
-    private final boolean isInvisible;
+    private final byte value;
 
-    public Invisible(IRecording replay, Player player, boolean isInvisible) {
+    public SwordBlock(IRecording replay, Player playerBlocking) {
         super(replay);
-        this.uniqueId = player.getUniqueId();
-        this.isInvisible = isInvisible;
+        this.uniqueId = playerBlocking.getUniqueId();
+        this.value = (byte) (playerBlocking.isBlocking() ? 0x10 : 0x00);
     }
 
     @Override
     public void play(IReplaySession replaySession, Player player) {
         EntityPlayer fakePlayer = (EntityPlayer) ((CraftEntity) replaySession.getSpawnedEntities().get(uniqueId.toString())).getHandle();
-        fakePlayer.setInvisible(isInvisible);
+        fakePlayer.getDataWatcher().watch(0, value);
 
         PacketPlayOutEntityMetadata playerMetadata = new PacketPlayOutEntityMetadata(fakePlayer.getId(), fakePlayer.getDataWatcher(), true);
 
@@ -34,11 +38,6 @@ public class Invisible extends Recordable {
 
     @Override
     public void unplay(IReplaySession replaySession, Player player) {
-        EntityPlayer fakePlayer = (EntityPlayer) ((CraftEntity) replaySession.getSpawnedEntities().get(uniqueId.toString())).getHandle();
-        fakePlayer.setInvisible(!isInvisible);
 
-        PacketPlayOutEntityMetadata playerMetadata = new PacketPlayOutEntityMetadata(fakePlayer.getId(), fakePlayer.getDataWatcher(), true);
-
-        v1_8_R3.sendPacket(player, playerMetadata);
     }
 }

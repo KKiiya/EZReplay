@@ -1,4 +1,4 @@
-package me.lagggpixel.replay.support.nms.recordable.entity.player.recordables.status;
+package me.lagggpixel.replay.support.nms.recordable.entity.player.status;
 
 import me.lagggpixel.replay.api.replay.content.IReplaySession;
 import me.lagggpixel.replay.api.replay.data.IRecording;
@@ -11,21 +11,21 @@ import org.bukkit.entity.Player;
 
 import java.util.UUID;
 
-public class Sneaking extends Recordable {
+public class Invisible extends Recordable {
 
     private final UUID uniqueId;
-    private final boolean isSneaking;
+    private final boolean isInvisible;
 
-    public Sneaking(IRecording replay, UUID player, boolean isSneaking) {
+    public Invisible(IRecording replay, Player player, boolean isInvisible) {
         super(replay);
-        this.uniqueId = player;
-        this.isSneaking = isSneaking;
+        this.uniqueId = player.getUniqueId();
+        this.isInvisible = isInvisible;
     }
 
     @Override
     public void play(IReplaySession replaySession, Player player) {
         EntityPlayer fakePlayer = (EntityPlayer) ((CraftEntity) replaySession.getSpawnedEntities().get(uniqueId.toString())).getHandle();
-        fakePlayer.setSneaking(isSneaking);
+        fakePlayer.setInvisible(isInvisible);
 
         PacketPlayOutEntityMetadata playerMetadata = new PacketPlayOutEntityMetadata(fakePlayer.getId(), fakePlayer.getDataWatcher(), true);
 
@@ -35,7 +35,7 @@ public class Sneaking extends Recordable {
     @Override
     public void unplay(IReplaySession replaySession, Player player) {
         EntityPlayer fakePlayer = (EntityPlayer) ((CraftEntity) replaySession.getSpawnedEntities().get(uniqueId.toString())).getHandle();
-        fakePlayer.setSneaking(!isSneaking);
+        fakePlayer.setInvisible(!isInvisible);
 
         PacketPlayOutEntityMetadata playerMetadata = new PacketPlayOutEntityMetadata(fakePlayer.getId(), fakePlayer.getDataWatcher(), true);
 
