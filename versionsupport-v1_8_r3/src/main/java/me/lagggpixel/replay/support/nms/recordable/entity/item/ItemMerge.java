@@ -42,7 +42,6 @@ public class ItemMerge extends Recordable {
 
       PacketPlayOutEntityMetadata metadata = new PacketPlayOutEntityMetadata(nmsTarget.getId(), nmsTarget.getDataWatcher(), true);
 
-      // FIXME - still needs to update the number of items on the target item
       v1_8_R3.sendPackets(player, destroy, metadata);
     } catch (ClassCastException ex) {
       v1_8_R3.getInstance().getPlugin().getLogger().warning("Attempting to merge items of not type item stack, the item will not merge.");
