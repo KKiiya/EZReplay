@@ -31,12 +31,14 @@ import net.minecraft.server.v1_8_R3.*;
 import net.minecraft.server.v1_8_R3.World;
 import org.apache.commons.codec.binary.Base64;
 import org.bukkit.*;
+import org.bukkit.Chunk;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.craftbukkit.v1_8_R3.CraftServer;
 import org.bukkit.craftbukkit.v1_8_R3.CraftWorld;
 import org.bukkit.craftbukkit.v1_8_R3.entity.CraftPlayer;
 import org.bukkit.craftbukkit.v1_8_R3.inventory.CraftItemStack;
+import org.bukkit.craftbukkit.v1_8_R3.util.CraftMagicNumbers;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.LivingEntity;
@@ -49,6 +51,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.reflect.Field;
 import java.net.URL;
+import java.util.HashMap;
+import java.util.List;
 import java.util.UUID;
 
 public class v1_8_R3 implements IVersionSupport {
@@ -72,6 +76,11 @@ public class v1_8_R3 implements IVersionSupport {
         return plugin;
     }
 
+    public IBlockData getBlockDataToNMS(BlockCache cache) {
+        net.minecraft.server.v1_8_R3.Block block = CraftMagicNumbers.getBlock(cache.getMaterial());
+        return block.fromLegacyData(cache.getData());
+    }
+
     @Override
     public int getVersion() {
         return 0;
@@ -93,7 +102,7 @@ public class v1_8_R3 implements IVersionSupport {
     }
 
     @Override
-    public Recordable createBlockUpdateRecordable(IRecording recording, BlockCache cache) {
+    public Recordable createBlockUpdateRecordable(IRecording recording, HashMap<Chunk, List<BlockCache>> cache) {
         return new BlockUpdateRecordable(recording, cache);
     }
 

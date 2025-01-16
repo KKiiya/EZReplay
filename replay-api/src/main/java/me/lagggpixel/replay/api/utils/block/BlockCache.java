@@ -5,6 +5,7 @@ import lombok.Setter;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
+import org.bukkit.block.Block;
 
 /**
  * @author Lagggpixel
@@ -20,6 +21,15 @@ public class BlockCache {
     private int x;
     private int y;
     private int z;
+
+    public BlockCache(Block block) {
+        this.world = block.getWorld();
+        this.material = block.getType();
+        this.data = block.getData();
+        this.x = block.getX();
+        this.y = block.getY();
+        this.z = block.getZ();
+    }
 
     public BlockCache(World world, Material material, byte data, Location location) {
         this.world = world;

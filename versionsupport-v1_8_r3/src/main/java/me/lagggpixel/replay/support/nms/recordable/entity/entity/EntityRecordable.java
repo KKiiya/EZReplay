@@ -1,5 +1,6 @@
 package me.lagggpixel.replay.support.nms.recordable.entity.entity;
 
+import me.lagggpixel.replay.api.data.Writeable;
 import me.lagggpixel.replay.api.replay.content.IReplaySession;
 import me.lagggpixel.replay.api.replay.data.recordable.Recordable;
 import me.lagggpixel.replay.api.replay.data.recordable.entity.IEntityRecordable;
@@ -19,11 +20,17 @@ import java.util.UUID;
  */
 public class EntityRecordable extends Recordable implements IEntityRecordable {
 
+    @Writeable
     private final UUID uniqueId;
+    @Writeable
     private final double x;
+    @Writeable
     private final double y;
+    @Writeable
     private final double z;
+    @Writeable
     private final float yaw;
+    @Writeable
     private final float pitch;
 
     public EntityRecordable(IRecording replay, Entity entity) {

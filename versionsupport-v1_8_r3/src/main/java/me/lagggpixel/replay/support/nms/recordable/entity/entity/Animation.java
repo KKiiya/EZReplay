@@ -1,5 +1,6 @@
 package me.lagggpixel.replay.support.nms.recordable.entity.entity;
 
+import me.lagggpixel.replay.api.data.Writeable;
 import me.lagggpixel.replay.api.replay.content.IReplaySession;
 import me.lagggpixel.replay.api.replay.data.recordable.Recordable;
 import me.lagggpixel.replay.api.utils.entity.AnimationType;
@@ -13,22 +14,27 @@ import org.bukkit.craftbukkit.v1_8_R3.entity.CraftEntity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 
+import java.util.UUID;
+
 public class Animation extends Recordable implements IAnimationRecordable {
 
-    private final String animatedEntity;
+    @Writeable
+    private final UUID animatedEntity;
+    @Writeable
     private final AnimationType animationType;
+    @Writeable
     private final EntityType type;
 
     public Animation(IRecording replay, org.bukkit.entity.Entity animatedEntity, AnimationType animationType) {
         super(replay);
-        this.animatedEntity = animatedEntity.getUniqueId().toString();
+        this.animatedEntity = animatedEntity.getUniqueId();
         this.type = animatedEntity.getType();
         this.animationType = animationType;
     }
 
     @Override
     public void play(IReplaySession replaySession, Player player) {
-        Entity fakeEntity = ((CraftEntity) replaySession.getSpawnedEntities().get(animatedEntity)).getHandle();
+        Entity fakeEntity = ((CraftEntity) replaySession.getSpawnedEntities().get(animatedEntity.toString())).getHandle();
 
         PacketPlayOutAnimation animation = new PacketPlayOutAnimation(fakeEntity, animationType.getID());
         if (animationType == AnimationType.HURT || animationType == AnimationType.CRITICAL_HIT || animationType == AnimationType.MAGIC_CRITICAL_HIT) {
@@ -60,7 +66,7 @@ public class Animation extends Recordable implements IAnimationRecordable {
     }
 
     @Override
-    public String getUUID() {
+    public UUID getUUID() {
         return animatedEntity;
     }
 

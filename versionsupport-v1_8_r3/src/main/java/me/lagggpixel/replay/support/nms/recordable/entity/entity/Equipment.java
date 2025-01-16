@@ -1,10 +1,12 @@
 package me.lagggpixel.replay.support.nms.recordable.entity.entity;
 
+import me.lagggpixel.replay.api.data.Writeable;
 import me.lagggpixel.replay.api.replay.content.IReplaySession;
 import me.lagggpixel.replay.api.replay.data.recordable.Recordable;
 import me.lagggpixel.replay.api.replay.data.recordable.entity.recordables.IEquipment;
 import me.lagggpixel.replay.api.replay.data.IRecording;
 
+import me.lagggpixel.replay.api.utils.item.ItemData;
 import me.lagggpixel.replay.support.nms.v1_8_R3;
 import net.minecraft.server.v1_8_R3.EntityHuman;
 import net.minecraft.server.v1_8_R3.PacketPlayOutEntityEquipment;
@@ -16,94 +18,71 @@ import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.UUID;
+
 public class Equipment extends Recordable implements IEquipment {
-    private final String UUID;
 
-    private final ItemStack helmet;
-    private final ItemStack chestplate;
-    private final ItemStack leggings;
-    private final ItemStack boots;
-    private final ItemStack mainHand ;
-
+    @Writeable
+    private final ItemData[] equipment = new ItemData[5];
+    @Writeable
+    private final UUID UUID;
+    @Writeable
     private final boolean isPlayer;
 
     public Equipment(IRecording replay, @NotNull LivingEntity entity) {
         super(replay);
-        this.UUID = entity.getUniqueId().toString();
-        this.helmet = entity.getEquipment().getHelmet();
-        this.chestplate = entity.getEquipment().getChestplate();
-        this.leggings = entity.getEquipment().getLeggings();
-        this.boots = entity.getEquipment().getBoots();
-        this.mainHand = entity.getEquipment().getItemInHand();
+        this.UUID = entity.getUniqueId();
+        this.equipment[0] = new ItemData(entity.getEquipment().getHelmet());
+        this.equipment[1] = new ItemData(entity.getEquipment().getChestplate());
+        this.equipment[2] = new ItemData(entity.getEquipment().getLeggings());
+        this.equipment[3] = new ItemData(entity.getEquipment().getBoots());
+        this.equipment[4] = new ItemData(entity.getEquipment().getItemInHand());
         this.isPlayer = entity instanceof Player;
     }
 
     @Override
-    public ItemStack getMainHand() {
-        return mainHand;
-    }
-
-    @Override
-    public ItemStack getOffhand() {
-        return null;
-    }
-
-    @Override
-    public ItemStack getHelmet() {
-        return helmet;
-    }
-
-    @Override
-    public ItemStack getChestplate() {
-        return chestplate;
-    }
-
-    @Override
-    public ItemStack getLeggings() {
-        return leggings;
-    }
-
-    @Override
-    public ItemStack getBoots() {
-        return boots;
-    }
-
-    @Override
     public void play(IReplaySession replaySession, Player player) {
-        net.minecraft.server.v1_8_R3.Entity entity = ((CraftEntity) replaySession.getSpawnedEntities().get(UUID)).getHandle();
+        net.minecraft.server.v1_8_R3.Entity entity = ((CraftEntity) replaySession.getSpawnedEntities().get(UUID.toString())).getHandle();
+
+        ItemStack mainHand = equipment[4].toItemStack();
+        ItemStack helmet = equipment[0].toItemStack();
+        ItemStack chestplate = equipment[1].toItemStack();
+        ItemStack leggings = equipment[2].toItemStack();
+        ItemStack boots = equipment[3].toItemStack();
 
         if (isPlayer) {
             EntityHuman human = (EntityHuman) entity;
-            human.a(CraftItemStack.asNMSCopy(getMainHand()), getMainHand().getAmount());
+            human.a(CraftItemStack.asNMSCopy(mainHand), 1);
         }
-        if (getHelmet() != null) entity.setEquipment(0, CraftItemStack.asNMSCopy(getHelmet()));
-        if (getChestplate() != null) entity.setEquipment(1, CraftItemStack.asNMSCopy(getChestplate()));
-        if (getLeggings() != null) entity.setEquipment(2, CraftItemStack.asNMSCopy(getLeggings()));
-        if (getBoots() != null)  entity.setEquipment(3, CraftItemStack.asNMSCopy(getBoots()));
+        if (helmet != null) entity.setEquipment(0, CraftItemStack.asNMSCopy(helmet));
+        if (chestplate != null) entity.setEquipment(1, CraftItemStack.asNMSCopy(chestplate));
+        if (leggings != null) entity.setEquipment(2, CraftItemStack.asNMSCopy(leggings));
+        if (boots != null)  entity.setEquipment(3, CraftItemStack.asNMSCopy(boots));
 
         int entityId = entity.getId();
-        if (getMainHand() != null) {
-            PacketPlayOutEntityEquipment mainHand = new PacketPlayOutEntityEquipment(entityId, EquipmentSlot.HAND.ordinal(), CraftItemStack.asNMSCopy(getMainHand()));
-            v1_8_R3.sendPacket(player, mainHand);
+        if (mainHand != null) {
+            PacketPlayOutEntityEquipment mainHandPacket = new PacketPlayOutEntityEquipment(entityId, EquipmentSlot.HAND.ordinal(), CraftItemStack.asNMSCopy(mainHand));
+            v1_8_R3.sendPacket(player, mainHandPacket);
         }
-        if (getHelmet() != null) {
-            PacketPlayOutEntityEquipment helmet = new PacketPlayOutEntityEquipment(entityId, EquipmentSlot.HEAD.ordinal(), CraftItemStack.asNMSCopy(getHelmet()));
-            v1_8_R3.sendPacket(player, helmet);
+        if (helmet != null) {
+            PacketPlayOutEntityEquipment helmetPacket = new PacketPlayOutEntityEquipment(entityId, EquipmentSlot.HEAD.ordinal(), CraftItemStack.asNMSCopy(helmet));
+            v1_8_R3.sendPacket(player, helmetPacket);
         }
-        if (getChestplate() != null) {
-            PacketPlayOutEntityEquipment chestplate = new PacketPlayOutEntityEquipment(entityId, EquipmentSlot.CHEST.ordinal(), CraftItemStack.asNMSCopy(getChestplate()));
-            v1_8_R3.sendPacket(player, chestplate);
+        if (chestplate != null) {
+            PacketPlayOutEntityEquipment chestplatePacket = new PacketPlayOutEntityEquipment(entityId, EquipmentSlot.CHEST.ordinal(), CraftItemStack.asNMSCopy(chestplate));
+            v1_8_R3.sendPacket(player, chestplatePacket);
         }
-        if (getLeggings() != null) {
-            PacketPlayOutEntityEquipment leggings = new PacketPlayOutEntityEquipment(entityId, EquipmentSlot.LEGS.ordinal(), CraftItemStack.asNMSCopy(getLeggings()));
-            v1_8_R3.sendPacket(player, leggings);
+        if (leggings != null) {
+            PacketPlayOutEntityEquipment leggingsPacket = new PacketPlayOutEntityEquipment(entityId, EquipmentSlot.LEGS.ordinal(), CraftItemStack.asNMSCopy(leggings));
+            v1_8_R3.sendPacket(player, leggingsPacket);
         }
-        if (getBoots() != null) {
-            PacketPlayOutEntityEquipment boots = new PacketPlayOutEntityEquipment(entityId, EquipmentSlot.FEET.ordinal(), CraftItemStack.asNMSCopy(getBoots()));
-            v1_8_R3.sendPacket(player, boots);
+        if (boots != null) {
+            PacketPlayOutEntityEquipment bootsPacket = new PacketPlayOutEntityEquipment(entityId, EquipmentSlot.FEET.ordinal(), CraftItemStack.asNMSCopy(boots));
+            v1_8_R3.sendPacket(player, bootsPacket);
         }
 
     }
+
 
     @Override
     public void unplay(IReplaySession replaySession, Player player) {
@@ -111,7 +90,7 @@ public class Equipment extends Recordable implements IEquipment {
     }
 
     @Override
-    public String getUUID() {
+    public UUID getUUID() {
         return UUID;
     }
 }

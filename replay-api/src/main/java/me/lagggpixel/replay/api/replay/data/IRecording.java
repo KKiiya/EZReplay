@@ -3,8 +3,8 @@ package me.lagggpixel.replay.api.replay.data;
 import me.lagggpixel.replay.api.replay.content.IReplaySession;
 import org.bukkit.Location;
 import org.bukkit.World;
+import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
-import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
 
 import java.io.File;
@@ -45,7 +45,12 @@ public interface IRecording {
      * @param tick the tick where the frame was added
      * @return the requested frame
      */
-    IFrame getFrame(int tick);
+    IFrame getFrame(long tick);
+
+    /**
+     *
+     */
+    long getFrameTick(IFrame frame);
 
     /**
      * Get the last frame
@@ -75,11 +80,6 @@ public interface IRecording {
      * Get the spawned entities during the replay
      */
     List<Entity> getSpawnedEntities();
-
-    /**
-     * Get the dropped items during the replay
-     */
-    List<Item> getDroppedItems();
 
     /**
      * Get the players that started playing
@@ -137,6 +137,20 @@ public interface IRecording {
      * @param value - The new value
      */
     void setRecordingChat(boolean value);
+
+    /**
+     * Add a block update to the recording
+     * @param frame The frame where the block update occurred
+     * @param block The block that was updated
+     */
+    void addBlockUpdate(IFrame frame, Block block);
+
+    /**
+     * Add a block update to the recording
+     * @param tick The tick where the block update occurred
+     * @param block The block that was updated
+     */
+    void addBlockUpdate(long tick, Block block);
 
     /**
      * Create a replay session to replay the recording

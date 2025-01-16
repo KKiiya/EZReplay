@@ -15,6 +15,8 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -62,7 +64,7 @@ public interface IVersionSupport {
      * @param cache - The new block cache object
      * @return Recordable object generated containing multiblock info
      */
-    Recordable createBlockUpdateRecordable(IRecording recording, BlockCache cache);
+    Recordable createBlockUpdateRecordable(IRecording recording, HashMap<Chunk, List<BlockCache>> cache);
 
     /**
      * Create a recordable for a block

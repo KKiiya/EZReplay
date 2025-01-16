@@ -2,6 +2,7 @@ package me.lagggpixel.replay.listeners.world;
 
 import me.lagggpixel.replay.Replay;
 import me.lagggpixel.replay.api.events.block.BlockChangeEvent;
+import me.lagggpixel.replay.api.replay.data.IFrame;
 import me.lagggpixel.replay.api.replay.data.IRecording;
 import me.lagggpixel.replay.api.replay.data.recordable.Recordable;
 import me.lagggpixel.replay.api.utils.block.BlockCache;
@@ -9,10 +10,7 @@ import me.lagggpixel.replay.api.utils.block.BlockEventType;
 import me.lagggpixel.replay.api.utils.entity.AnimationType;
 import me.lagggpixel.replay.api.replay.data.recordable.world.block.BlockAction;
 import me.lagggpixel.replay.replay.ReplayManager;
-import org.bukkit.Bukkit;
-import org.bukkit.Location;
-import org.bukkit.Material;
-import org.bukkit.World;
+import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
@@ -30,6 +28,7 @@ public class BlockListener implements Listener {
         Material material = block.getType();
         byte data = block.getData();
         Location location = block.getLocation();
+        Chunk chunk = block.getChunk();
 
         if (e.isCancelled()) return;
         if (material == Material.AIR) return;
@@ -67,10 +66,11 @@ public class BlockListener implements Listener {
         }
         else action = BlockAction.UPDATE;
 
+        IFrame frame = recording.getLastFrame();
 
-        Recordable blockUpdate = Replay.getInstance().getVersionSupport().createBlockUpdateRecordable(recording, cache);
+        recording.addBlockUpdate(frame, block);
         Recordable recordable = Replay.getInstance().getVersionSupport().createBlockRecordable(recording, cache, action, true);
-        recording.getLastFrame().addRecordable(blockUpdate, recordable);
+        frame.addRecordable(recordable);
     }
 
     @EventHandler

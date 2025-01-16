@@ -1,5 +1,6 @@
 package me.lagggpixel.replay.support.nms.recordable.entity.entity;
 
+import me.lagggpixel.replay.api.data.Writeable;
 import me.lagggpixel.replay.api.replay.content.IReplaySession;
 import me.lagggpixel.replay.api.replay.data.IRecording;
 import me.lagggpixel.replay.api.replay.data.recordable.Recordable;
@@ -17,14 +18,23 @@ import java.util.UUID;
 
 public class EntitySpawn extends Recordable implements IEntitySpawn {
 
+    @Writeable
     private final EntityType entityType;
+    @Writeable
     private final String customName;
+    @Writeable
     private final boolean isCustomNameVisible;
+    @Writeable
     private final Location spawnLocation;
+    @Writeable
     private final double motX;
+    @Writeable
     private final double motY;
+    @Writeable
     private final double motZ;
+    @Writeable
     private final UUID uniqueId;
+    @Writeable
     private final boolean isLiving;
 
     public EntitySpawn(IRecording replay, org.bukkit.entity.Entity entity) {

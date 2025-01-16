@@ -2,14 +2,17 @@ package me.lagggpixel.replay.replay.data;
 
 import lombok.Getter;
 import me.lagggpixel.replay.Replay;
+import me.lagggpixel.replay.api.data.Writeable;
 import me.lagggpixel.replay.api.replay.content.IReplaySession;
 import me.lagggpixel.replay.api.replay.data.IFrame;
 import me.lagggpixel.replay.api.replay.data.IRecording;
 import me.lagggpixel.replay.api.support.IVersionSupport;
+import me.lagggpixel.replay.api.utils.block.BlockCache;
 import me.lagggpixel.replay.replay.content.ReplaySession;
 import me.lagggpixel.replay.replay.tasks.EquipmentTrackerTask;
 import me.lagggpixel.replay.utils.FileUtils;
 import org.bukkit.*;
+import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
@@ -23,15 +26,23 @@ import java.util.stream.Collectors;
 
 public class Recording implements IRecording {
     @Getter
+    @Writeable
     public final UUID id;
+
     @Getter
     public final World world;
 
+    private final HashMap<Long, HashMap<Chunk, List<BlockCache>>> blockUpdates = new HashMap<>();
+
+    @Writeable
     private final List<IFrame> frames;
+    @Writeable
     private final List<Entity> spawnedEntities;
-    private final List<Item> droppedItems;
+    @Writeable
     private final List<String> playersThatPlayed;
+    @Writeable
     private final HashMap<String, Location> spawnLocations;
+    @Writeable
     private final HashMap<String, Object> customData;
     private final String worldCloneName;
     private int frameGeneratorTaskId = -1;
@@ -42,11 +53,10 @@ public class Recording implements IRecording {
 
     public Recording(World world) {
         this.id = UUID.randomUUID();
-        this.worldCloneName = world.getName()+"-"+id;
+        this.worldCloneName = world.getName()+"-"+ id;
         this.frames = new ArrayList<>();
         this.world = world;
         this.spawnedEntities = new ArrayList<>();
-        this.droppedItems = new ArrayList<>();
         this.playersThatPlayed = world.getPlayers().stream().map(p -> p.getUniqueId().toString()).collect(Collectors.toList());
         this.spawnLocations = new HashMap<>();
         this.customData = new HashMap<>();
@@ -68,11 +78,16 @@ public class Recording implements IRecording {
     }
 
     @Override
-    public IFrame getFrame(int tick) {
+    public IFrame getFrame(long tick) {
         if (tick < 0 || tick >= frames.size()) {
             throw new IllegalArgumentException("Tick index out of bounds");
         }
-        return frames.get(tick);
+        return frames.get((int) tick);
+    }
+
+    @Override
+    public long getFrameTick(IFrame frame) {
+        return frames.indexOf(frame);
     }
 
     @Override
@@ -101,11 +116,6 @@ public class Recording implements IRecording {
     }
 
     @Override
-    public List<Item> getDroppedItems() {
-        return droppedItems;
-    }
-
-    @Override
     public List<String> getPlayers() {
         return playersThatPlayed;
     }
@@ -123,35 +133,47 @@ public class Recording implements IRecording {
 
         frameGeneratorTaskId = Bukkit.getScheduler().runTaskTimer(Replay.getInstance(), () -> {
             frames.add(new Frame(this));
+            IFrame lastFrame = getLastFrame();
+            long tick = getFrameTick(lastFrame);
 
             for (Player player : world.getPlayers()) {
-                getLastFrame().addRecordable(vs.createEntityMovementRecordable(this, player));
-                getLastFrame().addRecordable(vs.createSwordBlockRecordable(this, player));
-                if (player.isSneaking()) getLastFrame().addRecordable(vs.createSneakingRecordable(this, player.getUniqueId(), true));
-                if (player.isSprinting()) getLastFrame().addRecordable(vs.createSprintRecordable(this, player.getUniqueId(), true));
-                if (player.hasPotionEffect(PotionEffectType.INVISIBILITY)) getLastFrame().addRecordable(vs.createInvisibilityRecordable(this, player, true));
+                lastFrame.addRecordable(vs.createEntityMovementRecordable(this, player));
+                lastFrame.addRecordable(vs.createSwordBlockRecordable(this, player));
+                if (player.isSneaking()) lastFrame.addRecordable(vs.createSneakingRecordable(this, player.getUniqueId(), true));
+                if (player.isSprinting()) lastFrame.addRecordable(vs.createSprintRecordable(this, player.getUniqueId(), true));
+                if (player.hasPotionEffect(PotionEffectType.INVISIBILITY)) lastFrame.addRecordable(vs.createInvisibilityRecordable(this, player, true));
             }
 
             List<Entity> deadEntities = new ArrayList<>();
             for (Entity entity : getSpawnedEntities()) {
                 if (entity.isDead()) deadEntities.add(entity);
                 if (!(entity instanceof Item) && !(entity instanceof Projectile)) {
-                    getLastFrame().addRecordable(vs.createEntityMovementRecordable(this, entity));
+                    lastFrame.addRecordable(vs.createEntityMovementRecordable(this, entity));
                 }
-                getLastFrame().addRecordable(vs.createEntityStatusRecordable(this, entity));
+                lastFrame.addRecordable(vs.createEntityStatusRecordable(this, entity));
             }
             for (Entity entity : deadEntities) {
-                getLastFrame().addRecordable(vs.createEntityDeathRecordable(this, entity));
+                lastFrame.addRecordable(vs.createEntityDeathRecordable(this, entity));
             }
             getSpawnedEntities().removeAll(deadEntities);
+
+
+            Bukkit.getScheduler().runTaskLater(Replay.getInstance(), () -> {
+                HashMap<Chunk, List<BlockCache>> chunkUpdates = blockUpdates.get(tick);
+                if (chunkUpdates != null) {
+                    Replay.getInstance().getLogger().info("Chunk updates: " + chunkUpdates);
+                    lastFrame.addRecordable(vs.createBlockUpdateRecordable(this, chunkUpdates));
+                }
+            }, 1L);
         }, 0, 1L).getTaskId();
 
         Bukkit.getScheduler().runTaskLater(Replay.getInstance(), () -> {
+            IFrame lastFrame = getLastFrame();
             for (Entity entity : world.getEntities()) {
                 if (entity instanceof Player) continue;
                 if (entity instanceof Item) continue;
                 spawnedEntities.add(entity);
-                getLastFrame().addRecordable(vs.createEntitySpawnRecordable(this, entity));
+                lastFrame.addRecordable(vs.createEntitySpawnRecordable(this, entity));
             }
         }, 5L);
 
@@ -208,6 +230,22 @@ public class Recording implements IRecording {
     @Override
     public void setRecordingChat(boolean value) {
         this.isRecordingChat = value;
+    }
+
+    @Override
+    public void addBlockUpdate(IFrame frame, Block block) {
+        long tick = getFrameTick(frame);
+        addBlockUpdate(tick, block);
+    }
+
+    @Override
+    public void addBlockUpdate(long tick, Block block) {
+        System.out.println("Adding block update at tick " + tick);
+        blockUpdates.putIfAbsent(tick, new HashMap<>());
+        HashMap<Chunk, List<BlockCache>> chunkUpdates = blockUpdates.get(tick);
+        Chunk chunk = block.getChunk();
+        chunkUpdates.putIfAbsent(chunk, new ArrayList<>());
+        chunkUpdates.get(chunk).add(new BlockCache(block));
     }
 
     @Override
