@@ -49,12 +49,17 @@ public class EntityDeath extends Recordable implements IEntityDeath {
         net.minecraft.server.v1_8_R3.Entity fakeEntity = ((CraftEntity) replaySession.getSpawnedEntities().get(uniqueId.toString())).getHandle();
         Entity bukkitEntity = fakeEntity.getBukkitEntity();
         fakeEntity.dead = false;
-        Sound deathSound = fakeEntity instanceof HumanEntity ? Sound.HURT_FLESH : Sound.valueOf(bukkitEntity.getType().toString() + "_DEATH");
 
+        try {
+            Sound deathSound = fakeEntity instanceof HumanEntity ? Sound.HURT_FLESH : Sound.valueOf(bukkitEntity.getType().toString() + "_DEATH");
+            PacketPlayOutNamedSoundEffect sound = new PacketPlayOutNamedSoundEffect(CraftSound.getSound(deathSound), fakeEntity.locX, fakeEntity.locY, fakeEntity.locZ, 1.0f, 1.0f);
+            v1_8_R3.sendPacket(player, sound);
+        } catch (IllegalArgumentException e) {
+            v1_8_R3.getInstance().getPlugin().getLogger().warning("Sound " + type + "_DEATH" + " not found.");
+        }
         PacketPlayOutSpawnEntityLiving spawn = new PacketPlayOutSpawnEntityLiving((EntityLiving) fakeEntity);
-        PacketPlayOutNamedSoundEffect sound = new PacketPlayOutNamedSoundEffect(CraftSound.getSound(deathSound), fakeEntity.locX, fakeEntity.locY, fakeEntity.locZ, 1.0f, 1.0f);
         PacketPlayOutEntityMetadata metadata = new PacketPlayOutEntityMetadata(fakeEntity.getId(), fakeEntity.getDataWatcher(), true);
 
-        v1_8_R3.sendPackets(player, spawn, metadata, sound);
+        v1_8_R3.sendPackets(player, spawn, metadata);
     }
 }
