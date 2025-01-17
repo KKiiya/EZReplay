@@ -16,6 +16,7 @@ public class ItemData {
             this.material = Material.AIR;
             this.data = 0;
             this.enchanted = false;
+            this.amount = 0;
             return;
         }
         this.material = item.getType();
