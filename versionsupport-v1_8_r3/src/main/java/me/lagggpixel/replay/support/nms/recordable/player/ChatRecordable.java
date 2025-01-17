@@ -1,5 +1,6 @@
 package me.lagggpixel.replay.support.nms.recordable.player;
 
+import me.lagggpixel.replay.api.data.Writeable;
 import me.lagggpixel.replay.api.replay.content.IReplaySession;
 import me.lagggpixel.replay.api.replay.data.IRecording;
 import me.lagggpixel.replay.api.replay.data.recordable.Recordable;
@@ -10,15 +11,15 @@ import java.util.UUID;
 
 public class ChatRecordable extends Recordable implements IChat {
 
+    @Writeable
     private final UUID sender;
+    @Writeable
     private final String format;
-    private final String content;
 
     public ChatRecordable(IRecording replay, UUID sender, String format, String content) {
         super(replay);
         this.sender = sender;
         this.format = format;
-        this.content = content;
     }
 
     @Override

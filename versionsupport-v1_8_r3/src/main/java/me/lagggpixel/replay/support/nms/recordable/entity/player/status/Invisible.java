@@ -1,5 +1,6 @@
 package me.lagggpixel.replay.support.nms.recordable.entity.player.status;
 
+import me.lagggpixel.replay.api.data.Writeable;
 import me.lagggpixel.replay.api.replay.content.IReplaySession;
 import me.lagggpixel.replay.api.replay.data.IRecording;
 import me.lagggpixel.replay.api.replay.data.recordable.Recordable;
@@ -13,7 +14,9 @@ import java.util.UUID;
 
 public class Invisible extends Recordable {
 
+    @Writeable
     private final UUID uniqueId;
+    @Writeable
     private final boolean isInvisible;
 
     public Invisible(IRecording replay, Player player, boolean isInvisible) {

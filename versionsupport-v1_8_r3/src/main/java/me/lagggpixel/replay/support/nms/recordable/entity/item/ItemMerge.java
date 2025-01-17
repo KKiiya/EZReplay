@@ -29,29 +29,28 @@ public class ItemMerge extends Recordable {
 
   @Override
   public void play(IReplaySession replaySession, Player player) {
-    try {
-      CraftItem entity = (CraftItem) replaySession.getSpawnedEntities().get(entityUUID);
-      int entityId = entity.getEntityId();
-      CraftItem target = (CraftItem) replaySession.getSpawnedEntities().get(targetUUID);
+      try {
+          CraftItem entity = (CraftItem) replaySession.getSpawnedEntities().get(entityUUID);
+          CraftItem target = (CraftItem) replaySession.getSpawnedEntities().get(targetUUID);
+          EntityItem nmsTarget = (EntityItem) target.getHandle();
+          int entityId = entity.getEntityId();
 
-      PacketPlayOutEntityDestroy destroy = new PacketPlayOutEntityDestroy(entityId);
-      ItemStack originalItem = target.getItemStack();
-      originalItem.setAmount(entity.getItemStack().getAmount() + target.getItemStack().getAmount());
-      target.setItemStack(originalItem);
-      EntityItem nmsTarget = (EntityItem) target.getHandle();
+          ItemStack itemStack = entity.getItemStack();
+          ItemStack targetItemStack = target.getItemStack();
+          targetItemStack.setAmount(targetItemStack.getAmount() + itemStack.getAmount());
+          target.setItemStack(targetItemStack);
 
-      PacketPlayOutEntityMetadata metadata = new PacketPlayOutEntityMetadata(nmsTarget.getId(), nmsTarget.getDataWatcher(), true);
-
-      v1_8_R3.sendPackets(player, destroy, metadata);
-    } catch (ClassCastException ex) {
-      v1_8_R3.getInstance().getPlugin().getLogger().warning("Attempting to merge items of not type item stack, the item will not merge.");
-      v1_8_R3.getInstance().getPlugin().getLogger().warning("It seems like the recording has a problem, the recording will continue to play, there may be inaccuracies in the recording.");
-    }
+          PacketPlayOutEntityDestroy destroy = new PacketPlayOutEntityDestroy(entityId);
+          PacketPlayOutEntityMetadata metadata = new PacketPlayOutEntityMetadata(nmsTarget.getId(), nmsTarget.getDataWatcher(), true);
+          v1_8_R3.sendPackets(player, destroy, metadata);
+      } catch (ClassCastException ex) {
+        v1_8_R3.getInstance().getPlugin().getLogger().warning("Attempting to merge items of not type item stack, the item will not merge.");
+        v1_8_R3.getInstance().getPlugin().getLogger().warning("It seems like the recording has a problem, the recording will continue to play, there may be inaccuracies in the recording.");
+      }
   }
 
   @Override
   public void unplay(IReplaySession replaySession, Player player) {
 
   }
-
 }

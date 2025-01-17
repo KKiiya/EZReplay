@@ -1,5 +1,6 @@
 package me.lagggpixel.replay.support.nms.recordable.entity.item;
 
+import me.lagggpixel.replay.api.data.Writeable;
 import me.lagggpixel.replay.api.replay.content.IReplaySession;
 import me.lagggpixel.replay.api.replay.data.IRecording;
 import me.lagggpixel.replay.api.replay.data.recordable.Recordable;
@@ -15,10 +16,15 @@ import org.bukkit.entity.Player;
 
 public class ItemPick extends Recordable {
 
+    @Writeable
     private final String itemUUID;
+    @Writeable
     private final String collectorUUID;
+    @Writeable
     private final double x;
+    @Writeable
     private final double y;
+    @Writeable
     private final double z;
 
     public ItemPick(IRecording replay, Item item, Entity collector) {

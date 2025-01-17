@@ -1,6 +1,7 @@
 package me.lagggpixel.replay.support.nms.recordable.entity.player.status;
 
 import lombok.Getter;
+import me.lagggpixel.replay.api.data.Writeable;
 import me.lagggpixel.replay.api.replay.content.IReplaySession;
 import me.lagggpixel.replay.api.replay.data.IRecording;
 import me.lagggpixel.replay.api.replay.data.recordable.Recordable;
@@ -17,7 +18,9 @@ import java.util.UUID;
 public class SwordBlock extends Recordable implements IBlocking {
 
     @Getter
+    @Writeable
     private final UUID uniqueId;
+    @Writeable
     private final byte value;
 
     public SwordBlock(IRecording replay, Player playerBlocking) {

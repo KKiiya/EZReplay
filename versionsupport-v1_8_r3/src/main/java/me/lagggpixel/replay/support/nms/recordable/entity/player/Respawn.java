@@ -1,5 +1,6 @@
 package me.lagggpixel.replay.support.nms.recordable.entity.player;
 
+import me.lagggpixel.replay.api.data.Writeable;
 import me.lagggpixel.replay.api.replay.content.IReplaySession;
 import me.lagggpixel.replay.api.replay.data.IRecording;
 import me.lagggpixel.replay.api.replay.data.recordable.Recordable;
@@ -9,11 +10,17 @@ import org.bukkit.entity.Player;
 
 public class Respawn extends Recordable {
 
+    @Writeable
     private final String uuid;
+    @Writeable
     private final double x;
+    @Writeable
     private final double y;
+    @Writeable
     private final double z;
+    @Writeable
     private final float yaw;
+    @Writeable
     private final float pitch;
 
     public Respawn(IRecording replay, Player player) {

@@ -136,6 +136,7 @@ public class ReplaySession implements IReplaySession {
         for (Player p : getViewers()) {
             playerControls.put(p, new Controls(this, p));
         }
+
         for (String replayPlayer : spawnedEntities.keySet()) {
             if (!(spawnedEntities.get(replayPlayer) instanceof Player)) continue;
             Player fakePlayer = (Player) spawnedEntities.get(replayPlayer);
@@ -222,6 +223,14 @@ public class ReplaySession implements IReplaySession {
         pause();
         this.currentFrameIndex = 0;
 
+        Bukkit.getScheduler().runTaskLaterAsynchronously(Replay.getInstance(), () -> {
+            for (IFrame frame : replay.getFrames()) {
+                for (Player p : getViewers()) {
+                    frame.unplay(this, p);
+                }
+            }
+        }, 10L);
+
         Bukkit.getScheduler().runTaskLater(Replay.getInstance(), this::resume, 20L);
     }
 
@@ -238,7 +247,7 @@ public class ReplaySession implements IReplaySession {
 
         if (delay < 1) delay = 1;
 
-        Bukkit.getScheduler().runTaskLater(Replay.getInstance(), () -> {
+        Bukkit.getScheduler().runTaskLaterAsynchronously(Replay.getInstance(), () -> {
             if (isPaused) return;
 
             for (Player p : getViewers()) {

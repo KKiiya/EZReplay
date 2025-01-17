@@ -1,5 +1,6 @@
 package me.lagggpixel.replay.support.nms.recordable.world;
 
+import me.lagggpixel.replay.api.data.Writeable;
 import me.lagggpixel.replay.api.replay.content.IReplaySession;
 import me.lagggpixel.replay.api.replay.data.IRecording;
 import me.lagggpixel.replay.api.replay.data.recordable.Recordable;
@@ -18,10 +19,15 @@ import java.util.ArrayList;
 
 public class ExplosionRecordable extends Recordable {
 
+    @Writeable
     private final String uuid;
+    @Writeable
     private final double x;
+    @Writeable
     private final double y;
+    @Writeable
     private final double z;
+    @Writeable
     private final float strength;
 
     public ExplosionRecordable(IRecording replay, Location location, Entity entity, float radius) {

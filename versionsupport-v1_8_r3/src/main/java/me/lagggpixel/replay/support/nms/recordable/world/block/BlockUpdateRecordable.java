@@ -10,7 +10,6 @@ import me.lagggpixel.replay.support.nms.v1_8_R3;
 import net.minecraft.server.v1_8_R3.*;
 import org.bukkit.block.Block;
 import org.bukkit.craftbukkit.v1_8_R3.CraftChunk;
-import org.bukkit.craftbukkit.v1_8_R3.CraftWorld;
 import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
@@ -51,12 +50,15 @@ public class BlockUpdateRecordable extends Recordable {
         updateBlocks(player, oldChunks);
     }
 
-    private void setBlockFast(BlockCache cache) {
-        World w = ((CraftWorld) cache.getWorld()).getHandle();
-        Chunk chunk = w.getChunkAt(cache.getX() >> 4, cache.getZ() >> 4);
-        BlockPosition bp = new BlockPosition(cache.getX(), cache.getY(), cache.getZ());
-        IBlockData ibd = v1_8_R3.getInstance().getBlockDataToNMS(cache);
-        chunk.a(bp, ibd);
+    private void setBlocksFast(Chunk chunk, List<BlockCache> caches) {
+        for (BlockCache cache : caches) {
+            ChunkSection cs = chunk.getSections()[cache.getY() >> 4];
+            if (cs == null) {
+                cs = new ChunkSection(cache.getY() >> 4 << 4, true);
+                chunk.getSections()[cache.getY() >> 4] = cs;
+            }
+            cs.setType(cache.getX() & 15, cache.getY() & 15, cache.getZ() & 15, v1_8_R3.getInstance().getBlockDataToNMS(cache));
+        }
     }
 
     private void updateBlocks(Player player, HashMap<org.bukkit.Chunk, List<BlockCache>> chunks) {
@@ -71,11 +73,9 @@ public class BlockUpdateRecordable extends Recordable {
             for (int i = 0; i < cacheList.size(); i++) {
                 BlockCache cache = cacheList.get(i);
                 IBlockData ibd = v1_8_R3.getInstance().getBlockDataToNMS(cache);
-                //TODO: Fix wrong block index
                 changeInfos[i] = packet.new MultiBlockChangeInfo(getIndex(cache), ibd);
-                setBlockFast(cache);
             }
-
+            setBlocksFast(c, cacheList);
             ReflectionUtils.setChunkCordIntPairs(packet, chunkCoordIntPair);
             ReflectionUtils.setMultiBlockChangeInfo(packet, changeInfos);
             v1_8_R3.sendPacket(player, packet);
@@ -83,9 +83,9 @@ public class BlockUpdateRecordable extends Recordable {
     }
 
     private short getIndex(BlockCache position) {
-        int x = position.getX();
-        int y = position.getY();
-        int z = position.getZ();
-        return (short)((x & 15) << 12 | (z & 15) << 8 | y);
+        int x = position.getX() & 15;
+        int y = position.getY() & 255;
+        int z = position.getZ() & 15;
+        return (short)(x << 12 | z << 8 | y);
     }
 }

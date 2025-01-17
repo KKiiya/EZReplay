@@ -9,6 +9,7 @@ public class ItemData {
     private final Material material;
     private final byte data;
     private final boolean enchanted;
+    private final int amount;
 
     public ItemData(ItemStack item) {
         if (item == null) {
@@ -20,6 +21,7 @@ public class ItemData {
         this.material = item.getType();
         this.data = item.getData().getData() != 0 ? item.getData().getData() : 0;
         this.enchanted = !item.getEnchantments().isEmpty();
+        this.amount = item.getAmount();
     }
 
     public Material getMaterial() {
@@ -32,6 +34,10 @@ public class ItemData {
 
     public boolean isEnchanted() {
         return enchanted;
+    }
+
+    public int getAmount() {
+        return amount;
     }
 
     public ItemStack toItemStack() {

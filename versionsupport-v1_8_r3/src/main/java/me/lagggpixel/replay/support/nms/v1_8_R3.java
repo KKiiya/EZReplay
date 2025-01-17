@@ -54,6 +54,7 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class v1_8_R3 implements IVersionSupport {
 
@@ -63,6 +64,8 @@ public class v1_8_R3 implements IVersionSupport {
     private static IReplay plugin;
     @Getter
     private final CraftServer server;
+
+    private static final ConcurrentHashMap<String, String[]> skinCache = new ConcurrentHashMap<>();
 
     public v1_8_R3(IReplay plugin) {
         this.server = (CraftServer) Bukkit.getServer();
@@ -340,29 +343,39 @@ public class v1_8_R3 implements IVersionSupport {
         return null;
     }
 
-    public static void sendPacket(Player player,Packet<PacketListenerPlayOut> packet) {
-        PlayerConnection connection = ((CraftPlayer) player).getHandle().playerConnection;
-        connection.sendPacket(packet);
+    public static void sendPacket(Player player, Packet<PacketListenerPlayOut> packet) {
+        Bukkit.getScheduler().runTaskAsynchronously(getInstance().getPlugin(), () -> {
+            PlayerConnection connection = ((CraftPlayer) player).getHandle().playerConnection;
+            connection.sendPacket(packet);
+        });
+
     }
 
     @SafeVarargs
     public static void sendPackets(Player player, Packet<PacketListenerPlayOut>... packets) {
-        PlayerConnection connection = ((CraftPlayer) player).getHandle().playerConnection;
-        for (Packet<PacketListenerPlayOut> packet : packets) {
-            connection.sendPacket(packet);
-        }
+        Bukkit.getScheduler().runTaskAsynchronously(getInstance().getPlugin(), () -> {
+            PlayerConnection connection = ((CraftPlayer) player).getHandle().playerConnection;
+            for (Packet<PacketListenerPlayOut> packet : packets) {
+                connection.sendPacket(packet);
+            }
+        });
     }
 
     public static void sendPackets(Player player, Iterable<Packet<PacketListenerPlayOut>> packets) {
-        PlayerConnection connection = ((CraftPlayer) player).getHandle().playerConnection;
-        for (Packet<PacketListenerPlayOut> packet : packets) {
-            connection.sendPacket(packet);
-        }
+        Bukkit.getScheduler().runTaskAsynchronously(getInstance().getPlugin(), () -> {
+            PlayerConnection connection = ((CraftPlayer) player).getHandle().playerConnection;
+            for (Packet<PacketListenerPlayOut> packet : packets) {
+                connection.sendPacket(packet);
+            }
+        });
     }
 
     private String[] getSkin(String name) {
-        try {
+        if (skinCache.containsKey(name)) {
+            return skinCache.get(name);
+        }
 
+        try {
             // gets UUID from name
             URL url = new URL("https://api.mojang.com/users/profiles/minecraft/" + name);
             InputStreamReader reader = new InputStreamReader(url.openStream());
@@ -374,15 +387,16 @@ public class v1_8_R3 implements IVersionSupport {
             JsonObject property = (new JsonParser().parse(reader2).getAsJsonObject().get("properties").getAsJsonArray().get(0).getAsJsonObject());
             String texture = property.get("value").getAsString();
             String signature = property.get("signature").getAsString();
-            return new String[] {texture, signature};
+            String[] skinData = new String[]{texture, signature};
+
+            skinCache.put(name, skinData);
+            return skinData;
 
         } catch (IOException | IllegalStateException exception) {
-
             Bukkit.getLogger().warning("The player " + ChatColor.RED + name + ChatColor.YELLOW + " does not exist.");
             String texture = "ewogICJ0aW1lc3RhbXAiIDogMTY0MDUxODU2Njk1NiwKICAicHJvZmlsZUlkIiA6ICJlYzU2MTUzOGYzZmQ0NjFkYWZmNTA4NmIyMjE1NGJjZSIsCiAgInByb2ZpbGVOYW1lIiA6ICJBbGV4IiwKICAic2lnbmF0dXJlUmVxdWlyZWQiIDogdHJ1ZSwKICAidGV4dHVyZXMiIDogewogICAgIlNLSU4iIDogewogICAgICAidXJsIiA6ICJodHRwOi8vdGV4dHVyZXMubWluZWNyYWZ0Lm5ldC90ZXh0dXJlLzFhNGFmNzE4NDU1ZDRhYWI1MjhlN2E2MWY4NmZhMjVlNmEzNjlkMTc2OGRjYjEzZjdkZjMxOWE3MTNlYjgxMGIiCiAgICB9CiAgfQp9";
             String signature = "BchUKARlsKuXPJA7qXd2QKgnj3jR+F2EYHG5gwl4QW/+nK8Mb7MLKJDcKbKdxGRgCFfi7perJrDXZ8TpNrGxLgI+ocmjonH+ebwqv5NuRbGD0+Pkc1HCp0mq1dXnRPVgxFrlB+1pTSOnsYRJSJbLdIDvxbwL3RgQIkpKOFT7+Tpdx0VXEoHp2HCWtteAtjh1kEReHTJmnKwAzWmOU5j3Ro8e7xcuOOEG5p9CTbZyk2xxBDNHOJMq7jhPCMModKz15JdGm02r7k1al8GzdO9g0yx6GD8RlpzH0j1Ol+BHCnQ80TcrBvEOc9xgNN9q68Z2kVU7elNbXPHZYFsxalbpvwaHelDgTmx71NYfDzIqqvOY0s37kJsndWuY2bRhqNhJBFZi/SOvXFZHHhQcARGxBsizc5LKfIG3UqYHhuAJ/beErRvZLUM8hCgd5w8ISZNzPdM5pMGfe7ckaEWRRjhb7CmFHVZ9RQ+cHXGnUdSsrsDCT/gwZLIt8gHSIncE3H5m9zauhRmY2KYUZVVMKkbPB1TRfUbZdVWbEjJA7w4SXdyCN0Byh37pQl0ONvXtc5/eNRyuGHlkQj5qh/26zm/x4sawA+/7F4xfWiCib55DMLHFyXP3ooQIPmbwz+u4zLPnXymwJZG894ObapMlc1hWPmb2SbN28ZOuU1R67JwUqaI=";
-            return new String[] {texture, signature};
+            return new String[]{texture, signature};
         }
-
     }
 }

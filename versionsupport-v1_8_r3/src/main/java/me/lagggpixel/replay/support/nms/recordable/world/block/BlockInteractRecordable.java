@@ -1,5 +1,6 @@
 package me.lagggpixel.replay.support.nms.recordable.world.block;
 
+import me.lagggpixel.replay.api.data.Writeable;
 import me.lagggpixel.replay.api.replay.content.IReplaySession;
 import me.lagggpixel.replay.api.replay.data.recordable.Recordable;
 import me.lagggpixel.replay.api.replay.data.recordable.world.block.BlockAction;
@@ -22,6 +23,7 @@ public class BlockInteractRecordable extends Recordable implements IBlockRecorda
     private final org.bukkit.Material material;
     private final BlockPosition blockPosition;
     private final BlockAction actionType;
+    @Writeable
     private final boolean playSound;
 
     public BlockInteractRecordable(IRecording replay, BlockCache cache, BlockAction actionType, boolean playSound) {

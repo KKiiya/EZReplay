@@ -161,7 +161,6 @@ public class Recording implements IRecording {
             Bukkit.getScheduler().runTaskLater(Replay.getInstance(), () -> {
                 HashMap<Chunk, List<BlockCache>> chunkUpdates = blockUpdates.get(tick);
                 if (chunkUpdates != null) {
-                    Replay.getInstance().getLogger().info("Chunk updates: " + chunkUpdates);
                     lastFrame.addRecordable(vs.createBlockUpdateRecordable(this, chunkUpdates));
                 }
             }, 1L);
@@ -240,7 +239,6 @@ public class Recording implements IRecording {
 
     @Override
     public void addBlockUpdate(long tick, Block block) {
-        System.out.println("Adding block update at tick " + tick);
         blockUpdates.putIfAbsent(tick, new HashMap<>());
         HashMap<Chunk, List<BlockCache>> chunkUpdates = blockUpdates.get(tick);
         Chunk chunk = block.getChunk();
