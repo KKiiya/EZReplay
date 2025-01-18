@@ -63,7 +63,7 @@ public class EntityListener implements Listener {
     public void onEntityDamage(EntityDamageEvent e) {
         Entity entity = e.getEntity();
         World world = entity.getWorld();
-        
+
         if (e.isCancelled()) return;
         if (!(entity instanceof LivingEntity)) return;
 

@@ -5,7 +5,6 @@ import me.lagggpixel.replay.api.replay.content.IReplaySession;
 import me.lagggpixel.replay.api.replay.data.IRecording;
 import me.lagggpixel.replay.api.replay.data.recordable.Recordable;
 import me.lagggpixel.replay.api.utils.block.BlockCache;
-import me.lagggpixel.replay.support.nms.utils.reflection.ReflectionUtils;
 import me.lagggpixel.replay.support.nms.v1_8_R3;
 import net.minecraft.server.v1_8_R3.*;
 import org.bukkit.block.Block;
@@ -42,6 +41,7 @@ public class BlockUpdateRecordable extends Recordable {
                 oldChunks.put(chunk, oldBlockCaches);
             }
         }
+
         updateBlocks(player, newChunks);
     }
 
@@ -57,27 +57,19 @@ public class BlockUpdateRecordable extends Recordable {
                 cs = new ChunkSection(cache.getY() >> 4 << 4, true);
                 chunk.getSections()[cache.getY() >> 4] = cs;
             }
-            cs.setType(cache.getX() & 15, cache.getY() & 15, cache.getZ() & 15, v1_8_R3.getInstance().getBlockDataToNMS(cache));
+            IBlockData blockData = v1_8_R3.getInstance().getBlockDataToNMS(cache);
+            cs.setType(cache.getX() & 15, cache.getY() & 15, cache.getZ() & 15, blockData);
         }
     }
 
     private void updateBlocks(Player player, HashMap<org.bukkit.Chunk, List<BlockCache>> chunks) {
         for (Map.Entry<org.bukkit.Chunk, List<BlockCache>> entry : chunks.entrySet()) {
             org.bukkit.Chunk chunk = entry.getKey();
-            List<BlockCache> cacheList = entry.getValue();
             Chunk c = ((CraftChunk) chunk).getHandle();
-            ChunkCoordIntPair chunkCoordIntPair = new ChunkCoordIntPair(c.locX, c.locZ);
-            PacketPlayOutMultiBlockChange packet = new PacketPlayOutMultiBlockChange();
-            PacketPlayOutMultiBlockChange.MultiBlockChangeInfo[] changeInfos = new PacketPlayOutMultiBlockChange.MultiBlockChangeInfo[cacheList.size()];
-
-            for (int i = 0; i < cacheList.size(); i++) {
-                BlockCache cache = cacheList.get(i);
-                IBlockData ibd = v1_8_R3.getInstance().getBlockDataToNMS(cache);
-                changeInfos[i] = packet.new MultiBlockChangeInfo(getIndex(cache), ibd);
-            }
+            List<BlockCache> cacheList = entry.getValue();
             setBlocksFast(c, cacheList);
-            ReflectionUtils.setChunkCordIntPairs(packet, chunkCoordIntPair);
-            ReflectionUtils.setMultiBlockChangeInfo(packet, changeInfos);
+
+            PacketPlayOutMultiBlockChange packet = new PacketPlayOutMultiBlockChange(cacheList.size(), toIndexArray(cacheList), c);
             v1_8_R3.sendPacket(player, packet);
         }
     }
@@ -87,5 +79,13 @@ public class BlockUpdateRecordable extends Recordable {
         int y = position.getY() & 255;
         int z = position.getZ() & 15;
         return (short)(x << 12 | z << 8 | y);
+    }
+
+    private short[] toIndexArray(List<BlockCache> caches) {
+        short[] shortArray = new short[caches.size()];
+        for (int i = 0; i < caches.size(); i++) {
+            shortArray[i] = getIndex(caches.get(i));
+        }
+        return shortArray;
     }
 }
