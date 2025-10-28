@@ -1,7 +1,7 @@
 package me.lagggpixel.replay.api.replay.data;
 
 import me.lagggpixel.replay.api.replay.content.IReplaySession;
-import org.bukkit.Location;
+import me.lagggpixel.replay.api.utils.Vector3d;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
@@ -91,7 +91,9 @@ public interface IRecording {
      * @param offlinePlayer The offline player to get the data from
      * @return the location Object
      */
-    Location getSpawnLocation(String offlinePlayer);
+    Vector3d getSpawnLocation(String offlinePlayer);
+
+    EntityIndex getEntityIndex();
 
     /**
      * Start or continue recording

@@ -4,9 +4,11 @@ import lombok.Getter;
 import me.lagggpixel.replay.Replay;
 import me.lagggpixel.replay.api.data.Writeable;
 import me.lagggpixel.replay.api.replay.content.IReplaySession;
+import me.lagggpixel.replay.api.replay.data.EntityIndex;
 import me.lagggpixel.replay.api.replay.data.IFrame;
 import me.lagggpixel.replay.api.replay.data.IRecording;
 import me.lagggpixel.replay.api.support.IVersionSupport;
+import me.lagggpixel.replay.api.utils.Vector3d;
 import me.lagggpixel.replay.api.utils.block.BlockCache;
 import me.lagggpixel.replay.replay.content.ReplaySession;
 import me.lagggpixel.replay.replay.tasks.EquipmentTrackerTask;
@@ -25,25 +27,24 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class Recording implements IRecording {
-    @Getter
-    @Writeable
-    public final UUID id;
+
+    @Writeable private final double VERSION = 1.0;
 
     @Getter
     public final World world;
 
     private final HashMap<Long, HashMap<Chunk, List<BlockCache>>> blockUpdates = new HashMap<>();
 
-    @Writeable
-    private final List<IFrame> frames;
-    @Writeable
+    @Getter
+    @Writeable private final UUID id;
+    @Writeable private final String worldName;
+    @Writeable private final EntityIndex entityIndex;
+    @Writeable private final List<Frame> frames;
+    @Writeable private final List<String> playersThatPlayed;
+    @Writeable private final Map<String, Vector3d> spawnLocations;
+    @Writeable private final HashMap<String, Object> customData;
+
     private final List<Entity> spawnedEntities;
-    @Writeable
-    private final List<String> playersThatPlayed;
-    @Writeable
-    private final HashMap<String, Location> spawnLocations;
-    @Writeable
-    private final HashMap<String, Object> customData;
     private final String worldCloneName;
     private int frameGeneratorTaskId = -1;
     private int equipmentTrackerTaskId = -1;
@@ -56,10 +57,25 @@ public class Recording implements IRecording {
         this.worldCloneName = world.getName()+"-"+ id;
         this.frames = new ArrayList<>();
         this.world = world;
+        this.worldName = world.getName();
+        this.entityIndex = new EntityIndex();
         this.spawnedEntities = new ArrayList<>();
         this.playersThatPlayed = world.getPlayers().stream().map(p -> p.getUniqueId().toString()).collect(Collectors.toList());
         this.spawnLocations = new HashMap<>();
         this.customData = new HashMap<>();
+    }
+
+    public Recording(UUID id, String worldName, EntityIndex index, List<Frame> frames) {
+        this.id = id;
+        this.world = null;
+        this.worldName = worldName;
+        this.entityIndex = index;
+        this.frames = frames;
+        this.spawnedEntities = new ArrayList<>();
+        this.playersThatPlayed = new ArrayList<>();
+        this.spawnLocations = new HashMap<>();
+        this.customData = new HashMap<>();
+        this.worldCloneName = worldName + "-" + id;
     }
 
     @Override
@@ -69,12 +85,12 @@ public class Recording implements IRecording {
 
     @Override
     public void add(IFrame... frames) {
-        this.frames.addAll(List.of(frames));
+        this.frames.addAll((Collection<? extends Frame>) List.of(frames));
     }
 
     @Override
     public void add(List<IFrame> frames) {
-        this.frames.addAll(frames);
+        this.frames.addAll((Collection<? extends Frame>) frames);
     }
 
     @Override
@@ -121,8 +137,13 @@ public class Recording implements IRecording {
     }
 
     @Override
-    public Location getSpawnLocation(String offlinePlayer) {
+    public Vector3d getSpawnLocation(String offlinePlayer) {
         return spawnLocations.get(offlinePlayer);
+    }
+
+    @Override
+    public EntityIndex getEntityIndex() {
+        return entityIndex;
     }
 
     @Override
@@ -137,6 +158,7 @@ public class Recording implements IRecording {
             long tick = getFrameTick(lastFrame);
 
             for (Player player : world.getPlayers()) {
+                entityIndex.getOrRegister(player.getUniqueId());
                 lastFrame.addRecordable(vs.createEntityMovementRecordable(this, player));
                 lastFrame.addRecordable(vs.createSwordBlockRecordable(this, player));
                 if (player.isSneaking()) lastFrame.addRecordable(vs.createSneakingRecordable(this, player.getUniqueId(), true));
@@ -147,6 +169,7 @@ public class Recording implements IRecording {
             List<Entity> deadEntities = new ArrayList<>();
             for (Entity entity : getSpawnedEntities()) {
                 if (entity.isDead()) deadEntities.add(entity);
+                else entityIndex.getOrRegister(entity.getUniqueId());
                 if (!(entity instanceof Item) && !(entity instanceof Projectile)) {
                     lastFrame.addRecordable(vs.createEntityMovementRecordable(this, entity));
                 }
@@ -177,7 +200,7 @@ public class Recording implements IRecording {
         }, 5L);
 
         for (Player p : world.getPlayers()) {
-            spawnLocations.put(p.getUniqueId().toString(), p.getLocation());
+            spawnLocations.put(p.getUniqueId().toString(), Vector3d.fromBukkitLocation(p.getLocation()));
         }
         equipmentTrackerTaskId = Bukkit.getScheduler().runTaskTimer(Replay.getInstance(), new EquipmentTrackerTask(this), 0, 1L).getTaskId();
     }

@@ -1,11 +1,16 @@
 package me.lagggpixel.replay.replay.data;
 
 import me.lagggpixel.replay.api.replay.content.IReplaySession;
+import me.lagggpixel.replay.api.replay.data.EntityIndex;
 import me.lagggpixel.replay.api.replay.data.recordable.Recordable;
 import me.lagggpixel.replay.api.replay.data.IFrame;
 import me.lagggpixel.replay.api.replay.data.IRecording;
+import me.lagggpixel.replay.api.replay.serialize.BinarySerializable;
 import org.bukkit.entity.Player;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -22,6 +27,19 @@ public class Frame implements IFrame {
 
     public Frame(IRecording replay, Recordable... recordables) {
         this(replay, new ArrayList<>(Arrays.asList(recordables)));
+    }
+
+    public Frame(DataInputStream in, EntityIndex index) throws IOException {
+        int recordableCount = in.readShort();
+        this.recordables = new ArrayList<>(recordableCount);
+
+        for (int i = 0; i < recordableCount; i++) {
+            short typeId = in.readShort();
+            Recordable recordable = RecordableRegistry.create(typeId, in, index);
+            this.recordables.add(recordable);
+        }
+
+        this.replay = null; // will be set when attached to a Recording
     }
 
     public Frame(IRecording replay) {
@@ -68,5 +86,19 @@ public class Frame implements IFrame {
                 e.printStackTrace();
             }
         }
+    }
+
+    @Override
+    public void write(DataOutputStream out) throws IOException {
+        out.writeShort(recordables.size());
+        for (Recordable recordable : recordables) {
+            out.writeShort(recordable.getTypeId());
+            recordable.write(out);
+        }
+    }
+
+    @Override
+    public void read(DataInputStream in, EntityIndex index) throws IOException {
+
     }
 }

@@ -2,11 +2,12 @@ package me.lagggpixel.replay.api.replay.data;
 
 import me.lagggpixel.replay.api.replay.content.IReplaySession;
 import me.lagggpixel.replay.api.replay.data.recordable.Recordable;
+import me.lagggpixel.replay.api.replay.serialize.BinarySerializable;
 import org.bukkit.entity.Player;
 
 import java.util.List;
 
-public interface IFrame {
+public interface IFrame extends BinarySerializable {
     List<Recordable> getRecordables();
 
     IRecording getReplay();

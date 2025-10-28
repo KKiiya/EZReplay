@@ -14,6 +14,8 @@ import org.bukkit.craftbukkit.v1_8_R3.entity.CraftEntity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.util.UUID;
 
 public class Animation extends Recordable implements IAnimationRecordable {
@@ -63,6 +65,11 @@ public class Animation extends Recordable implements IAnimationRecordable {
     @Override
     public void unplay(IReplaySession replaySession, Player player) {
 
+    }
+
+    @Override
+    public short getTypeId() {
+        return 0;
     }
 
     @Override
