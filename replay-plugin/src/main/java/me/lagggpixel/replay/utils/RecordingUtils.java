@@ -30,7 +30,7 @@ public class RecordingUtils {
 
                 // Frames
                 int frameCount = in.readInt();
-                List<Frame> frames = new ArrayList<>(frameCount);
+                List<IFrame> frames = new ArrayList<>(frameCount);
                 for (int i = 0; i < frameCount; i++) {
                     frames.add(new Frame(in, index));
                 }

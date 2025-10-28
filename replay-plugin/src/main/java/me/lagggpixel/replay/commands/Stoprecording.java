@@ -1,6 +1,7 @@
 package me.lagggpixel.replay.commands;
 
 import me.lagggpixel.replay.Replay;
+import me.lagggpixel.replay.api.replay.data.IRecording;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -17,8 +18,9 @@ public class Stoprecording implements CommandExecutor {
             return false;
         }
         Player player = ((Player) commandSender).getPlayer();
-        Replay.getInstance().getReplayManager().stopRecording(player.getWorld());
+        IRecording replay = Replay.getInstance().getReplayManager().stopRecording(player.getWorld());
         player.sendMessage(ChatColor.GREEN + "Recording stopped.");
+        replay.toFile();
         return false;
     }
 }

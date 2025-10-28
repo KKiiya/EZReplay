@@ -16,8 +16,6 @@ import org.bukkit.entity.EntityType;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 
-import java.util.UUID;
-
 public class EntityDeath extends Recordable {
 
     @Writeable private final EntityType type;
@@ -45,8 +43,7 @@ public class EntityDeath extends Recordable {
 
     @Override
     public void unplay(IReplaySession replaySession, Player player) {
-        UUID uniqueId = replaySession.getReplay().getEntityIndex().getUuid(entityId);
-        net.minecraft.server.v1_8_R3.Entity fakeEntity = ((CraftEntity) replaySession.getSpawnedEntities().get(uniqueId.toString())).getHandle();
+        net.minecraft.server.v1_8_R3.Entity fakeEntity = ((CraftEntity) replaySession.getSpawnedEntities().get(entityId)).getHandle();
         Entity bukkitEntity = fakeEntity.getBukkitEntity();
         fakeEntity.dead = false;
 

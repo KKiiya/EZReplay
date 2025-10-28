@@ -38,7 +38,7 @@ public class TrackerMenu implements IMenu {
     }
 
     private void addContents() {
-        for (String uuid : replaySession.getSpawnedEntities().keySet()) {
+        for (Short uuid : replaySession.getSpawnedEntities().keySet()) {
             Entity entity = replaySession.getSpawnedEntities().get(uuid);
             if (!(entity instanceof Player)) continue;
 
@@ -57,7 +57,7 @@ public class TrackerMenu implements IMenu {
             ));
             stack.setItemMeta(skullMeta);
 
-            inv.addItem(vs.setItemTag(stack, "player", uuid));
+            inv.addItem(vs.setItemTag(stack, "player", uuid.toString()));
         }
     }
 
@@ -65,8 +65,13 @@ public class TrackerMenu implements IMenu {
     public void onInventoryClick(InventoryClickEvent e) {
         ItemStack item = e.getCurrentItem();
         String uuid = vs.getItemTag(item, "player");
-        if (uuid == null) return;
-        Player target = (Player) replaySession.getSpawnedEntities().get(uuid);
+        short id = -1;
+        try {
+            id = Short.parseShort(uuid);
+        } catch (NumberFormatException ex) {
+            return;
+        }
+        Player target = (Player) replaySession.getSpawnedEntities().get(id);
         switch (e.getClick()) {
             case RIGHT:
             case SHIFT_RIGHT:

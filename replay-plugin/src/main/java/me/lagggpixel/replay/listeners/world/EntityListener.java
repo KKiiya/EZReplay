@@ -60,6 +60,11 @@ public class EntityListener implements Listener {
     }
 
     @EventHandler
+    public void onTNTPrime(ExplosionPrimeEvent e) {
+
+    }
+
+    @EventHandler
     public void onEntityDamage(EntityDamageEvent e) {
         Entity entity = e.getEntity();
         World world = entity.getWorld();

@@ -58,31 +58,40 @@ public class BlockUpdateRecordable extends Recordable {
 
     private void setBlocksFast(Chunk chunk, List<BlockCache> caches) {
         for (BlockCache cache : caches) {
-            ChunkSection cs = chunk.getSections()[cache.getY() >> 4];
+            int sectionIndex = cache.getY() >> 4;
+            ChunkSection cs = chunk.getSections()[sectionIndex];
             if (cs == null) {
-                cs = new ChunkSection(cache.getY() >> 4 << 4, true);
-                chunk.getSections()[cache.getY() >> 4] = cs;
+                cs = new ChunkSection(sectionIndex << 4, true);
+                chunk.getSections()[sectionIndex] = cs;
             }
             IBlockData blockData = v1_8_R3.getInstance().getBlockDataToNMS(cache);
-            cs.setType(cache.getX() & 15, cache.getY() & 15, cache.getZ() & 15, blockData);
+            // Make sure local Y is calculated correctly
+            int localY = cache.getY() & 15;
+            cs.setType(cache.getX() & 15, localY, cache.getZ() & 15, blockData);
         }
     }
 
     private void updateBlocks(Player player, HashMap<ChunkPos, List<BlockCache>> chunks) {
         for (Map.Entry<ChunkPos, List<BlockCache>> entry : chunks.entrySet()) {
-            ChunkPos chunk = entry.getKey();
-            Chunk c = ((CraftWorld) player.getWorld()).getHandle().getChunkAt(chunk.getX(), chunk.getZ());
+            ChunkPos chunkPos = entry.getKey();
+            Chunk chunk = ((CraftWorld) player.getWorld()).getHandle().getChunkAt(chunkPos.getX(), chunkPos.getZ());
             List<BlockCache> cacheList = entry.getValue();
-            setBlocksFast(c, cacheList);
 
-            PacketPlayOutMultiBlockChange packet = new PacketPlayOutMultiBlockChange(cacheList.size(), toIndexArray(cacheList), c);
+            // IMPORTANT: Update the server-side chunk FIRST
+            setBlocksFast(chunk, cacheList);
+
+            // THEN create the packet - it will read the updated block data from the chunk
+            short[] positions = toIndexArray(cacheList);
+            PacketPlayOutMultiBlockChange packet = new PacketPlayOutMultiBlockChange(cacheList.size(), positions, chunk);
+
+            // Send the packet
             v1_8_R3.sendPacket(player, packet);
         }
     }
 
     private short getIndex(BlockCache position) {
         int x = position.getX() & 15;
-        int y = position.getY() & 255;
+        int y = position.getY();
         int z = position.getZ() & 15;
         return (short)(x << 12 | z << 8 | y);
     }

@@ -141,27 +141,31 @@ public class ReplayManager implements IReplayManager {
     }
 
     @Override
-    public void startRecording(World world) {
-        if (activeRecordings.containsKey(world)) return;
+    public IRecording startRecording(World world) {
+        if (activeRecordings.containsKey(world)) return null;
         IRecording recording = new Recording(world);
         activeRecordings.put(world, recording);
         recording.start();
+        return recording;
     }
 
     @Override
-    public void pauseRecording(World world) {
-        if (!activeRecordings.containsKey(world)) return;
+    public IRecording pauseRecording(World world) {
+        if (!activeRecordings.containsKey(world)) return null;
         IRecording recording = activeRecordings.get(world);
         recording.pause();
+        return recording;
     }
 
     @Override
-    public void stopRecording(World world) {
-        if (!activeRecordings.containsKey(world)) return;
+    public IRecording stopRecording(World world) {
+        if (!activeRecordings.containsKey(world)) return null;
         IRecording recording = activeRecordings.get(world);
         recording.stop();
         replayById.put(recording.getID().toString(), recording);
         LogUtil.info(replayById.toString());
+        activeRecordings.remove(world);
+        return recording;
     }
 
     private void loadReplays() {

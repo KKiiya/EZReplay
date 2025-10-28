@@ -43,7 +43,7 @@ public class Recording implements IRecording {
     @Writeable private UUID id;
     @Writeable private String worldName;
     @Writeable private EntityIndex entityIndex;
-    @Writeable private final List<Frame> frames;
+    @Writeable private final List<IFrame> frames;
     @Writeable private final List<UUID> playersThatPlayed;
     @Writeable private final Map<Short, Vector3d> spawnLocations;
     @Writeable private final Map<String, String> customData;
@@ -69,7 +69,7 @@ public class Recording implements IRecording {
         this.customData = new HashMap<>();
     }
 
-    public Recording(UUID id, String worldName, EntityIndex index, List<Frame> frames) {
+    public Recording(UUID id, String worldName, EntityIndex index, List<IFrame> frames) {
         this.id = id;
         this.world = null;
         this.worldName = worldName;
@@ -94,12 +94,12 @@ public class Recording implements IRecording {
 
     @Override
     public void add(IFrame... frames) {
-        this.frames.addAll((Collection<? extends Frame>) List.of(frames));
+        this.frames.addAll(List.of(frames));
     }
 
     @Override
     public void add(List<IFrame> frames) {
-        this.frames.addAll((Collection<? extends Frame>) frames);
+        this.frames.addAll(frames);
     }
 
     @Override
@@ -178,8 +178,10 @@ public class Recording implements IRecording {
             long tick = getFrameTick(lastFrame);
 
             for (Player player : world.getPlayers()) {
+                if (!EquipmentTrackerTask.isTracked(player)) {
+                    equipmentTrackerTaskId = Bukkit.getScheduler().runTaskTimer(Replay.getInstance(), new EquipmentTrackerTask(this, player), 0L, 5L).getTaskId();
+                }
                 entityIndex.getOrRegister(player.getUniqueId());
-                lastFrame.addRecordable(vs.createEntityMovementRecordable(this, player));
                 lastFrame.addRecordable(vs.createSwordBlockRecordable(this, player));
                 if (player.isSneaking()) lastFrame.addRecordable(vs.createSneakingRecordable(this, player.getUniqueId(), true));
                 if (player.isSprinting()) lastFrame.addRecordable(vs.createSprintRecordable(this, player.getUniqueId(), true));
@@ -200,10 +202,14 @@ public class Recording implements IRecording {
             }
             getSpawnedEntities().removeAll(deadEntities);
 
-
             Bukkit.getScheduler().runTaskLater(Replay.getInstance(), () -> {
                 HashMap<ChunkPos, List<BlockCache>> chunkUpdates = blockUpdates.get(tick);
                 if (chunkUpdates != null) {
+                    chunkUpdates.replaceAll((chunk, caches) ->
+                            caches.stream()
+                                    .sorted(Comparator.comparing(cache -> cache.getMaterial() == Material.AIR))
+                                    .collect(Collectors.toList())
+                    );
                     lastFrame.addRecordable(vs.createBlockUpdateRecordable(this, chunkUpdates));
                 }
             }, 1L);
@@ -222,7 +228,6 @@ public class Recording implements IRecording {
         for (Player p : world.getPlayers()) {
             spawnLocations.put(entityIndex.getOrRegister(p.getUniqueId()), Vector3d.fromBukkitLocation(p.getLocation()));
         }
-        equipmentTrackerTaskId = Bukkit.getScheduler().runTaskTimer(Replay.getInstance(), new EquipmentTrackerTask(this), 0, 1L).getTaskId();
     }
 
     @Override
@@ -357,7 +362,7 @@ public class Recording implements IRecording {
 
         // Frames
         out.writeInt(frames.size());
-        for (Frame frame : frames) {
+        for (IFrame frame : frames) {
             frame.write(out);
         }
 

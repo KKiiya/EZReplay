@@ -127,7 +127,7 @@ public abstract class Recordable implements BinarySerializable {
             else if (subType == String.class) out.writeUTF((String) subValue);
             else if (subType.isEnum()) out.writeShort(((Enum<?>) subValue).ordinal());
             else if (subType == UUID.class) out.writeShort(replay.getEntityIndex().getOrRegister((UUID) subValue));
-            else throw new IOException("Unsupported nested @Writeable field: " + subField.getName());
+            else writeNestedObject(out, subValue);
         }
     }
 }

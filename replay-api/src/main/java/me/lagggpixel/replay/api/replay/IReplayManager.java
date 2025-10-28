@@ -28,9 +28,9 @@ public interface IReplayManager {
 
     void removeFromActiveRecordings(World world);
 
-    void startRecording(World world);
+    IRecording startRecording(World world);
 
-    void pauseRecording(World world);
+    IRecording pauseRecording(World world);
 
-    void stopRecording(World world);
+    IRecording stopRecording(World world);
 }

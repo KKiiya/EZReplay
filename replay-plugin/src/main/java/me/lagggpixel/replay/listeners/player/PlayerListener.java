@@ -10,9 +10,21 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 
 public class PlayerListener implements Listener {
+
+    @EventHandler
+    public void onPlayerMove(PlayerMoveEvent e) {
+        Player player = e.getPlayer();
+
+        IRecording recording = ReplayManager.getInstance().getActiveRecording(player.getWorld());
+        if (recording == null) return;
+
+        Recordable movement = Replay.getInstance().getVersionSupport().createEntityMovementRecordable(recording, player);
+        recording.getLastFrame().addRecordable(movement);
+    }
 
     @EventHandler
     public void onRespawn(PlayerRespawnEvent e) {

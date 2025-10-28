@@ -34,4 +34,12 @@ public class ItemData {
         if (enchanted) item.addUnsafeEnchantment(Enchantment.DURABILITY, 1);
         return item;
     }
+
+    public boolean equals(ItemStack item) {
+        return equals(new ItemData(item));
+    }
+
+    public boolean equals(ItemData other) {
+        return this.material == other.material && this.data == other.data && this.enchanted == other.enchanted;
+    }
 }
