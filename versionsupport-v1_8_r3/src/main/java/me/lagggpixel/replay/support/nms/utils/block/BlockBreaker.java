@@ -20,7 +20,6 @@ public class BlockBreaker extends AbstractBlockBreaker {
     protected Entity getHandle() {
         return ((CraftEntity) getEntity()).getHandle();
     }
-
     @Override
     public float getDamage(int tickDifference) {
         return getStrength(getHandle().world.getType(new BlockPosition(x, y, z)).getBlock()) * (tickDifference + 1);

@@ -43,14 +43,21 @@ public class PacketListener implements Listener {
 
         BlockPosition position = packet.a();
         Block block = world.c(position);
+        Location loc = new Location(p.getWorld(), position.getX(), position.getY(), position.getZ());
 
-        if (packet.c() == PacketPlayInBlockDig.EnumPlayerDigType.START_DESTROY_BLOCK) {
-            Location loc = new Location(p.getWorld(), position.getX(), position.getY(), position.getZ());
-            AbstractBlockBreaker blockBreaker = new BlockBreaker(p, loc);
-            recording.getLastFrame().addRecordable(new BlockDigRecordable(recording, blockBreaker, DigType.DIG_START));
-            blocksBreaking.put(block, blockBreaker);
-        } else if (packet.c() == PacketPlayInBlockDig.EnumPlayerDigType.STOP_DESTROY_BLOCK || packet.c() == PacketPlayInBlockDig.EnumPlayerDigType.ABORT_DESTROY_BLOCK) {
-
+        AbstractBlockBreaker breaker;
+        switch (packet.c()) {
+            case START_DESTROY_BLOCK:
+                breaker = new BlockBreaker(p, loc);
+                recording.getLastFrame().addRecordable(new BlockDigRecordable(recording, breaker, DigType.DIG_START));
+            break;
+            case ABORT_DESTROY_BLOCK:
+            case STOP_DESTROY_BLOCK:
+                breaker = blocksBreaking.remove(block);
+                if (breaker != null) {
+                    recording.getLastFrame().addRecordable(new BlockDigRecordable(recording, breaker, DigType.DIG_STOP));
+                }
+            break;
         }
     }
 }
