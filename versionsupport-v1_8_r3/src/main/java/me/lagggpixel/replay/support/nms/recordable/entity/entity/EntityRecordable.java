@@ -20,18 +20,12 @@ import java.util.UUID;
  */
 public class EntityRecordable extends Recordable implements IEntityRecordable {
 
-    @Writeable
-    private final UUID uniqueId;
-    @Writeable
-    private final double x;
-    @Writeable
-    private final double y;
-    @Writeable
-    private final double z;
-    @Writeable
-    private final float yaw;
-    @Writeable
-    private final float pitch;
+    @Writeable private final UUID uniqueId;
+    @Writeable private final double x;
+    @Writeable private final double y;
+    @Writeable private final double z;
+    @Writeable private final float yaw;
+    @Writeable private final float pitch;
 
     public EntityRecordable(IRecording replay, Entity entity) {
         super(replay);
@@ -60,5 +54,10 @@ public class EntityRecordable extends Recordable implements IEntityRecordable {
     @Override
     public void unplay(IReplaySession replaySession, Player player) {
 
+    }
+
+    @Override
+    public short getTypeId() {
+        return 0;
     }
 }

@@ -19,7 +19,7 @@ public interface IReplaySession {
 
     List<BukkitRunnable> startedTasks();
 
-    int getCurrentTick();
+    long getCurrentTick();
 
     void start();
     void pause();

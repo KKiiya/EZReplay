@@ -127,7 +127,7 @@ public class ReplaySession implements IReplaySession {
     }
 
     @Override
-    public int getCurrentTick() {
+    public long getCurrentTick() {
         return currentFrameIndex;
     }
 
@@ -141,7 +141,7 @@ public class ReplaySession implements IReplaySession {
             if (!(spawnedEntities.get(replayPlayer) instanceof Player)) continue;
             Player fakePlayer = (Player) spawnedEntities.get(replayPlayer);
             for (Player viewer : getViewers()) {
-                vs.spawnFakePlayer(fakePlayer, viewer, replay.getSpawnLocation(replayPlayer));
+                vs.spawnFakePlayer(fakePlayer, viewer, replay.getSpawnLocation(replayPlayer).toBukkitLocation(world));
             }
         }
 
