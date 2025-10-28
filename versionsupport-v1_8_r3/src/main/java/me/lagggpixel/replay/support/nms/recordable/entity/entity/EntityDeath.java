@@ -4,7 +4,7 @@ import me.lagggpixel.replay.api.data.Writeable;
 import me.lagggpixel.replay.api.replay.content.IReplaySession;
 import me.lagggpixel.replay.api.replay.data.IRecording;
 import me.lagggpixel.replay.api.replay.data.recordable.Recordable;
-import me.lagggpixel.replay.api.replay.data.recordable.entity.recordables.IEntityDeath;
+import me.lagggpixel.replay.api.replay.data.recordable.RecordableRegistry;
 import me.lagggpixel.replay.support.nms.v1_8_R3;
 import net.minecraft.server.v1_8_R3.*;
 import org.bukkit.Bukkit;
@@ -15,24 +15,23 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
+
 import java.util.UUID;
 
-public class EntityDeath extends Recordable implements IEntityDeath {
+public class EntityDeath extends Recordable {
 
-    @Writeable
-    private final EntityType type;
-    @Writeable
-    private final UUID uniqueId;
+    @Writeable private final EntityType type;
+    @Writeable private final short entityId;
 
     public EntityDeath(IRecording replay, Entity entity) {
         super(replay);
         this.type = entity.getType();
-        this.uniqueId = entity.getUniqueId();
+        this.entityId = replay.getEntityIndex().getOrRegister(entity.getUniqueId());
     }
 
     @Override
     public void play(IReplaySession replaySession, Player player) {
-        net.minecraft.server.v1_8_R3.Entity fakeEntity = ((CraftEntity) replaySession.getSpawnedEntities().get(uniqueId.toString())).getHandle();
+        net.minecraft.server.v1_8_R3.Entity fakeEntity = ((CraftEntity) replaySession.getSpawnedEntities().get(entityId)).getHandle();
         fakeEntity.dead = true;
 
         PacketPlayOutEntityStatus status = new PacketPlayOutEntityStatus(fakeEntity, (byte) 3);
@@ -46,6 +45,7 @@ public class EntityDeath extends Recordable implements IEntityDeath {
 
     @Override
     public void unplay(IReplaySession replaySession, Player player) {
+        UUID uniqueId = replaySession.getReplay().getEntityIndex().getUuid(entityId);
         net.minecraft.server.v1_8_R3.Entity fakeEntity = ((CraftEntity) replaySession.getSpawnedEntities().get(uniqueId.toString())).getHandle();
         Entity bukkitEntity = fakeEntity.getBukkitEntity();
         fakeEntity.dead = false;
@@ -61,5 +61,10 @@ public class EntityDeath extends Recordable implements IEntityDeath {
         PacketPlayOutEntityMetadata metadata = new PacketPlayOutEntityMetadata(fakeEntity.getId(), fakeEntity.getDataWatcher(), true);
 
         v1_8_R3.sendPackets(player, spawn, metadata);
+    }
+
+    @Override
+    public short getTypeId() {
+        return RecordableRegistry.ENTITY_DEATH;
     }
 }

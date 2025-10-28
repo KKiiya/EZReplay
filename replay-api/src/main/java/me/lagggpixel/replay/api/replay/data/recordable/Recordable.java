@@ -34,10 +34,6 @@ public abstract class Recordable implements BinarySerializable {
 
     public abstract short getTypeId();
 
-    public Recordable create(short typeId, DataOutputStream in, EntityIndex index) {
-        return null;
-    }
-
     public void read(DataInputStream in, EntityIndex index) throws IOException {
         // Implemented in subclasses
     }

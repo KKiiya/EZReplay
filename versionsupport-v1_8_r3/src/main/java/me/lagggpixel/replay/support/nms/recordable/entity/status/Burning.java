@@ -4,30 +4,27 @@ import me.lagggpixel.replay.api.data.Writeable;
 import me.lagggpixel.replay.api.replay.content.IReplaySession;
 import me.lagggpixel.replay.api.replay.data.IRecording;
 import me.lagggpixel.replay.api.replay.data.recordable.Recordable;
+import me.lagggpixel.replay.api.replay.data.recordable.RecordableRegistry;
 import me.lagggpixel.replay.support.nms.v1_8_R3;
 import net.minecraft.server.v1_8_R3.Entity;
 import net.minecraft.server.v1_8_R3.PacketPlayOutEntityMetadata;
 import org.bukkit.craftbukkit.v1_8_R3.entity.CraftEntity;
 import org.bukkit.entity.Player;
 
-import java.util.UUID;
-
 public class Burning extends Recordable {
 
-    @Writeable
-    private final UUID uniqueId;
-    @Writeable
-    private final int fireTicks;
+    @Writeable private final short entityId;
+    @Writeable private final int fireTicks;
 
     public Burning(IRecording replay, org.bukkit.entity.Entity entity) {
         super(replay);
-        this.uniqueId = entity.getUniqueId();
+        this.entityId = replay.getEntityIndex().getOrRegister(entity.getUniqueId());
         this.fireTicks = entity.getFireTicks();
     }
 
     @Override
     public void play(IReplaySession replaySession, Player player) {
-        Entity fakeEntity = ((CraftEntity) replaySession.getSpawnedEntities().get(uniqueId.toString())).getHandle();
+        Entity fakeEntity = ((CraftEntity) replaySession.getSpawnedEntities().get(entityId)).getHandle();
         fakeEntity.setOnFire(fireTicks);
 
         PacketPlayOutEntityMetadata entityMetadata = new PacketPlayOutEntityMetadata(fakeEntity.getId(), fakeEntity.getDataWatcher(), true);
@@ -38,5 +35,10 @@ public class Burning extends Recordable {
     @Override
     public void unplay(IReplaySession replaySession, Player player) {
 
+    }
+
+    @Override
+    public short getTypeId() {
+        return RecordableRegistry.BURNING;
     }
 }

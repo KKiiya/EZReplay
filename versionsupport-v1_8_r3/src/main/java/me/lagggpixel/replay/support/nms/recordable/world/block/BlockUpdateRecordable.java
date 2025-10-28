@@ -4,11 +4,13 @@ import me.lagggpixel.replay.api.data.Writeable;
 import me.lagggpixel.replay.api.replay.content.IReplaySession;
 import me.lagggpixel.replay.api.replay.data.IRecording;
 import me.lagggpixel.replay.api.replay.data.recordable.Recordable;
+import me.lagggpixel.replay.api.replay.data.recordable.RecordableRegistry;
 import me.lagggpixel.replay.api.utils.block.BlockCache;
+import me.lagggpixel.replay.api.utils.block.ChunkPos;
 import me.lagggpixel.replay.support.nms.v1_8_R3;
 import net.minecraft.server.v1_8_R3.*;
 import org.bukkit.block.Block;
-import org.bukkit.craftbukkit.v1_8_R3.CraftChunk;
+import org.bukkit.craftbukkit.v1_8_R3.CraftWorld;
 import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
@@ -18,11 +20,10 @@ import java.util.Map;
 
 public class BlockUpdateRecordable extends Recordable {
 
-    @Writeable
-    private final HashMap<org.bukkit.Chunk, List<BlockCache>> newChunks;
-    private final HashMap<org.bukkit.Chunk, List<BlockCache>> oldChunks;
+    @Writeable private final HashMap<ChunkPos, List<BlockCache>> newChunks;
+    @Writeable private final HashMap<ChunkPos, List<BlockCache>> oldChunks;
 
-    public BlockUpdateRecordable(IRecording replay, HashMap<org.bukkit.Chunk, List<BlockCache>> newChunks) {
+    public BlockUpdateRecordable(IRecording replay, HashMap<ChunkPos, List<BlockCache>> newChunks) {
         super(replay);
         this.newChunks = newChunks;
         this.oldChunks = new HashMap<>();
@@ -31,12 +32,12 @@ public class BlockUpdateRecordable extends Recordable {
     @Override
     public void play(IReplaySession replaySession, Player player) {
         if (oldChunks.isEmpty()) {
-            for (org.bukkit.Chunk chunk : newChunks.keySet()) {
+            for (ChunkPos chunk : newChunks.keySet()) {
                 List<BlockCache> newBlockCaches = newChunks.get(chunk);
                 List<BlockCache> oldBlockCaches = new ArrayList<>();
                 for (BlockCache cache : newBlockCaches) {
-                    Block block = cache.getWorld().getBlockAt(cache.getX(), cache.getY(), cache.getZ());
-                    oldBlockCaches.add(new BlockCache(cache.getWorld(), block.getType(), block.getData(), block.getLocation()));
+                    Block block = replaySession.getWorld().getBlockAt(cache.getX(), cache.getY(), cache.getZ());
+                    oldBlockCaches.add(new BlockCache(block.getType(), block.getData(), block.getLocation()));
                 }
                 oldChunks.put(chunk, oldBlockCaches);
             }
@@ -48,6 +49,11 @@ public class BlockUpdateRecordable extends Recordable {
     @Override
     public void unplay(IReplaySession replaySession, Player player) {
         updateBlocks(player, oldChunks);
+    }
+
+    @Override
+    public short getTypeId() {
+        return RecordableRegistry.BLOCK_UPDATE;
     }
 
     private void setBlocksFast(Chunk chunk, List<BlockCache> caches) {
@@ -62,10 +68,10 @@ public class BlockUpdateRecordable extends Recordable {
         }
     }
 
-    private void updateBlocks(Player player, HashMap<org.bukkit.Chunk, List<BlockCache>> chunks) {
-        for (Map.Entry<org.bukkit.Chunk, List<BlockCache>> entry : chunks.entrySet()) {
-            org.bukkit.Chunk chunk = entry.getKey();
-            Chunk c = ((CraftChunk) chunk).getHandle();
+    private void updateBlocks(Player player, HashMap<ChunkPos, List<BlockCache>> chunks) {
+        for (Map.Entry<ChunkPos, List<BlockCache>> entry : chunks.entrySet()) {
+            ChunkPos chunk = entry.getKey();
+            Chunk c = ((CraftWorld) player.getWorld()).getHandle().getChunkAt(chunk.getX(), chunk.getZ());
             List<BlockCache> cacheList = entry.getValue();
             setBlocksFast(c, cacheList);
 

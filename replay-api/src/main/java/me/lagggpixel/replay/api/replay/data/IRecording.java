@@ -1,6 +1,7 @@
 package me.lagggpixel.replay.api.replay.data;
 
 import me.lagggpixel.replay.api.replay.content.IReplaySession;
+import me.lagggpixel.replay.api.replay.serialize.BinarySerializable;
 import me.lagggpixel.replay.api.utils.Vector3d;
 import org.bukkit.World;
 import org.bukkit.block.Block;
@@ -9,13 +10,21 @@ import org.bukkit.entity.Player;
 
 import java.io.File;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
  * @author Lagggpixel
  * @since May 10, 2024
  */
-public interface IRecording {
+public interface IRecording extends BinarySerializable {
+
+    /**
+     * Get the version of the replay format
+     * @return the version number
+     */
+    double getVersion();
+
     /**
      * Get the ID of the replay
      * @return the ID object of the replay
@@ -84,14 +93,14 @@ public interface IRecording {
     /**
      * Get the players that started playing
      */
-    List<String> getPlayers();
+    List<UUID> getPlayers();
 
     /**
      * Get the first location where the player spawned
-     * @param offlinePlayer The offline player to get the data from
+     * @param entityId The custom entity id from our EntityIndex
      * @return the location Object
      */
-    Vector3d getSpawnLocation(String offlinePlayer);
+    Vector3d getSpawnLocation(short entityId);
 
     EntityIndex getEntityIndex();
 
@@ -167,4 +176,8 @@ public interface IRecording {
      * @return The IReplaySession object
      */
     IReplaySession watch(Player... players);
+
+    Map<Short, Vector3d> getSpawnLocations();
+
+    Map<String, String> getCustomData();
 }

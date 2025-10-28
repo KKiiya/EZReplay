@@ -3,8 +3,8 @@ package me.lagggpixel.replay.support.nms.recordable.entity.entity;
 import me.lagggpixel.replay.api.data.Writeable;
 import me.lagggpixel.replay.api.replay.content.IReplaySession;
 import me.lagggpixel.replay.api.replay.data.recordable.Recordable;
+import me.lagggpixel.replay.api.replay.data.recordable.RecordableRegistry;
 import me.lagggpixel.replay.api.utils.entity.AnimationType;
-import me.lagggpixel.replay.api.replay.data.recordable.entity.recordables.IAnimationRecordable;
 import me.lagggpixel.replay.api.replay.data.IRecording;
 import me.lagggpixel.replay.support.nms.v1_8_R3;
 import net.minecraft.server.v1_8_R3.*;
@@ -14,14 +14,10 @@ import org.bukkit.craftbukkit.v1_8_R3.entity.CraftEntity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.util.UUID;
-
-public class Animation extends Recordable implements IAnimationRecordable {
+public class Animation extends Recordable {
 
     @Writeable
-    private final UUID animatedEntity;
+    private final short entityId;
     @Writeable
     private final AnimationType animationType;
     @Writeable
@@ -29,14 +25,14 @@ public class Animation extends Recordable implements IAnimationRecordable {
 
     public Animation(IRecording replay, org.bukkit.entity.Entity animatedEntity, AnimationType animationType) {
         super(replay);
-        this.animatedEntity = animatedEntity.getUniqueId();
+        this.entityId = replay.getEntityIndex().getOrRegister(animatedEntity.getUniqueId());
         this.type = animatedEntity.getType();
         this.animationType = animationType;
     }
 
     @Override
     public void play(IReplaySession replaySession, Player player) {
-        Entity fakeEntity = ((CraftEntity) replaySession.getSpawnedEntities().get(animatedEntity.toString())).getHandle();
+        Entity fakeEntity = ((CraftEntity) replaySession.getSpawnedEntities().get(entityId)).getHandle();
 
         PacketPlayOutAnimation animation = new PacketPlayOutAnimation(fakeEntity, animationType.getID());
         if (animationType == AnimationType.HURT || animationType == AnimationType.CRITICAL_HIT || animationType == AnimationType.MAGIC_CRITICAL_HIT) {
@@ -69,16 +65,6 @@ public class Animation extends Recordable implements IAnimationRecordable {
 
     @Override
     public short getTypeId() {
-        return 0;
-    }
-
-    @Override
-    public UUID getUUID() {
-        return animatedEntity;
-    }
-
-    @Override
-    public AnimationType getAnimationType() {
-        return animationType;
+        return RecordableRegistry.ANIMATION;
     }
 }

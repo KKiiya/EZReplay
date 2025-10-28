@@ -5,7 +5,7 @@ import me.lagggpixel.replay.api.replay.data.EntityIndex;
 import me.lagggpixel.replay.api.replay.data.recordable.Recordable;
 import me.lagggpixel.replay.api.replay.data.IFrame;
 import me.lagggpixel.replay.api.replay.data.IRecording;
-import me.lagggpixel.replay.api.replay.serialize.BinarySerializable;
+import me.lagggpixel.replay.api.replay.data.recordable.RecordableRegistry;
 import org.bukkit.entity.Player;
 
 import java.io.DataInputStream;
@@ -99,6 +99,13 @@ public class Frame implements IFrame {
 
     @Override
     public void read(DataInputStream in, EntityIndex index) throws IOException {
+        int recordableCount = in.readShort();
+        this.recordables.clear();
 
+        for (int i = 0; i < recordableCount; i++) {
+            short typeId = in.readShort();
+            Recordable recordable = RecordableRegistry.create(typeId, in, index);
+            this.recordables.add(recordable);
+        }
     }
 }

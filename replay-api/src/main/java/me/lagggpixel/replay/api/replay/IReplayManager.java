@@ -11,9 +11,9 @@ import java.util.UUID;
 public interface IReplayManager {
     File saveReplay(IRecording replay);
 
-    void loadReplay(UUID id);
+    IRecording loadReplay(UUID id);
 
-    void loadReplay(String id);
+    IRecording loadReplay(String id);
 
     List<IRecording> getReplays();
 

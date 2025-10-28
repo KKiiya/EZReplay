@@ -10,6 +10,7 @@ import me.lagggpixel.replay.api.replay.data.IRecording;
 import me.lagggpixel.replay.api.support.IVersionSupport;
 import me.lagggpixel.replay.api.utils.Vector3d;
 import me.lagggpixel.replay.api.utils.block.BlockCache;
+import me.lagggpixel.replay.api.utils.block.ChunkPos;
 import me.lagggpixel.replay.replay.content.ReplaySession;
 import me.lagggpixel.replay.replay.tasks.EquipmentTrackerTask;
 import me.lagggpixel.replay.utils.FileUtils;
@@ -22,27 +23,30 @@ import org.bukkit.entity.Projectile;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.File;
+import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
 public class Recording implements IRecording {
 
-    @Writeable private final double VERSION = 1.0;
+    @Writeable private double VERSION = 1.0;
 
     @Getter
     public final World world;
 
-    private final HashMap<Long, HashMap<Chunk, List<BlockCache>>> blockUpdates = new HashMap<>();
+    private final HashMap<Long, HashMap<ChunkPos, List<BlockCache>>> blockUpdates = new HashMap<>();
 
     @Getter
-    @Writeable private final UUID id;
-    @Writeable private final String worldName;
-    @Writeable private final EntityIndex entityIndex;
+    @Writeable private UUID id;
+    @Writeable private String worldName;
+    @Writeable private EntityIndex entityIndex;
     @Writeable private final List<Frame> frames;
-    @Writeable private final List<String> playersThatPlayed;
-    @Writeable private final Map<String, Vector3d> spawnLocations;
-    @Writeable private final HashMap<String, Object> customData;
+    @Writeable private final List<UUID> playersThatPlayed;
+    @Writeable private final Map<Short, Vector3d> spawnLocations;
+    @Writeable private final Map<String, String> customData;
 
     private final List<Entity> spawnedEntities;
     private final String worldCloneName;
@@ -60,7 +64,7 @@ public class Recording implements IRecording {
         this.worldName = world.getName();
         this.entityIndex = new EntityIndex();
         this.spawnedEntities = new ArrayList<>();
-        this.playersThatPlayed = world.getPlayers().stream().map(p -> p.getUniqueId().toString()).collect(Collectors.toList());
+        this.playersThatPlayed = world.getPlayers().stream().map(Entity::getUniqueId).collect(Collectors.toList());
         this.spawnLocations = new HashMap<>();
         this.customData = new HashMap<>();
     }
@@ -76,6 +80,11 @@ public class Recording implements IRecording {
         this.spawnLocations = new HashMap<>();
         this.customData = new HashMap<>();
         this.worldCloneName = worldName + "-" + id;
+    }
+
+    @Override
+    public double getVersion() {
+        return VERSION;
     }
 
     @Override
@@ -123,7 +132,18 @@ public class Recording implements IRecording {
 
     @Override
     public File toFile() {
-        return null;
+        File folder = new File(Replay.getInstance().getDataFolder(), "replays");
+        if (!folder.exists() && !folder.mkdirs()) throw new IllegalStateException("Failed to create replay folder: " + folder.getAbsolutePath());
+
+        File file = new File(folder, id + ".rpl");
+        try (DataOutputStream out = new DataOutputStream(new java.io.BufferedOutputStream(new java.io.FileOutputStream(file)))) {
+            write(out);
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new RuntimeException("Failed to save replay file for ID " + id, e);
+        }
+
+        return file;
     }
 
     @Override
@@ -132,13 +152,13 @@ public class Recording implements IRecording {
     }
 
     @Override
-    public List<String> getPlayers() {
+    public List<UUID> getPlayers() {
         return playersThatPlayed;
     }
 
     @Override
-    public Vector3d getSpawnLocation(String offlinePlayer) {
-        return spawnLocations.get(offlinePlayer);
+    public Vector3d getSpawnLocation(short entityId) {
+        return spawnLocations.get(entityId);
     }
 
     @Override
@@ -182,7 +202,7 @@ public class Recording implements IRecording {
 
 
             Bukkit.getScheduler().runTaskLater(Replay.getInstance(), () -> {
-                HashMap<Chunk, List<BlockCache>> chunkUpdates = blockUpdates.get(tick);
+                HashMap<ChunkPos, List<BlockCache>> chunkUpdates = blockUpdates.get(tick);
                 if (chunkUpdates != null) {
                     lastFrame.addRecordable(vs.createBlockUpdateRecordable(this, chunkUpdates));
                 }
@@ -200,7 +220,7 @@ public class Recording implements IRecording {
         }, 5L);
 
         for (Player p : world.getPlayers()) {
-            spawnLocations.put(p.getUniqueId().toString(), Vector3d.fromBukkitLocation(p.getLocation()));
+            spawnLocations.put(entityIndex.getOrRegister(p.getUniqueId()), Vector3d.fromBukkitLocation(p.getLocation()));
         }
         equipmentTrackerTaskId = Bukkit.getScheduler().runTaskTimer(Replay.getInstance(), new EquipmentTrackerTask(this), 0, 1L).getTaskId();
     }
@@ -263,8 +283,8 @@ public class Recording implements IRecording {
     @Override
     public void addBlockUpdate(long tick, Block block) {
         blockUpdates.putIfAbsent(tick, new HashMap<>());
-        HashMap<Chunk, List<BlockCache>> chunkUpdates = blockUpdates.get(tick);
-        Chunk chunk = block.getChunk();
+        HashMap<ChunkPos, List<BlockCache>> chunkUpdates = blockUpdates.get(tick);
+        ChunkPos chunk = new ChunkPos(block.getChunk());
         chunkUpdates.putIfAbsent(chunk, new ArrayList<>());
         chunkUpdates.get(chunk).add(new BlockCache(block));
     }
@@ -285,6 +305,16 @@ public class Recording implements IRecording {
         }
         loadWorldAsyncAndTeleport(players);
         return null;
+    }
+
+    @Override
+    public Map<Short, Vector3d> getSpawnLocations() {
+        return spawnLocations;
+    }
+
+    @Override
+    public Map<String, String> getCustomData() {
+        return customData;
     }
 
     private void loadWorldAsyncAndTeleport(Player... players) {
@@ -311,5 +341,113 @@ public class Recording implements IRecording {
                 }.runTask(Replay.getInstance()); // Run on the main server thread
             }
         }.runTaskAsynchronously(Replay.getInstance());
+    }
+
+    @Override
+    public void write(DataOutputStream out) throws IOException {
+        out.writeDouble(VERSION);
+
+        // Core metadata
+        out.writeLong(id.getMostSignificantBits());
+        out.writeLong(id.getLeastSignificantBits());
+        out.writeUTF(worldName);
+
+        // Entity index
+        entityIndex.write(out);
+
+        // Frames
+        out.writeInt(frames.size());
+        for (Frame frame : frames) {
+            frame.write(out);
+        }
+
+        // Players
+        out.writeInt(playersThatPlayed.size());
+        for (UUID playerId : playersThatPlayed) {
+            out.writeLong(playerId.getMostSignificantBits());
+            out.writeLong(playerId.getLeastSignificantBits());
+        }
+
+        // Spawn locations
+        out.writeInt(spawnLocations.size());
+        for (Map.Entry<Short, Vector3d> entry : spawnLocations.entrySet()) {
+            out.writeShort(entry.getKey());
+            Vector3d loc = entry.getValue();
+            out.writeDouble(loc.getX());
+            out.writeDouble(loc.getY());
+            out.writeDouble(loc.getZ());
+            out.writeFloat(loc.getYaw());
+            out.writeFloat(loc.getPitch());
+        }
+
+        // Custom data
+        out.writeInt(customData.size());
+        for (Map.Entry<String, String> entry : customData.entrySet()) {
+            out.writeUTF(entry.getKey());
+            // For now, only support String values
+            if (entry.getValue() != null) {
+                out.writeUTF("String");
+                out.writeUTF((String) entry.getValue());
+            } else {
+                out.writeUTF("Unsupported");
+                out.writeUTF("");
+            }
+        }
+    }
+
+
+    @Override
+    public void read(DataInputStream in, EntityIndex index) throws IOException {
+        VERSION = in.readDouble();
+
+        this.id = new UUID(in.readLong(), in.readLong());
+        this.worldName = in.readUTF();
+
+        // Entity index
+        index.read(in);
+        this.entityIndex = index;
+
+        // Frames
+        frames.clear();
+        int frameCount = in.readInt();
+        for (int i = 0; i < frameCount; i++) {
+            Frame frame = new Frame(this);
+            frame.read(in, index);
+            frames.add(frame);
+        }
+
+        // Players
+        playersThatPlayed.clear();
+        int playerCount = in.readInt();
+        for (int i = 0; i < playerCount; i++) {
+            playersThatPlayed.add(new UUID(in.readLong(), in.readLong()));
+        }
+
+        // Spawn locations
+        spawnLocations.clear();
+        int spawnLocationCount = in.readInt();
+        for (int i = 0; i < spawnLocationCount; i++) {
+            short entityId = in.readShort();
+            double x = in.readDouble();
+            double y = in.readDouble();
+            double z = in.readDouble();
+            float yaw = in.readFloat();
+            float pitch = in.readFloat();
+            spawnLocations.put(entityId, new Vector3d(x, y, z, yaw, pitch));
+        }
+
+        // Custom data
+        customData.clear();
+        int customDataCount = in.readInt();
+        for (int i = 0; i < customDataCount; i++) {
+            String key = in.readUTF();
+            String type = in.readUTF();
+            if (type.equals("String")) {
+                customData.put(key, in.readUTF());
+            } else {
+                in.readUTF(); // skip value
+                customData.put(key, null);
+            }
+        }
     }
 }

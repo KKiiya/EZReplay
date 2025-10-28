@@ -2,6 +2,7 @@ package me.lagggpixel.replay.api.utils.block;
 
 import lombok.Getter;
 import lombok.Setter;
+import me.lagggpixel.replay.api.data.Writeable;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
@@ -15,15 +16,13 @@ import org.bukkit.block.Block;
 @Getter
 @Setter
 public class BlockCache {
-    private final World world;
-    private final Material material;
-    private final byte data;
-    private int x;
-    private int y;
-    private int z;
+    @Writeable private final Material material;
+    @Writeable private final byte data;
+    @Writeable private int x;
+    @Writeable private int y;
+    @Writeable private int z;
 
     public BlockCache(Block block) {
-        this.world = block.getWorld();
         this.material = block.getType();
         this.data = block.getData();
         this.x = block.getX();
@@ -31,8 +30,7 @@ public class BlockCache {
         this.z = block.getZ();
     }
 
-    public BlockCache(World world, Material material, byte data, Location location) {
-        this.world = world;
+    public BlockCache(Material material, byte data, Location location) {
         this.material = material;
         this.data = data;
         this.x = location.getBlockX();
@@ -40,8 +38,7 @@ public class BlockCache {
         this.z = location.getBlockZ();
     }
 
-    public BlockCache(World world, Material material, byte data, int x, int y, int z) {
-        this.world = world;
+    public BlockCache(Material material, byte data, int x, int y, int z) {
         this.material = material;
         this.data = data;
         this.x = x;
@@ -78,10 +75,11 @@ public class BlockCache {
     }
 
     public static BlockCache fromBukkitLocation(Location location) {
-        return new BlockCache(location.getWorld(), location.getBlock().getType(), location.getBlock().getData(), location.getBlockX(), location.getBlockY(), location.getBlockZ());
+        assert location.getWorld() != null;
+        return new BlockCache(location.getBlock().getType(), location.getBlock().getData(), location.getBlockX(), location.getBlockY(), location.getBlockZ());
     }
 
-    public Location toBukkitLocation() {
+    public Location toBukkitLocation(World world) {
         return new Location(world, x, y, z);
     }
 

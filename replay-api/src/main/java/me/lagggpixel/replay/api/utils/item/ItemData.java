@@ -1,15 +1,18 @@
 package me.lagggpixel.replay.api.utils.item;
 
+import lombok.Getter;
+import me.lagggpixel.replay.api.data.Writeable;
 import org.bukkit.Material;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemStack;
 
+@Getter
 public class ItemData {
 
-    private final Material material;
-    private final byte data;
-    private final boolean enchanted;
-    private final int amount;
+    @Writeable private final Material material;
+    @Writeable private final byte data;
+    @Writeable private final boolean enchanted;
+    @Writeable private final int amount;
 
     public ItemData(ItemStack item) {
         if (item == null) {
@@ -23,22 +26,6 @@ public class ItemData {
         this.data = item.getData().getData() != 0 ? item.getData().getData() : 0;
         this.enchanted = !item.getEnchantments().isEmpty();
         this.amount = item.getAmount();
-    }
-
-    public Material getMaterial() {
-        return material;
-    }
-
-    public byte getData() {
-        return data;
-    }
-
-    public boolean isEnchanted() {
-        return enchanted;
-    }
-
-    public int getAmount() {
-        return amount;
     }
 
     public ItemStack toItemStack() {

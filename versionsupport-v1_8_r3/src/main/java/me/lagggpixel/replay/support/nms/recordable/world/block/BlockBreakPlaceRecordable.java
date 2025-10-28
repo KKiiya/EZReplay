@@ -20,4 +20,9 @@ public class BlockBreakPlaceRecordable extends Recordable {
     public void unplay(IReplaySession replaySession, Player player) {
 
     }
+
+    @Override
+    public short getTypeId() {
+        return -1;
+    }
 }

@@ -15,7 +15,7 @@ public interface IReplaySession {
     HashMap<Player, IControls> getPlayerControls();
 
     World getWorld();
-    HashMap<String, Entity> getSpawnedEntities();
+    HashMap<Short, Entity> getSpawnedEntities();
 
     List<BukkitRunnable> startedTasks();
 

@@ -29,11 +29,11 @@ public class ReplaySession implements IReplaySession {
     private final World world;
     @Getter
     private final List<Player> playersWatching;
-    private final IRecording replay;
     private final HashMap<Player, IControls> playerControls;
+    private final IRecording replay;
 
     @Getter
-    private final HashMap<String, Entity> spawnedEntities;
+    private final HashMap<Short, Entity> spawnedEntities;
 
     private final List<BukkitRunnable> startedTasks;
 
@@ -57,9 +57,9 @@ public class ReplaySession implements IReplaySession {
 
         this.spawnedEntities = new HashMap<>();
 
-        for (String player : replay.getPlayers()) {
-            Player NPC = vs.createNPCCopy(this, Bukkit.getOfflinePlayer(UUID.fromString(player)));
-            spawnedEntities.put(player, NPC);
+        for (UUID player : replay.getPlayers()) {
+            Player NPC = vs.createNPCCopy(this, Bukkit.getOfflinePlayer(player));
+            spawnedEntities.put(replay.getEntityIndex().getOrRegister(player), NPC);
         }
 
         this.startedTasks = new ArrayList<>();
@@ -86,9 +86,9 @@ public class ReplaySession implements IReplaySession {
 
         this.spawnedEntities = new HashMap<>();
 
-        for (String player : replay.getPlayers()) {
-            Player NPC = vs.createNPCCopy(this, Bukkit.getOfflinePlayer(UUID.fromString(player)));
-            spawnedEntities.put(player, NPC);
+        for (UUID player : replay.getPlayers()) {
+            Player NPC = vs.createNPCCopy(this, Bukkit.getOfflinePlayer(player));
+            spawnedEntities.put(replay.getEntityIndex().getOrRegister(player), NPC);
         }
 
         this.startedTasks = new ArrayList<>();
@@ -137,7 +137,7 @@ public class ReplaySession implements IReplaySession {
             playerControls.put(p, new Controls(this, p));
         }
 
-        for (String replayPlayer : spawnedEntities.keySet()) {
+        for (Short replayPlayer : spawnedEntities.keySet()) {
             if (!(spawnedEntities.get(replayPlayer) instanceof Player)) continue;
             Player fakePlayer = (Player) spawnedEntities.get(replayPlayer);
             for (Player viewer : getViewers()) {

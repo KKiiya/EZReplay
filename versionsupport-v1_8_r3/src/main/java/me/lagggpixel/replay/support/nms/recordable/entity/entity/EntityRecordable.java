@@ -3,8 +3,8 @@ package me.lagggpixel.replay.support.nms.recordable.entity.entity;
 import me.lagggpixel.replay.api.data.Writeable;
 import me.lagggpixel.replay.api.replay.content.IReplaySession;
 import me.lagggpixel.replay.api.replay.data.recordable.Recordable;
-import me.lagggpixel.replay.api.replay.data.recordable.entity.IEntityRecordable;
 import me.lagggpixel.replay.api.replay.data.IRecording;
+import me.lagggpixel.replay.api.replay.data.recordable.RecordableRegistry;
 import me.lagggpixel.replay.support.nms.v1_8_R3;
 import net.minecraft.server.v1_8_R3.*;
 import org.bukkit.Location;
@@ -12,15 +12,13 @@ import org.bukkit.craftbukkit.v1_8_R3.entity.CraftEntity;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 
-import java.util.UUID;
-
 /**
  * @author Lagggpixel
  * @since May 01, 2024
  */
-public class EntityRecordable extends Recordable implements IEntityRecordable {
+public class EntityRecordable extends Recordable {
 
-    @Writeable private final UUID uniqueId;
+    @Writeable private final short entityId;
     @Writeable private final double x;
     @Writeable private final double y;
     @Writeable private final double z;
@@ -29,7 +27,7 @@ public class EntityRecordable extends Recordable implements IEntityRecordable {
 
     public EntityRecordable(IRecording replay, Entity entity) {
         super(replay);
-        this.uniqueId = entity.getUniqueId();
+        this.entityId = replay.getEntityIndex().getOrRegister(entity.getUniqueId());
         Location location = entity.getLocation();
         this.x = location.getX();
         this.y = location.getY();
@@ -40,7 +38,7 @@ public class EntityRecordable extends Recordable implements IEntityRecordable {
 
     @Override
     public void play(IReplaySession replaySession, Player player) {
-        Entity replayEntity = replaySession.getSpawnedEntities().get(uniqueId.toString());
+        Entity replayEntity = replaySession.getSpawnedEntities().get(entityId);
         net.minecraft.server.v1_8_R3.Entity entity = ((CraftEntity) replayEntity).getHandle();
         entity.setPositionRotation(x, y, z, yaw, pitch);
 
@@ -58,6 +56,6 @@ public class EntityRecordable extends Recordable implements IEntityRecordable {
 
     @Override
     public short getTypeId() {
-        return 0;
+        return RecordableRegistry.ENTITY_RECORDABLE;
     }
 }

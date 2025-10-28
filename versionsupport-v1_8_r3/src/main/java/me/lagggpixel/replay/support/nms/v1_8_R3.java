@@ -10,8 +10,9 @@ import me.lagggpixel.replay.api.replay.content.IReplaySession;
 import me.lagggpixel.replay.api.replay.data.recordable.Recordable;
 import me.lagggpixel.replay.api.replay.data.IRecording;
 import me.lagggpixel.replay.api.utils.block.BlockCache;
+import me.lagggpixel.replay.api.utils.block.ChunkPos;
 import me.lagggpixel.replay.api.utils.entity.AnimationType;
-import me.lagggpixel.replay.api.replay.data.recordable.world.block.BlockAction;
+import me.lagggpixel.replay.api.utils.block.BlockAction;
 import me.lagggpixel.replay.api.support.IVersionSupport;
 import me.lagggpixel.replay.support.nms.recordable.entity.entity.*;
 import me.lagggpixel.replay.support.nms.recordable.entity.player.Respawn;
@@ -31,7 +32,6 @@ import net.minecraft.server.v1_8_R3.*;
 import net.minecraft.server.v1_8_R3.World;
 import org.apache.commons.codec.binary.Base64;
 import org.bukkit.*;
-import org.bukkit.Chunk;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.craftbukkit.v1_8_R3.CraftServer;
@@ -105,7 +105,7 @@ public class v1_8_R3 implements IVersionSupport {
     }
 
     @Override
-    public Recordable createBlockUpdateRecordable(IRecording recording, HashMap<Chunk, List<BlockCache>> cache) {
+    public Recordable createBlockUpdateRecordable(IRecording recording, HashMap<ChunkPos, List<BlockCache>> cache) {
         return new BlockUpdateRecordable(recording, cache);
     }
 

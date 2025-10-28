@@ -8,7 +8,7 @@ import me.lagggpixel.replay.api.replay.data.recordable.Recordable;
 import me.lagggpixel.replay.api.utils.block.BlockCache;
 import me.lagggpixel.replay.api.utils.block.BlockEventType;
 import me.lagggpixel.replay.api.utils.entity.AnimationType;
-import me.lagggpixel.replay.api.replay.data.recordable.world.block.BlockAction;
+import me.lagggpixel.replay.api.utils.block.BlockAction;
 import me.lagggpixel.replay.replay.ReplayManager;
 import org.bukkit.*;
 import org.bukkit.block.Block;
@@ -36,7 +36,7 @@ public class BlockListener implements Listener {
         IRecording recording = ReplayManager.getInstance().getActiveRecording(world);
         if (recording == null) return;
 
-        BlockCache cache = new BlockCache(world, material, data, location);
+        BlockCache cache = new BlockCache(material, data, location);
         BlockAction action = determineBlockAction(e, block, recording);
 
         if (action == null) return;

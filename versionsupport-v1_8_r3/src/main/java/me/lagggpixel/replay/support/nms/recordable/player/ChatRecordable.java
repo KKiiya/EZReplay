@@ -4,22 +4,22 @@ import me.lagggpixel.replay.api.data.Writeable;
 import me.lagggpixel.replay.api.replay.content.IReplaySession;
 import me.lagggpixel.replay.api.replay.data.IRecording;
 import me.lagggpixel.replay.api.replay.data.recordable.Recordable;
-import me.lagggpixel.replay.api.replay.data.recordable.arena.IChat;
+import me.lagggpixel.replay.api.replay.data.recordable.RecordableRegistry;
 import org.bukkit.entity.Player;
 
 import java.util.UUID;
 
-public class ChatRecordable extends Recordable implements IChat {
+public class ChatRecordable extends Recordable {
 
-    @Writeable
-    private final UUID sender;
-    @Writeable
-    private final String format;
+    @Writeable private final short entityId;
+    @Writeable private final String format;
+    @Writeable private final String content;
 
     public ChatRecordable(IRecording replay, UUID sender, String format, String content) {
         super(replay);
-        this.sender = sender;
+        this.entityId = replay.getEntityIndex().getOrRegister(sender);
         this.format = format;
+        this.content = content;
     }
 
     @Override
@@ -33,12 +33,7 @@ public class ChatRecordable extends Recordable implements IChat {
     }
 
     @Override
-    public UUID getSender() {
-        return sender;
-    }
-
-    @Override
-    public String getFormat() {
-        return format;
+    public short getTypeId() {
+        return RecordableRegistry.CHAT;
     }
 }

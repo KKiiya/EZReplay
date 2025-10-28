@@ -4,6 +4,7 @@ import me.lagggpixel.replay.api.data.Writeable;
 import me.lagggpixel.replay.api.replay.content.IReplaySession;
 import me.lagggpixel.replay.api.replay.data.IRecording;
 import me.lagggpixel.replay.api.replay.data.recordable.Recordable;
+import me.lagggpixel.replay.api.replay.data.recordable.RecordableRegistry;
 import me.lagggpixel.replay.api.utils.Vector3d;
 import me.lagggpixel.replay.api.utils.entity.EntityTypes;
 import me.lagggpixel.replay.api.utils.item.ItemData;
@@ -11,33 +12,24 @@ import me.lagggpixel.replay.support.nms.v1_8_R3;
 import net.minecraft.server.v1_8_R3.*;
 import org.bukkit.craftbukkit.v1_8_R3.CraftWorld;
 import org.bukkit.craftbukkit.v1_8_R3.entity.CraftEntity;
-import org.bukkit.craftbukkit.v1_8_R3.entity.CraftItem;
 import org.bukkit.craftbukkit.v1_8_R3.inventory.CraftItemStack;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
-import java.util.UUID;
-
 public class ItemDrop extends Recordable {
 
-    @Writeable
-    private final ItemData data;
-    @Writeable
-    private final Vector3d location;
-    @Writeable
-    private final double motX;
-    @Writeable
-    private final double motY;
-    @Writeable
-    private final double motZ;
-    @Writeable
-    private final UUID uuid;
+    @Writeable private final ItemData data;
+    @Writeable private final Vector3d location;
+    @Writeable private final double motX;
+    @Writeable private final double motY;
+    @Writeable private final double motZ;
+    @Writeable private final short entityId;
 
     public ItemDrop(IRecording replay, Item item) {
         super(replay);
         this.location = Vector3d.fromBukkitLocation(item.getLocation());
-        this.uuid = item.getUniqueId();
+        this.entityId = replay.getEntityIndex().getOrRegister(item.getUniqueId());
         this.motX = item.getVelocity().getX();
         this.motY = item.getVelocity().getY();
         this.motZ = item.getVelocity().getZ();
@@ -61,16 +53,21 @@ public class ItemDrop extends Recordable {
         PacketPlayOutEntityVelocity entityVelocity = new PacketPlayOutEntityVelocity(entityItem);
         PacketPlayOutEntity.PacketPlayOutRelEntityMove movement = new PacketPlayOutEntity.PacketPlayOutRelEntityMove(entityItem.getId(), (byte) motX, (byte) motY, (byte) motZ, false);
 
-        replaySession.getSpawnedEntities().put(uuid.toString(), entityItem.getBukkitEntity());
+        replaySession.getSpawnedEntities().put(entityId, entityItem.getBukkitEntity());
         v1_8_R3.sendPackets(player, spawn, metadata, entityVelocity, movement);
     }
 
     @Override
     public void unplay(IReplaySession replaySession, Player player) {
-        Entity entity = ((CraftEntity)  replaySession.getSpawnedEntities().get(uuid.toString())).getHandle();
+        Entity entity = ((CraftEntity)  replaySession.getSpawnedEntities().get(entityId)).getHandle();
 
         PacketPlayOutEntityDestroy destroy = new PacketPlayOutEntityDestroy(entity.getId());
 
         v1_8_R3.sendPacket(player, destroy);
+    }
+
+    @Override
+    public short getTypeId() {
+        return RecordableRegistry.ITEM_DROP;
     }
 }
