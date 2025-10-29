@@ -7,7 +7,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-public class EntityIndex {
+import me.lagggpixel.replay.api.replay.serialize.BinarySerializable;
+
+public class EntityIndex implements BinarySerializable {
     private final Map<UUID, Short> uuidToId = new HashMap<>();
     private final Map<Short, UUID> idToUuid = new HashMap<>();
     private short nextId = 1; // 0 can be reserved for "invalid"
@@ -36,6 +38,11 @@ public class EntityIndex {
     }
 
     public void read(DataInputStream in) throws IOException {
+        read(in, this);
+    }
+
+    @Override
+    public void read(DataInputStream in, EntityIndex index) throws IOException {
         short size = in.readShort();
         for (int i = 0; i < size; i++) {
             short id = in.readShort();

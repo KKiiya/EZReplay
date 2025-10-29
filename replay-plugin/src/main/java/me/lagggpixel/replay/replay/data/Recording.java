@@ -11,6 +11,7 @@ import me.lagggpixel.replay.api.support.IVersionSupport;
 import me.lagggpixel.replay.api.utils.Vector3d;
 import me.lagggpixel.replay.api.utils.block.BlockCache;
 import me.lagggpixel.replay.replay.content.ReplaySession;
+import me.lagggpixel.replay.replay.tasks.EntityTrackerTask;
 import me.lagggpixel.replay.replay.tasks.EquipmentTrackerTask;
 import me.lagggpixel.replay.utils.FileUtils;
 import org.bukkit.*;
@@ -48,6 +49,7 @@ public class Recording implements IRecording {
     @Writeable private final Map<String, String> customData;
 
     private final List<Entity> spawnedEntities;
+    private final Map<Integer, Integer> trackedEntities = new HashMap<>();
     private final String worldCloneName;
     private int frameGeneratorTaskId = -1;
     private int equipmentTrackerTaskId = -1;
@@ -189,13 +191,25 @@ public class Recording implements IRecording {
 
             List<Entity> deadEntities = new ArrayList<>();
             for (Entity entity : getSpawnedEntities()) {
-                if (entity.isDead()) deadEntities.add(entity);
-                else entityIndex.getOrRegister(entity.getUniqueId());
+                if (entity.isDead()) {
+                    deadEntities.add(entity);
+                    if (EntityTrackerTask.isTracked(entity)) {
+                        int taskId = trackedEntities.get(entity.getEntityId());
+                        Bukkit.getScheduler().cancelTask(taskId);
+                        trackedEntities.remove(entity.getEntityId());
+                        EntityTrackerTask.untrackEntity(entity);
+                    }
+                } else entityIndex.getOrRegister(entity.getUniqueId());
+                
                 if (!(entity instanceof Item) && !(entity instanceof Projectile)) {
-                    lastFrame.addRecordable(vs.createEntityMovementRecordable(this, entity));
+                    if (!EntityTrackerTask.isTracked(entity)) {
+                        int taskId = Bukkit.getScheduler().runTaskTimer(Replay.getInstance(), new EntityTrackerTask(this, entity), 0L, 1L).getTaskId();
+                        trackedEntities.put(entity.getEntityId(), taskId);
+                    }
                 }
                 lastFrame.addRecordable(vs.createEntityStatusRecordable(this, entity));
             }
+
             for (Entity entity : deadEntities) {
                 lastFrame.addRecordable(vs.createEntityDeathRecordable(this, entity));
             }

@@ -42,11 +42,8 @@ public class Vector3d {
     }
 
     public boolean equals(Object var1) {
-        if (!(var1 instanceof Vector3d)) {
-            return false;
-        } else {
-            Vector3d var2 = (Vector3d) var1;
-            return this.x == var2.x && this.y == var2.y && this.z == var2.z;
-        }
+        if (!(var1 instanceof Vector3d)) return false;
+        Vector3d var2 = (Vector3d) var1;
+        return this.x == var2.x && this.y == var2.y && this.z == var2.z && this.yaw == var2.yaw && this.pitch == var2.pitch;
     }
 }
