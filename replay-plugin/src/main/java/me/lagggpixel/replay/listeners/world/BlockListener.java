@@ -10,8 +10,13 @@ import me.lagggpixel.replay.api.utils.block.BlockEventType;
 import me.lagggpixel.replay.api.utils.entity.AnimationType;
 import me.lagggpixel.replay.api.utils.block.BlockAction;
 import me.lagggpixel.replay.replay.ReplayManager;
+
+import java.util.ArrayList;
+import java.util.List;
+
 import org.bukkit.*;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.*;
@@ -52,16 +57,9 @@ public class BlockListener implements Listener {
         if (e.isCancelled()) return;
 
         // Only record physics events that actually change the block
-        Block block = e.getBlock();
-        Material changedType = e.getChangedType();
+        if (shouldIgnorePhysics(e)) return;
 
-        // Skip if the block isn't actually changing
-        if (block.getType() == changedType) return;
-
-        // Skip water/lava flow physics (too spammy)
-        if (changedType == Material.WATER || changedType == Material.LAVA) return;
-
-        e.setCancelled(callBlockChangeEvent(null, block, BlockEventType.PHYSICS));
+        e.setCancelled(callBlockChangeEvent(null, e.getBlock(), BlockEventType.PHYSICS));
     }
 
     @EventHandler
@@ -145,16 +143,16 @@ public class BlockListener implements Listener {
         e.setCancelled(callBlockChangeEvent(null, e.getBlock(), BlockEventType.FADE));
     }
 
-    @EventHandler
-    public void onBlockPlace(BlockPlaceEvent e) {
-        if (e.isCancelled()) return;
-        e.setCancelled(callBlockChangeEvent(e.getPlayer(), e.getBlock(), BlockEventType.PLACE));
-    }
-
-    @EventHandler
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onBlockBreak(BlockBreakEvent e) {
         if (e.isCancelled()) return;
         e.setCancelled(callBlockChangeEvent(e.getPlayer(), e.getBlock(), BlockEventType.BREAK));
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onBlockPlace(BlockPlaceEvent e) {
+        if (e.isCancelled()) return;
+        e.setCancelled(callBlockChangeEvent(e.getPlayer(), e.getBlock(), BlockEventType.PLACE));
     }
 
     @EventHandler
@@ -197,38 +195,142 @@ public class BlockListener implements Listener {
         recording.getLastFrame().addRecordable(animation);
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.MONITOR)
     public void onBlockInteract(PlayerInteractEvent e) {
-        /*
+        if (e.isCancelled()) return;
+        // Only handle right-click interactions with blocks
+        if (e.getAction() != Action.RIGHT_CLICK_BLOCK) return;
         if (e.getClickedBlock() == null) return;
-
+        
         Player player = e.getPlayer();
         Block block = e.getClickedBlock();
         World world = block.getWorld();
-        byte data = block.getData();
-        Location loc = block.getLocation();
-
-        BlockCache cache = new BlockCache(world, block.getType(), data, loc);
-
-        boolean isInteractable = Replay.getInstance().getVersionSupport().isInteractable(block);
-
-        IArena a = Replay.getInstance().getBedWarsAPI().getArenaUtil().getArenaByIdentifier(world.getName());
-        if (a == null) return;
-
-        IRecording recording = Replay.getInstance().getReplayManager().getActiveReplay(a);
+        
+        // Check if block is actually interactable (doors, levers, buttons, etc.)
+        if (!Replay.getInstance().getVersionSupport().isInteractable(block)) return;
+        
+        // Get active recording
+        IRecording recording = ReplayManager.getInstance().getActiveRecording(world);
         if (recording == null) return;
+        
+        // Collect all blocks that will be affected by this interaction
+        List<Block> affectedBlocks = getAffectedBlocks(block);
+        
+        // Schedule capture AFTER the interaction completes
+        // This ensures we capture the NEW state (door open, lever flipped, etc.)
+        Bukkit.getScheduler().runTask(Replay.getInstance(), () -> {
+            IFrame frame = recording.getLastFrame();
+            
+            // Record all affected blocks (e.g., both door halves)
+            for (Block affectedBlock : affectedBlocks) {
+                BlockCache cache = new BlockCache(affectedBlock);
+                recording.addBlockUpdate(frame, affectedBlock);
+                
+                // Create interaction recordable with sound for first block only
+                boolean playSound = affectedBlock.equals(block);
+                Recordable blockRecordable = Replay.getInstance().getVersionSupport()
+                        .createBlockRecordable(recording, cache, BlockAction.INTERACT, playSound);
+                frame.addRecordable(blockRecordable);
+            }
+            
+            // Add swing animation for the player
+            Recordable animation = Replay.getInstance().getVersionSupport()
+                    .createAnimationRecordable(recording, player, AnimationType.SWING_MAIN_HAND);
+            frame.addRecordable(animation);
+        });
+    }
 
-        if (!isInteractable) return;
-
-        Recordable recordable = Replay.getInstance().getVersionSupport().createBlockRecordable(recording, cache, BlockAction.INTERACT, true);
-        Recordable animation = Replay.getInstance().getVersionSupport().createAnimationRecordable(recording, player, AnimationType.SWING_MAIN_HAND);
-        recording.getLastFrame().addRecordable(recordable, animation);
-         */
+    private boolean shouldIgnorePhysics(BlockPhysicsEvent e) {
+        Material type = e.getChangedType();
+        Material current = e.getBlock().getType();
+        
+        // Ignore if no actual change
+        if (type == current) return true;
+        
+        // Ignore liquid flow
+        if (type == Material.WATER || type == Material.LAVA) return true;
+        
+        // Add more filters as needed
+        return false;
     }
 
     private boolean callBlockChangeEvent(Entity entity, Block block, BlockEventType eventType) {
         BlockChangeEvent event = new BlockChangeEvent(entity, block, eventType);
         Bukkit.getPluginManager().callEvent(event);
         return event.isCancelled();
+    }
+
+    private List<Block> getAffectedBlocks(Block block) {
+        List<Block> blocks = new ArrayList<>();
+        blocks.add(block);
+        
+        Material type = block.getType();
+        
+        // Handle double-height blocks (doors)
+        if (isDoor(type)) {
+            Block otherHalf = getOtherDoorHalf(block);
+            if (otherHalf != null) {
+                blocks.add(otherHalf);
+            }
+        }
+        // Handle double chests
+        else if (type == Material.CHEST || type == Material.TRAPPED_CHEST) {
+            Block adjacent = getAdjacentChest(block);
+            if (adjacent != null) {
+                blocks.add(adjacent);
+            }
+        }
+        
+        return blocks;
+    }
+
+    private boolean isDoor(Material type) {
+        return type == Material.LEGACY_WOODEN_DOOR ||
+            type == Material.IRON_DOOR ||
+            type == Material.SPRUCE_DOOR ||
+            type == Material.BIRCH_DOOR ||
+            type == Material.JUNGLE_DOOR ||
+            type == Material.ACACIA_DOOR ||
+            type == Material.DARK_OAK_DOOR;
+    }
+
+    /**
+     * Gets the other half of a door
+     */
+    private Block getOtherDoorHalf(Block door) {
+        byte data = door.getData();
+        boolean isUpperHalf = (data & 0x8) != 0;
+        
+        if (isUpperHalf) {
+            // Get lower half
+            Block lower = door.getRelative(BlockFace.DOWN);
+            if (isDoor(lower.getType())) {
+                return lower;
+            }
+        } else {
+            // Get upper half
+            Block upper = door.getRelative(BlockFace.UP);
+            if (isDoor(upper.getType())) {
+                return upper;
+            }
+        }
+        
+        return null;
+    }
+
+    /**
+     * Gets adjacent chest if this is a double chest
+     */
+    private Block getAdjacentChest(Block chest) {
+        Material chestType = chest.getType();
+        
+        for (BlockFace face : new BlockFace[]{BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST, BlockFace.WEST}) {
+            Block adjacent = chest.getRelative(face);
+            if (adjacent.getType() == chestType) {
+                return adjacent;
+            }
+        }
+        
+        return null;
     }
 }

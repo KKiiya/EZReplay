@@ -20,35 +20,36 @@ import java.util.Map;
 
 public class BlockUpdateRecordable extends Recordable {
 
-    @Writeable private final HashMap<ChunkPos, List<BlockCache>> newChunks;
-    @Writeable private final HashMap<ChunkPos, List<BlockCache>> oldChunks;
+    @Writeable private final List<BlockCache> newBlocks;
+    private List<BlockCache> oldBlocks;
 
-    public BlockUpdateRecordable(IRecording replay, HashMap<ChunkPos, List<BlockCache>> newChunks) {
+    public BlockUpdateRecordable(IRecording replay, List<BlockCache> newBlocks) {
         super(replay);
-        this.newChunks = newChunks;
-        this.oldChunks = new HashMap<>();
+        this.newBlocks = newBlocks;
+        this.oldBlocks = null; // Lazy initialization on first play
     }
 
     @Override
     public void play(IReplaySession replaySession, Player player) {
-        if (oldChunks.isEmpty()) {
-            for (ChunkPos chunk : newChunks.keySet()) {
-                List<BlockCache> newBlockCaches = newChunks.get(chunk);
-                List<BlockCache> oldBlockCaches = new ArrayList<>();
-                for (BlockCache cache : newBlockCaches) {
-                    Block block = replaySession.getWorld().getBlockAt(cache.getX(), cache.getY(), cache.getZ());
-                    oldBlockCaches.add(new BlockCache(block.getType(), block.getData(), block.getLocation()));
-                }
-                oldChunks.put(chunk, oldBlockCaches);
+        // Lazy capture old states on first play
+        if (oldBlocks == null) {
+            oldBlocks = new ArrayList<>(newBlocks.size());
+            for (BlockCache cache : newBlocks) {
+                Block block = replaySession.getWorld().getBlockAt(cache.getX(), cache.getY(), cache.getZ());
+                oldBlocks.add(new BlockCache(block.getType(), block.getData(), block.getLocation()));
             }
         }
 
-        updateBlocks(player, newChunks);
+        updateBlocks(player, newBlocks);
     }
 
     @Override
     public void unplay(IReplaySession replaySession, Player player) {
-        updateBlocks(player, oldChunks);
+        if (oldBlocks == null) {
+            // Should never happen, but handle gracefully
+            return;
+        }
+        updateBlocks(player, oldBlocks);
     }
 
     @Override
@@ -56,51 +57,87 @@ public class BlockUpdateRecordable extends Recordable {
         return RecordableRegistry.BLOCK_UPDATE;
     }
 
+    /**
+     * Efficiently sets multiple blocks in a chunk section
+     */
     private void setBlocksFast(Chunk chunk, List<BlockCache> caches) {
         for (BlockCache cache : caches) {
             int sectionIndex = cache.getY() >> 4;
+            
+            // Get or create chunk section
             ChunkSection cs = chunk.getSections()[sectionIndex];
             if (cs == null) {
                 cs = new ChunkSection(sectionIndex << 4, true);
                 chunk.getSections()[sectionIndex] = cs;
             }
+            
+            // Convert BlockCache to NMS block data
             IBlockData blockData = v1_8_R3.getInstance().getBlockDataToNMS(cache);
-            // Make sure local Y is calculated correctly
-            int localY = cache.getY() & 15;
-            cs.setType(cache.getX() & 15, localY, cache.getZ() & 15, blockData);
+            
+            // Set block in chunk section (local coordinates)
+            int localX = cache.getX() & 15;
+            int localY = cache.getY() & 15; // Fixed: Y also needs to be local to section
+            int localZ = cache.getZ() & 15;
+            
+            cs.setType(localX, localY, localZ, blockData);
         }
     }
 
-    private void updateBlocks(Player player, HashMap<ChunkPos, List<BlockCache>> chunks) {
-        for (Map.Entry<ChunkPos, List<BlockCache>> entry : chunks.entrySet()) {
+    /**
+     * Updates blocks for a player by grouping them into chunks
+     */
+    private void updateBlocks(Player player, List<BlockCache> caches) {
+        if (caches == null || caches.isEmpty()) {
+            return;
+        }
+
+        // Group blocks by chunk for efficient updates
+        Map<ChunkPos, List<BlockCache>> chunkMap = new HashMap<>();
+        for (BlockCache cache : caches) {
+            ChunkPos chunkPos = new ChunkPos(cache.getX() >> 4, cache.getZ() >> 4);
+            chunkMap.computeIfAbsent(chunkPos, k -> new ArrayList<>()).add(cache);
+        }
+
+        // Update each chunk
+        for (Map.Entry<ChunkPos, List<BlockCache>> entry : chunkMap.entrySet()) {
             ChunkPos chunkPos = entry.getKey();
-            Chunk chunk = ((CraftWorld) player.getWorld()).getHandle().getChunkAt(chunkPos.getX(), chunkPos.getZ());
-            List<BlockCache> cacheList = entry.getValue();
+            List<BlockCache> chunkCaches = entry.getValue();
 
-            // IMPORTANT: Update the server-side chunk FIRST
-            setBlocksFast(chunk, cacheList);
+            // Get NMS chunk
+            Chunk chunk = ((CraftWorld) player.getWorld()).getHandle()
+                    .getChunkAt(chunkPos.getX(), chunkPos.getZ());
 
-            // THEN create the packet - it will read the updated block data from the chunk
-            short[] positions = toIndexArray(cacheList);
-            PacketPlayOutMultiBlockChange packet = new PacketPlayOutMultiBlockChange(cacheList.size(), positions, chunk);
+            // IMPORTANT: Update server-side chunk FIRST
+            setBlocksFast(chunk, chunkCaches);
 
-            // Send the packet
+            // THEN create packet with updated data
+            short[] positions = toIndexArray(chunkCaches);
+            PacketPlayOutMultiBlockChange packet = new PacketPlayOutMultiBlockChange(chunkCaches.size(), positions, chunk);
+
+            // Send packet to player
             v1_8_R3.sendPacket(player, packet);
         }
     }
 
-    private short getIndex(BlockCache position) {
-        int x = position.getX() & 15;
-        int y = position.getY();
-        int z = position.getZ() & 15;
-        return (short)(x << 12 | z << 8 | y);
+    /**
+     * Converts local block position to chunk section index
+     * Format: xxxx zzzz yyyy (4 bits each for x/z, 8 bits for y)
+     */
+    private short getIndex(BlockCache cache) {
+        int x = cache.getX() & 15;
+        int y = cache.getY() & 255; // Full Y coordinate (0-255)
+        int z = cache.getZ() & 15;
+        return (short) (x << 12 | z << 8 | y);
     }
 
+    /**
+     * Converts list of BlockCache to array of position indices
+     */
     private short[] toIndexArray(List<BlockCache> caches) {
-        short[] shortArray = new short[caches.size()];
+        short[] indices = new short[caches.size()];
         for (int i = 0; i < caches.size(); i++) {
-            shortArray[i] = getIndex(caches.get(i));
+            indices[i] = getIndex(caches.get(i));
         }
-        return shortArray;
+        return indices;
     }
 }

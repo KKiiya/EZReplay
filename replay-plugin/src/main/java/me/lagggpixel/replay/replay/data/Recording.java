@@ -10,7 +10,6 @@ import me.lagggpixel.replay.api.replay.data.IRecording;
 import me.lagggpixel.replay.api.support.IVersionSupport;
 import me.lagggpixel.replay.api.utils.Vector3d;
 import me.lagggpixel.replay.api.utils.block.BlockCache;
-import me.lagggpixel.replay.api.utils.block.ChunkPos;
 import me.lagggpixel.replay.replay.content.ReplaySession;
 import me.lagggpixel.replay.replay.tasks.EquipmentTrackerTask;
 import me.lagggpixel.replay.utils.FileUtils;
@@ -37,9 +36,9 @@ public class Recording implements IRecording {
     @Getter
     public final World world;
 
-    private final HashMap<Long, HashMap<ChunkPos, List<BlockCache>>> blockUpdates = new HashMap<>();
+    private final HashMap<Long, List<BlockCache>> blockUpdates = new HashMap<>();
+    private final Map<Long, Set<Location>> recordedBlocksPerTick = new HashMap<>();
 
-    @Getter
     @Writeable private UUID id;
     @Writeable private String worldName;
     @Writeable private EntityIndex entityIndex;
@@ -202,17 +201,12 @@ public class Recording implements IRecording {
             }
             getSpawnedEntities().removeAll(deadEntities);
 
-            Bukkit.getScheduler().runTaskLater(Replay.getInstance(), () -> {
-                HashMap<ChunkPos, List<BlockCache>> chunkUpdates = blockUpdates.get(tick);
-                if (chunkUpdates != null) {
-                    chunkUpdates.replaceAll((chunk, caches) ->
-                            caches.stream()
-                                    .sorted(Comparator.comparing(cache -> cache.getMaterial() == Material.AIR))
-                                    .collect(Collectors.toList())
-                    );
-                    lastFrame.addRecordable(vs.createBlockUpdateRecordable(this, chunkUpdates));
-                }
-            }, 1L);
+            List<BlockCache> caches = blockUpdates.get(tick);
+            if (caches != null) {
+                caches.sort(Comparator.comparing(cache -> cache.getMaterial() == Material.AIR));
+                lastFrame.addRecordable(vs.createBlockUpdateRecordable(this, caches));
+                blockUpdates.remove(tick);
+            }
         }, 0, 1L).getTaskId();
 
         Bukkit.getScheduler().runTaskLater(Replay.getInstance(), () -> {
@@ -287,11 +281,19 @@ public class Recording implements IRecording {
 
     @Override
     public void addBlockUpdate(long tick, Block block) {
-        blockUpdates.putIfAbsent(tick, new HashMap<>());
-        HashMap<ChunkPos, List<BlockCache>> chunkUpdates = blockUpdates.get(tick);
-        ChunkPos chunk = new ChunkPos(block.getChunk());
-        chunkUpdates.putIfAbsent(chunk, new ArrayList<>());
-        chunkUpdates.get(chunk).add(new BlockCache(block));
+        // Deduplication check
+        recordedBlocksPerTick.putIfAbsent(tick, new HashSet<>());
+        Location loc = block.getLocation();
+        
+        if (!recordedBlocksPerTick.get(tick).add(loc)) {
+            return; // Already recorded this block on this tick
+        }
+        
+        blockUpdates.putIfAbsent(tick, new ArrayList<>());
+        List<BlockCache> chunkUpdates = blockUpdates.get(tick);
+        
+        // Capture CURRENT state before it changes
+        chunkUpdates.add(new BlockCache(block));
     }
 
     @Override

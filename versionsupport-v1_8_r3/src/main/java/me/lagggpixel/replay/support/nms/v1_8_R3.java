@@ -10,7 +10,6 @@ import me.lagggpixel.replay.api.replay.content.IReplaySession;
 import me.lagggpixel.replay.api.replay.data.recordable.Recordable;
 import me.lagggpixel.replay.api.replay.data.IRecording;
 import me.lagggpixel.replay.api.utils.block.BlockCache;
-import me.lagggpixel.replay.api.utils.block.ChunkPos;
 import me.lagggpixel.replay.api.utils.entity.AnimationType;
 import me.lagggpixel.replay.api.utils.block.BlockAction;
 import me.lagggpixel.replay.api.support.IVersionSupport;
@@ -51,7 +50,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.reflect.Field;
 import java.net.URL;
-import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -105,7 +103,7 @@ public class v1_8_R3 implements IVersionSupport {
     }
 
     @Override
-    public Recordable createBlockUpdateRecordable(IRecording recording, HashMap<ChunkPos, List<BlockCache>> cache) {
+    public Recordable createBlockUpdateRecordable(IRecording recording, List<BlockCache> cache) {
         return new BlockUpdateRecordable(recording, cache);
     }
 

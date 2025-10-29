@@ -3,7 +3,6 @@ package me.lagggpixel.replay.api.support;
 import me.lagggpixel.replay.api.replay.content.IReplaySession;
 import me.lagggpixel.replay.api.replay.data.recordable.Recordable;
 import me.lagggpixel.replay.api.utils.block.BlockCache;
-import me.lagggpixel.replay.api.utils.block.ChunkPos;
 import me.lagggpixel.replay.api.utils.entity.AnimationType;
 import me.lagggpixel.replay.api.replay.data.IRecording;
 import me.lagggpixel.replay.api.utils.block.BlockAction;
@@ -16,7 +15,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 
@@ -65,7 +63,7 @@ public interface IVersionSupport {
      * @param cache - The new block cache object
      * @return Recordable object generated containing multiblock info
      */
-    Recordable createBlockUpdateRecordable(IRecording recording, HashMap<ChunkPos, List<BlockCache>> cache);
+    Recordable createBlockUpdateRecordable(IRecording recording, List<BlockCache> cache);
 
     /**
      * Create a recordable for a block
