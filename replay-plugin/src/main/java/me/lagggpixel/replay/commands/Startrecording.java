@@ -23,6 +23,7 @@ public class Startrecording implements CommandExecutor {
         Replay.getInstance().getReplayManager().startRecording(world);
         player.sendMessage(ChatColor.GREEN + "Recording started.");
         FileUtils.saveWorldToCache(world);
+        
         return false;
     }
 }
