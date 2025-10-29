@@ -20,37 +20,48 @@ import org.bukkit.event.player.PlayerInteractEvent;
 
 public class BlockListener implements Listener {
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onBlockEvent(BlockChangeEvent e) {
-        if (e.isCancelled()) return;
-
         Block block = e.getBlock();
         World world = block.getWorld();
-        Material material = block.getType();
-        byte data = block.getData();
-        Location location = block.getLocation();
 
         if ((e.getEventType() == BlockEventType.FROM_TO || e.getEventType() == BlockEventType.PHYSICS)
-                && (material == Material.WATER || material == Material.LAVA)) return;
+                && (block.getType() == Material.WATER || block.getType() == Material.LAVA)) return;
 
         IRecording recording = ReplayManager.getInstance().getActiveRecording(world);
         if (recording == null) return;
 
-        BlockCache cache = new BlockCache(material, data, location);
+        IFrame frame = recording.getLastFrame();
         BlockAction action = determineBlockAction(e, block, recording);
-
         if (action == null) return;
 
-        IFrame frame = recording.getLastFrame();
-        recording.addBlockUpdate(frame, block);
-        Recordable recordable = Replay.getInstance().getVersionSupport().createBlockRecordable(recording, cache, action, true);
-        frame.addRecordable(recordable);
+        // Schedule block capture AFTER the event completes
+        Bukkit.getScheduler().runTask(Replay.getInstance(), () -> {
+            // Now the block state reflects the NEW state
+            recording.addBlockUpdate(frame, block);
+
+            BlockCache cache = new BlockCache(block); // Captures NEW state
+            Recordable recordable = Replay.getInstance().getVersionSupport()
+                    .createBlockRecordable(recording, cache, action, true);
+            frame.addRecordable(recordable);
+        });
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.MONITOR)
     public void onBlockPhysics(BlockPhysicsEvent e) {
         if (e.isCancelled()) return;
-        e.setCancelled(callBlockChangeEvent(null, e.getBlock(), BlockEventType.PHYSICS));
+
+        // Only record physics events that actually change the block
+        Block block = e.getBlock();
+        Material changedType = e.getChangedType();
+
+        // Skip if the block isn't actually changing
+        if (block.getType() == changedType) return;
+
+        // Skip water/lava flow physics (too spammy)
+        if (changedType == Material.WATER || changedType == Material.LAVA) return;
+
+        e.setCancelled(callBlockChangeEvent(null, block, BlockEventType.PHYSICS));
     }
 
     @EventHandler
