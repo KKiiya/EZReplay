@@ -50,6 +50,7 @@ public class Recording implements IRecording {
 
     private final List<Entity> spawnedEntities;
     private final Map<Integer, Integer> trackedEntities = new HashMap<>();
+    private final Map<Integer, Integer> trackedEquipment = new HashMap<>();
     private final String worldCloneName;
     private int frameGeneratorTaskId = -1;
     private int equipmentTrackerTaskId = -1;
@@ -181,6 +182,7 @@ public class Recording implements IRecording {
             for (Player player : world.getPlayers()) {
                 if (!EquipmentTrackerTask.isTracked(player)) {
                     equipmentTrackerTaskId = Bukkit.getScheduler().runTaskTimer(Replay.getInstance(), new EquipmentTrackerTask(this, player), 0L, 5L).getTaskId();
+                    trackedEquipment.put(player.getEntityId(), equipmentTrackerTaskId);
                 }
                 entityIndex.getOrRegister(player.getUniqueId());
                 lastFrame.addRecordable(vs.createSwordBlockRecordable(this, player));
@@ -245,6 +247,22 @@ public class Recording implements IRecording {
         Bukkit.getScheduler().cancelTask(equipmentTrackerTaskId);
         frameGeneratorTaskId = -1;
         equipmentTrackerTaskId = -1;
+        for (Player player : world.getPlayers()) {
+            int taskId = trackedEquipment.get(player.getEntityId());
+            Bukkit.getScheduler().cancelTask(taskId);
+            trackedEquipment.remove(player.getEntityId());
+            EquipmentTrackerTask.untrack(player);
+
+        }
+
+        for (Entity entity : getSpawnedEntities()) {
+            if (EntityTrackerTask.isTracked(entity)) {
+                int taskId = trackedEntities.get(entity.getEntityId());
+                Bukkit.getScheduler().cancelTask(taskId);
+                trackedEntities.remove(entity.getEntityId());
+                EntityTrackerTask.untrackEntity(entity);
+            }
+        }
     }
 
     @Override
@@ -255,6 +273,22 @@ public class Recording implements IRecording {
         Bukkit.getScheduler().cancelTask(equipmentTrackerTaskId);
         frameGeneratorTaskId = -1;
         equipmentTrackerTaskId = -1;
+        for (Player player : world.getPlayers()) {
+            int taskId = trackedEquipment.get(player.getEntityId());
+            Bukkit.getScheduler().cancelTask(taskId);
+            trackedEquipment.remove(player.getEntityId());
+            EquipmentTrackerTask.untrack(player);
+
+        }
+
+        for (Entity entity : getSpawnedEntities()) {
+            if (EntityTrackerTask.isTracked(entity)) {
+                int taskId = trackedEntities.get(entity.getEntityId());
+                Bukkit.getScheduler().cancelTask(taskId);
+                trackedEntities.remove(entity.getEntityId());
+                EntityTrackerTask.untrackEntity(entity);
+            }
+        }
         Replay.getInstance().getReplayManager().getReplays().add(this);
         Replay.getInstance().getReplayManager().removeFromActiveRecordings(world);
     }

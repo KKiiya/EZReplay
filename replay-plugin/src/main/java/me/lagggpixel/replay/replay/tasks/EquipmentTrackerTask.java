@@ -50,4 +50,8 @@ public class EquipmentTrackerTask implements Runnable {
     public static boolean isTracked(Player player) {
         return trackedPlayers.contains(player);
     }
+
+    public static void untrack(Player player) {
+        trackedPlayers.remove(player);
+    }
 }
