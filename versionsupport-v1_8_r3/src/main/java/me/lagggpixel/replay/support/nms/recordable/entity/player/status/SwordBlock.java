@@ -1,6 +1,5 @@
 package me.lagggpixel.replay.support.nms.recordable.entity.player.status;
 
-import lombok.Getter;
 import me.lagggpixel.replay.api.data.Writeable;
 import me.lagggpixel.replay.api.replay.content.IReplaySession;
 import me.lagggpixel.replay.api.replay.data.IRecording;
