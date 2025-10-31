@@ -71,7 +71,34 @@ public class BlockListener implements Listener {
 
     @EventHandler
     public void onRedstone(BlockRedstoneEvent e) {
-        callBlockChangeEvent(null, e.getBlock(), BlockEventType.REDSTONE);
+        // Don't record redstone changes - let server handle physics
+        // Only record if it's a player-initiated change (lever, button, etc.)
+        // Repeaters, comparators, and powered blocks should not be recorded
+        Block block = e.getBlock();
+        Material type = block.getType();
+        
+        // Skip automatic redstone updates
+        if (isAutomaticRedstoneComponent(type)) {
+            return;
+        }
+        
+        callBlockChangeEvent(null, block, BlockEventType.REDSTONE);
+    }
+    
+    /**
+     * Check if this is an automatic redstone component that shouldn't be recorded
+     */
+    private boolean isAutomaticRedstoneComponent(Material type) {
+        return type == Material.REDSTONE_WIRE ||
+               type == Material.REDSTONE_LAMP ||
+               type == Material.COMPARATOR ||
+               type == Material.REPEATER ||
+               type == Material.PISTON ||
+               type == Material.STICKY_PISTON ||
+               type == Material.REDSTONE_TORCH ||
+               type == Material.POWERED_RAIL ||
+               type == Material.ACTIVATOR_RAIL ||
+               type == Material.DETECTOR_RAIL;
     }
 
     @EventHandler
@@ -163,13 +190,65 @@ public class BlockListener implements Listener {
     @EventHandler
     public void onPistonExtend(BlockPistonExtendEvent e) {
         if (e.isCancelled()) return;
-        e.setCancelled(callBlockChangeEvent(null, e.getBlock(), BlockEventType.PISTON_EXTEND));
+        
+        Block piston = e.getBlock();
+        World world = piston.getWorld();
+        IRecording recording = ReplayManager.getInstance().getActiveRecording(world);
+        if (recording == null) return;
+        
+        // Record the piston base
+        callBlockChangeEvent(null, piston, BlockEventType.PISTON_EXTEND);
+        
+        // Schedule recording of piston extension block and pushed blocks
+        Bukkit.getScheduler().runTask(Replay.getInstance(), () -> {
+            IFrame frame = recording.getLastFrame();
+            
+            // Record the piston extension (head)
+            BlockFace direction = e.getDirection();
+            Block extensionBlock = piston.getRelative(direction);
+            if (extensionBlock.getType() == Material.PISTON_HEAD) {
+                recording.addBlockUpdate(frame, extensionBlock);
+            }
+            
+            // Record all pushed blocks
+            for (Block pushedBlock : e.getBlocks()) {
+                Block newLocation = pushedBlock.getRelative(direction);
+                recording.addBlockUpdate(frame, pushedBlock); // Old location (now air)
+                recording.addBlockUpdate(frame, newLocation); // New location
+            }
+        });
     }
 
     @EventHandler
     public void onPistonRetract(BlockPistonRetractEvent e) {
         if (e.isCancelled()) return;
-        e.setCancelled(callBlockChangeEvent(null, e.getBlock(), BlockEventType.PISTON_RETRACT));
+        
+        Block piston = e.getBlock();
+        World world = piston.getWorld();
+        IRecording recording = ReplayManager.getInstance().getActiveRecording(world);
+        if (recording == null) return;
+        
+        // Record the piston base
+        callBlockChangeEvent(null, piston, BlockEventType.PISTON_RETRACT);
+        
+        // Schedule recording of removed extension and pulled blocks
+        Bukkit.getScheduler().runTask(Replay.getInstance(), () -> {
+            IFrame frame = recording.getLastFrame();
+            
+            // Record the removed piston extension
+            BlockFace direction = e.getDirection();
+            Block extensionBlock = piston.getRelative(direction);
+            recording.addBlockUpdate(frame, extensionBlock); // Now air
+            
+            // Record pulled blocks (for sticky pistons)
+            if (e.isSticky()) {
+                for (Block pulledBlock : e.getBlocks()) {
+                    Block newLocation = pulledBlock.getRelative(direction.getOppositeFace());
+                    recording.addBlockUpdate(frame, pulledBlock); // Old location (now air)
+                    recording.addBlockUpdate(frame, newLocation); // New location
+                }
+            }
+        });
     }
 
     @EventHandler

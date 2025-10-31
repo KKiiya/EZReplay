@@ -15,6 +15,7 @@ public class InventoryListener implements Listener {
         if (e.getCurrentItem() == null) return;
         if (inv.getHolder() == null) return;
         if (!(inv.getHolder() instanceof IMenu)) return;
+        e.setCancelled(true);
         ((IMenu) (inv.getHolder())).onInventoryClick(e);
     }
 }

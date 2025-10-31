@@ -157,13 +157,18 @@ public class BlockInteractRecordable extends Recordable {
             case JUNGLE_DOOR:
             case ACACIA_DOOR:
             case DARK_OAK_DOOR:
-                return "random.door_open"; // or door_close depending on state
+                // Check door state to determine open/close sound
+                boolean isOpen = (data & 0x4) != 0;
+                return isOpen ? "random.door_close" : "random.door_open";
             
             case IRON_DOOR_BLOCK:
                 return "random.door_open";
             
             // Trapdoors
             case TRAP_DOOR:
+                boolean trapdoorOpen = (data & 0x4) != 0;
+                return trapdoorOpen ? "random.door_close" : "random.door_open";
+                
             case IRON_TRAPDOOR:
                 return "random.door_open";
             
@@ -174,20 +179,33 @@ public class BlockInteractRecordable extends Recordable {
             case JUNGLE_FENCE_GATE:
             case ACACIA_FENCE_GATE:
             case DARK_OAK_FENCE_GATE:
-                return "random.door_open";
+                boolean gateOpen = (data & 0x4) != 0;
+                return gateOpen ? "random.door_close" : "random.door_open";
             
-            // Redstone components
+            // Redstone components - FIXED
             case LEVER:
-                return "random.click";
+                // Lever has distinct on/off sounds
+                boolean leverOn = (data & 0x8) != 0;
+                return leverOn ? "random.click" : "random.click";
             
             case STONE_BUTTON:
-            case WOOD_BUTTON:
                 return "random.click";
+                
+            case WOOD_BUTTON:
+                return "random.wood_click";
             
+            // Pressure plates - FIXED
             case STONE_PLATE:
+                // Stone pressure plate
+                return "random.click";
+                
             case WOOD_PLATE:
+                // Wood pressure plate
+                return "random.wood_click";
+                
             case GOLD_PLATE:
             case IRON_PLATE:
+                // Metal pressure plates
                 return "random.click";
             
             // Chests
