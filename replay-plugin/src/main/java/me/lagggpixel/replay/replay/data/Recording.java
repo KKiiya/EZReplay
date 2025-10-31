@@ -107,7 +107,7 @@ public class Recording implements IRecording {
     }
 
     @Override
-    public short getVersion() {
+    public short getCodecVersion() {
         return CODEC_VERSION;
     }
 
