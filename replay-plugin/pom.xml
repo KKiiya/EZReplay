@@ -24,6 +24,10 @@
             <id>placeholder</id>
             <url>https://repo.extendedclip.com/content/repositories/placeholderapi/</url>
         </repository>
+        <repository>
+            <id>bedwars2023-releases</id>
+            <url>https://repo.tomkeuper.com/repository/releases/</url>
+        </repository>
     </repositories>
 
     <dependencies>
@@ -32,6 +36,18 @@
             <artifactId>placeholderapi</artifactId>
             <version>2.11.5</version>
             <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.tomkeuper.spigot.versionsupport</groupId>
+            <artifactId>material-version</artifactId>
+            <version>[1.5.0,)</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.tomkeuper.spigot.versionsupport</groupId>
+            <artifactId>itemstack-version</artifactId>
+            <version>[1.5.0,)</version>
+            <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>me.lagggpixel</groupId>

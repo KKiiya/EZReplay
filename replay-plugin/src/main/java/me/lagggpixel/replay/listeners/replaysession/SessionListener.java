@@ -62,6 +62,7 @@ public class SessionListener implements Listener {
 
         if (replaySession == null) return;
         if (item == null || item.getType() == Material.AIR) return;
+        e.setCancelled(true);
         if (e.getAction() != Action.RIGHT_CLICK_AIR && e.getAction() != Action.RIGHT_CLICK_BLOCK) return;
 
         IControls controls = replaySession.getPlayerControls().get(player);

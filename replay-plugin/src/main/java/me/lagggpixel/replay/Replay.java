@@ -22,9 +22,13 @@ import org.bukkit.World;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import com.tomkeuper.spigot.versionsupport.MaterialSupport;
+import com.tomkeuper.spigot.versionsupport.MaterialSupport.SupportBuilder;
+
 import java.util.Objects;
 
 public final class Replay extends JavaPlugin implements IReplay {
+
     @Getter
     private static Replay instance;
     private static String VERSION;
@@ -34,13 +38,18 @@ public final class Replay extends JavaPlugin implements IReplay {
     private IReplayManager replayManager;
     @Getter
     private IReplaySessionManager replaySessionManager;
+    @Getter
+    private MaterialSupport materialSupport;
 
     @Override
     public void onEnable() {
         instance = this;
 
         VERSION = Bukkit.getServer().getClass().getPackage().getName().split("\\.")[3];
-        loadVersionSupport();
+        if (!loadVersionSupport()) {
+            Bukkit.getPluginManager().disablePlugin(this);
+            return;
+        }
         replayManager = ReplayManager.init();
         replaySessionManager = ReplaySessionManager.init();
 
@@ -69,15 +78,19 @@ public final class Replay extends JavaPlugin implements IReplay {
 
     }
 
-    private void loadVersionSupport() {
+    private boolean loadVersionSupport() {
         switch (VERSION) {
             case "v1_8_R3":
                 versionSupport = new v1_8_R3(this);
                 break;
             default:
                 getLogger().severe("Your version " + VERSION + " is not supported, the plugin will not be loaded!");
-                onDisable();
         }
+        if (versionSupport != null) {
+            new MaterialSupport.SupportBuilder();
+            materialSupport = SupportBuilder.load();
+        }
+        return versionSupport != null;
     }
 
     private void registerListener(Listener... listeners) {

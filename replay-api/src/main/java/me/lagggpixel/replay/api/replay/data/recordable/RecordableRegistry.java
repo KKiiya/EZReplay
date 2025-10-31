@@ -37,6 +37,8 @@ public class RecordableRegistry {
     public static final short BLOCK_INTERACT = 17;
     public static final short BLOCK_UPDATE = 18;
     public static final short EXPLOSION = 19;
+    public static final short PROJECTILE_LAUNCH = 20;
+    public static final short VEHICLE_RIDE = 21;
 
 
     public static Recordable create(short typeId, DataInputStream in, EntityIndex index) {

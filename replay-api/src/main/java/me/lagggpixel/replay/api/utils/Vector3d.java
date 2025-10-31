@@ -4,6 +4,7 @@ import lombok.Getter;
 import me.lagggpixel.replay.api.data.Writeable;
 import org.bukkit.Location;
 import org.bukkit.World;
+import org.bukkit.util.Vector;
 
 /**
  * @author Lagggpixel
@@ -31,6 +32,14 @@ public class Vector3d {
         this.z = z;
         this.yaw = yaw;
         this.pitch = pitch;
+    }
+
+    public Vector3d(Vector vector) {
+        this.x = vector.getX();
+        this.y = vector.getY();
+        this.z = vector.getZ();
+        this.yaw = 0;
+        this.pitch = 0;
     }
 
     public static Vector3d fromBukkitLocation(Location loc) {

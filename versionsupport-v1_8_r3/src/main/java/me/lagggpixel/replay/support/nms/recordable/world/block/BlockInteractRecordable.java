@@ -22,13 +22,17 @@ import org.bukkit.entity.Player;
  */
 public class BlockInteractRecordable extends Recordable {
 
-    @Writeable private final BlockCache blockCache;
+    @Writeable private final Material material;
+    @Writeable private final byte data;
+    @Writeable private final BlockPosition blockPosition;
     @Writeable private final BlockAction actionType;
     @Writeable private final boolean playSound;
 
     public BlockInteractRecordable(IRecording replay, BlockCache cache, BlockAction actionType, boolean playSound) {
         super(replay);
-        this.blockCache = cache;
+        this.material = cache.getMaterial();
+        this.data = cache.getData();
+        this.blockPosition = new BlockPosition(cache.getX(), cache.getY(), cache.getZ());
         this.actionType = actionType;
         this.playSound = playSound;
     }
@@ -69,14 +73,9 @@ public class BlockInteractRecordable extends Recordable {
      */
     private void sendBlockChange(Player player) {
         // Get NMS block data
-        Block nmsBlock = CraftMagicNumbers.getBlock(blockCache.getMaterial());
-        IBlockData blockData = nmsBlock.fromLegacyData(blockCache.getData());
-        BlockPosition blockPosition = new BlockPosition(
-            blockCache.getX(),
-            blockCache.getY(),
-            blockCache.getZ()
-        );
-
+        Block nmsBlock = CraftMagicNumbers.getBlock(material);
+        IBlockData blockData = nmsBlock.fromLegacyData(data);
+        
         // Send block change packet
         PacketPlayOutBlockChange packet = new PacketPlayOutBlockChange(
             ((CraftWorld) player.getWorld()).getHandle(),
@@ -99,15 +98,10 @@ public class BlockInteractRecordable extends Recordable {
      * Plays the interaction sound (door creak, lever click, etc.)
      */
     private void playInteractionSound(Player player) {
-        Block nmsBlock = CraftMagicNumbers.getBlock(blockCache.getMaterial());
+        Block nmsBlock = CraftMagicNumbers.getBlock(material);
         Block.StepSound stepSound = nmsBlock.stepSound;
-        BlockPosition blockPosition = new BlockPosition(
-            blockCache.getX(),
-            blockCache.getY(),
-            blockCache.getZ()
-        );
-
-        String soundName = getSoundForInteraction(blockCache.getMaterial());
+        
+        String soundName = getSoundForInteraction(material);
         if (soundName == null) {
             // Fallback to step sound
             soundName = stepSound.getStepSound();
@@ -129,13 +123,8 @@ public class BlockInteractRecordable extends Recordable {
      * Plays place/break sounds
      */
     private void playPlaceBreakSound(Player player) {
-        Block nmsBlock = CraftMagicNumbers.getBlock(blockCache.getMaterial());
+        Block nmsBlock = CraftMagicNumbers.getBlock(material);
         Block.StepSound stepSound = nmsBlock.stepSound;
-        BlockPosition blockPosition = new BlockPosition(
-            blockCache.getX(),
-            blockCache.getY(),
-            blockCache.getZ()
-        );
         
         String soundName;
         if (actionType == BlockAction.BREAK) {

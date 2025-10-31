@@ -3,6 +3,7 @@ package me.lagggpixel.replay.api.utils.block;
 public enum BlockEventType {
     PLACE,
     BREAK,
+    INTERACT,
     PISTON_EXTEND,
     PISTON_RETRACT,
     IGNITE,

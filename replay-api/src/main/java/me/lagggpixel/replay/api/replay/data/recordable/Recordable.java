@@ -11,6 +11,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.util.Objects;
 import java.util.UUID;
 
 /**
@@ -36,6 +37,10 @@ public abstract class Recordable implements BinarySerializable {
 
     public void read(DataInputStream in, EntityIndex index) throws IOException {
         // Implemented in subclasses
+    }
+
+    public int getIdentityHash() {
+        return System.identityHashCode(this);
     }
 
     /**
@@ -128,6 +133,44 @@ public abstract class Recordable implements BinarySerializable {
             else if (subType.isEnum()) out.writeShort(((Enum<?>) subValue).ordinal());
             else if (subType == UUID.class) out.writeShort(replay.getEntityIndex().getOrRegister((UUID) subValue));
             else writeNestedObject(out, subValue);
+        }
+    }
+
+    
+    public static class RecordableSignature {
+        private short typeId;
+        private int hash;
+
+        public RecordableSignature(Recordable r) {
+            this.typeId = r.getTypeId();
+            this.hash = r.getIdentityHash(); // Implement this in Recordable
+        }
+
+        public short getTypeId() {
+            return typeId;
+        }
+        
+        @Override
+        public boolean equals(Object o) {
+            if (!(o instanceof RecordableSignature)) return false;
+            RecordableSignature other = (RecordableSignature) o;
+            return typeId == other.typeId && hash == other.hash;
+        }
+        
+        @Override
+        public int hashCode() {
+            return Objects.hash(typeId, hash);
+        }
+        
+        public void writeIdentifier(DataOutputStream out) throws IOException {
+            out.writeInt(hash);
+        }
+        
+        public static RecordableSignature readIdentifier(DataInputStream in, short typeId) throws IOException {
+            RecordableSignature sig = new RecordableSignature(null);
+            sig.typeId = typeId;
+            sig.hash = in.readInt();
+            return sig;
         }
     }
 }

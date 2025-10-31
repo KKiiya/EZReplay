@@ -12,6 +12,7 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Projectile;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
@@ -97,6 +98,15 @@ public interface IVersionSupport {
     Recordable createEntitySpawnRecordable(IRecording replay, Entity entity);
 
     /**
+     * Create a recordable for a launched projectile
+     * @param replay The replay where it is recorded
+     * @param shooter The entity who launched the projectile
+     * @param projectile The projectile being launched
+     * @return The recordable generated for containing the projectile launch data
+     */
+    Recordable createProjectileLaunchRecordable(IRecording replay, Entity shooter, Projectile projectile);
+
+    /**
      * Create a recordable for a spawned entity
      *
      * @param replay The replay where it is recorded
@@ -113,6 +123,14 @@ public interface IVersionSupport {
      * @return The recordable generated for containing the entity death data
      */
     Recordable createEntityDeathRecordable(IRecording replay, Entity entity);
+
+    /**
+     * Create a recordable for an entity riding a vehicle
+     * @param replay The replay where it is recorded
+     * @param entity The entity to gather the data from
+     * @return The recordable generated for containing the entity riding data
+     */
+    Recordable createEntityRideRecordable(IRecording replay, Entity vehicle, Entity entity);
 
     /**
      * Create a recordable for an entity burning

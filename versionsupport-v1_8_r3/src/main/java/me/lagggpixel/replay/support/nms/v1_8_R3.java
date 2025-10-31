@@ -24,6 +24,7 @@ import me.lagggpixel.replay.support.nms.recordable.entity.player.status.Invisibl
 import me.lagggpixel.replay.support.nms.recordable.entity.player.status.Sneaking;
 import me.lagggpixel.replay.support.nms.recordable.entity.player.status.Sprinting;
 import me.lagggpixel.replay.support.nms.recordable.entity.player.status.SwordBlock;
+import me.lagggpixel.replay.support.nms.recordable.entity.projectile.ProjectileLaunchRecordable;
 import me.lagggpixel.replay.support.nms.recordable.entity.status.Burning;
 import me.lagggpixel.replay.support.nms.recordable.world.block.BlockInteractRecordable;
 import me.lagggpixel.replay.support.nms.recordable.world.block.BlockUpdateRecordable;
@@ -42,6 +43,7 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Projectile;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.jetbrains.annotations.Nullable;
@@ -98,6 +100,11 @@ public class v1_8_R3 implements IVersionSupport {
     }
 
     @Override
+    public Recordable createEntityRideRecordable(IRecording replay, Entity vehicle, Entity entity) {
+        return new VehicleRide(replay, vehicle, entity);
+    }
+
+    @Override
     public Recordable createEquipmentRecordable(IRecording replay, LivingEntity entity) {
         return new Equipment(replay, entity);
     }
@@ -110,6 +117,11 @@ public class v1_8_R3 implements IVersionSupport {
     @Override
     public Recordable createBlockRecordable(IRecording replay, BlockCache cache, BlockAction actionType, boolean playSound) {
         return new BlockInteractRecordable(replay, cache, actionType, playSound);
+    }
+
+    @Override
+    public Recordable createProjectileLaunchRecordable(IRecording replay, Entity shooter, Projectile projectile) {
+        return new ProjectileLaunchRecordable(replay, shooter, projectile);
     }
 
     @Override

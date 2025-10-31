@@ -27,6 +27,8 @@ public class EntityTrackerTask implements Runnable {
 
     @Override
     public void run() {
+        if (!isTracked(entity)) return;
+        if (entity.getVehicle() != null) return;
         Location loc = entity.getLocation();
         Vector3d currentPosition = new Vector3d(loc.getX(), loc.getY(), loc.getZ());
 
