@@ -37,7 +37,6 @@ public class ReplayManager implements IReplayManager {
 
     public static IReplayManager init() {
         if (instance != null) throw new IllegalStateException("ReplayManager is already initialized");
-
         instance = new ReplayManager();
         // Load replays from file
         return instance;
@@ -50,7 +49,7 @@ public class ReplayManager implements IReplayManager {
 
     public IRecording loadReplay(UUID id) {
         File folder = new File(Replay.getInstance().getDataFolder(), "replays");
-        File file = new File(folder, id + ".rpl");
+        File file = new File(folder, id + ".ezrpl");
         if (!file.exists()) {
             throw new IllegalArgumentException("Replay file not found: " + file.getAbsolutePath());
         }
@@ -59,12 +58,12 @@ public class ReplayManager implements IReplayManager {
             // Recreate the recording object from file
             EntityIndex index = new EntityIndex();
 
-            double version = in.readDouble(); // Read version early to validate
+            short codecVersion = in.readShort(); // Read version early to validate
             long mostSigBits = in.readLong();
             long leastSigBits = in.readLong();
             String worldName = in.readUTF();
 
-            Recording recording = new Recording(new UUID(mostSigBits, leastSigBits), worldName, index, new ArrayList<>());
+            Recording recording = new Recording(codecVersion, new UUID(mostSigBits, leastSigBits), worldName, index, new ArrayList<>());
             recording.getEntityIndex().read(in);
 
             int frameCount = in.readShort();

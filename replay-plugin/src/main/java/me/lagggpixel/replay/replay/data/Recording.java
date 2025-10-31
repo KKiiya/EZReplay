@@ -40,7 +40,7 @@ import java.util.zip.GZIPOutputStream;
 
 public class Recording implements IRecording {
 
-    @Writeable private double VERSION = 1.0;
+    @Writeable private short CODEC_VERSION = 1;
 
     @Getter
     public final World world;
@@ -66,6 +66,10 @@ public class Recording implements IRecording {
     private boolean isRecordingChat = false;
     private boolean finished = false;
 
+    /**
+     * Use this constructor to create a new recording
+     * @param world the world to record
+     */
     public Recording(World world) {
         this.id = UUID.randomUUID();
         this.worldCloneName = world.getName()+"-"+ id;
@@ -79,7 +83,16 @@ public class Recording implements IRecording {
         this.customData = new HashMap<>();
     }
 
-    public Recording(UUID id, String worldName, EntityIndex index, List<IFrame> frames) {
+    /**
+     * Use this constructor to load a recording from file
+     * @param codec the codec version of the recording
+     * @param id the ID of the recording
+     * @param worldName the name of the world recorded
+     * @param index the entity index of the recording
+     * @param frames the frames of the recording
+     */
+    public Recording(short codec, UUID id, String worldName, EntityIndex index, List<IFrame> frames) {
+        this.CODEC_VERSION = codec;
         this.id = id;
         this.world = null;
         this.worldName = worldName;
@@ -90,11 +103,12 @@ public class Recording implements IRecording {
         this.spawnLocations = new HashMap<>();
         this.customData = new HashMap<>();
         this.worldCloneName = worldName + "-" + id;
+        this.finished = true;
     }
 
     @Override
-    public double getVersion() {
-        return VERSION;
+    public short getVersion() {
+        return CODEC_VERSION;
     }
 
     @Override
@@ -445,7 +459,7 @@ public class Recording implements IRecording {
     
     @Override
     public void write(DataOutputStream out) throws IOException {
-        out.writeDouble(VERSION);
+        out.writeShort(CODEC_VERSION);
 
         // Core metadata
         out.writeLong(id.getMostSignificantBits());
@@ -518,7 +532,7 @@ public class Recording implements IRecording {
 
     @Override
     public void read(DataInputStream in, EntityIndex index) throws IOException {
-        VERSION = in.readDouble();
+        CODEC_VERSION = in.readShort();
 
         this.id = new UUID(in.readLong(), in.readLong());
         this.worldName = in.readUTF();
