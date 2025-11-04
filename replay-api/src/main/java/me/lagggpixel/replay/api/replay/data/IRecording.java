@@ -20,10 +20,10 @@ import java.util.UUID;
 public interface IRecording extends BinarySerializable {
 
     /**
-     * Get the version of the replay format
-     * @return the version number
+     * Get the codec version of the replay format
+     * @return the codec version number of the replay
      */
-    double getVersion();
+    short getCodecVersion();
 
     /**
      * Get the ID of the replay

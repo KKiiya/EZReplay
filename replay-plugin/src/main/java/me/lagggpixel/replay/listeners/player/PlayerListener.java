@@ -21,6 +21,7 @@ public class PlayerListener implements Listener {
 
         IRecording recording = ReplayManager.getInstance().getActiveRecording(player.getWorld());
         if (recording == null) return;
+        if (player.getVehicle() != null) return;
 
         Recordable movement = Replay.getInstance().getVersionSupport().createEntityMovementRecordable(recording, player);
         recording.getLastFrame().addRecordable(movement);
