@@ -2,7 +2,6 @@ package me.lagggpixel.replay.menu;
 
 import me.lagggpixel.replay.Replay;
 import me.lagggpixel.replay.api.replay.content.IReplaySession;
-import me.lagggpixel.replay.api.support.IVersionSupport;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.entity.Entity;

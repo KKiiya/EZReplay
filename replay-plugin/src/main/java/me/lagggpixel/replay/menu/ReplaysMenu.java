@@ -42,7 +42,9 @@ public class ReplaysMenu implements IMenu {
     @Override
     public void onInventoryClick(InventoryClickEvent e) {
         ItemStack item = e.getCurrentItem();
+        if (item == null || item.getType() == Material.AIR) return;
         ItemMeta meta = item.getItemMeta();
+        if (meta == null) return;
         UUID ID = UUID.fromString(meta.getDisplayName());
 
         IRecording recording = Replay.getInstance().getReplayManager().getReplayByID(ID);

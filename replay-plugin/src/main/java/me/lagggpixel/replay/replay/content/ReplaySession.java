@@ -7,7 +7,6 @@ import me.lagggpixel.replay.api.replay.content.IControls;
 import me.lagggpixel.replay.api.replay.content.IReplaySession;
 import me.lagggpixel.replay.api.replay.data.IFrame;
 import me.lagggpixel.replay.api.replay.data.IRecording;
-import me.lagggpixel.replay.api.support.IVersionSupport;
 import me.lagggpixel.replay.utils.Utils;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
