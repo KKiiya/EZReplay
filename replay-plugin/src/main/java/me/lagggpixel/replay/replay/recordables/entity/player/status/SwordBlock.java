@@ -23,7 +23,7 @@ public class SwordBlock extends Recordable {
     }
 
     @Override
-    public void play(IReplaySession replaySession, Player player) {
+    public void play(IReplaySession replaySession) {
         EntityPlayer fakePlayer = (EntityPlayer) ((CraftEntity) replaySession.getSpawnedEntities().get(entityId)).getHandle();
         fakePlayer.getDataWatcher().watch(0, value);
 
@@ -33,7 +33,7 @@ public class SwordBlock extends Recordable {
     }
 
     @Override
-    public void unplay(IReplaySession replaySession, Player player) {
+    public void unplay(IReplaySession replaySession) {
 
     }
 

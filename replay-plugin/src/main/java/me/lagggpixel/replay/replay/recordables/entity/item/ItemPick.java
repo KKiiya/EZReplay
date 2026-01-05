@@ -33,7 +33,7 @@ public class ItemPick extends Recordable {
     }
 
     @Override
-    public void play(IReplaySession replaySession, Player player) {
+    public void play(IReplaySession replaySession) {
         int subItemId = replaySession.getSpawnedEntities().get(itemId).getEntityId();
         int subCollectorId = replaySession.getSpawnedEntities().get(collectorId).getEntityId();
 
@@ -45,7 +45,7 @@ public class ItemPick extends Recordable {
     }
 
     @Override
-    public void unplay(IReplaySession replaySession, Player player) {
+    public void unplay(IReplaySession replaySession) {
 
     }
 

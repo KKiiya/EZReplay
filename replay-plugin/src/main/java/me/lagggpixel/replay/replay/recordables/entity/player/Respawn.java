@@ -30,14 +30,14 @@ public class Respawn extends Recordable {
     }
 
     @Override
-    public void play(IReplaySession replaySession, Player player) {
+    public void play(IReplaySession replaySession) {
         Player fakePlayer = (Player) replaySession.getSpawnedEntities().get(entityId);
         Location spawnLocation = new Location(replaySession.getWorld(), x, y, z, yaw, pitch);
         v1_8_R3.getInstance().spawnFakePlayer(fakePlayer, player, spawnLocation);
     }
 
     @Override
-    public void unplay(IReplaySession replaySession, Player player) {
+    public void unplay(IReplaySession replaySession) {
 
     }
 

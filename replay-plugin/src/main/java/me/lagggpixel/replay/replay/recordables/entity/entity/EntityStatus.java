@@ -24,7 +24,7 @@ public class EntityStatus extends Recordable {
     }
 
     @Override
-    public void play(IReplaySession replaySession, Player player) {
+    public void play(IReplaySession replaySession) {
         Entity entity = replaySession.getSpawnedEntities().get(entityId);
         net.minecraft.server.v1_8_R3.Entity nmsEntity = ((CraftEntity) entity).getHandle();
 
@@ -35,7 +35,7 @@ public class EntityStatus extends Recordable {
     }
 
     @Override
-    public void unplay(IReplaySession replaySession, Player player) {
+    public void unplay(IReplaySession replaySession) {
 
     }
 

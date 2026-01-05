@@ -37,7 +37,7 @@ public class ItemDrop extends Recordable {
     }
 
     @Override
-    public void play(IReplaySession replaySession, Player player) {
+    public void play(IReplaySession replaySession) {
         World world = ((CraftWorld) replaySession.getWorld()).getHandle();
         ItemStack itemStack = data.toItemStack();
         net.minecraft.server.v1_8_R3.ItemStack nmsStack = CraftItemStack.asNMSCopy(itemStack);
@@ -58,7 +58,7 @@ public class ItemDrop extends Recordable {
     }
 
     @Override
-    public void unplay(IReplaySession replaySession, Player player) {
+    public void unplay(IReplaySession replaySession) {
         Entity entity = ((CraftEntity)  replaySession.getSpawnedEntities().get(entityId)).getHandle();
 
         PacketPlayOutEntityDestroy destroy = new PacketPlayOutEntityDestroy(entity.getId());

@@ -38,7 +38,7 @@ public class BlockInteractRecordable extends Recordable {
     }
 
     @Override
-    public void play(IReplaySession replaySession, Player player) {
+    public void play(IReplaySession replaySession) {
         if (actionType == BlockAction.INTERACT) {
             // For interactions, we need to send the actual block state change
             sendBlockChange(player);
@@ -56,7 +56,7 @@ public class BlockInteractRecordable extends Recordable {
     }
 
     @Override
-    public void unplay(IReplaySession replaySession, Player player) {
+    public void unplay(IReplaySession replaySession) {
         // For unplay, we should reverse the interaction
         // But this is typically handled by BlockUpdateRecordable
         // which restores the old block state

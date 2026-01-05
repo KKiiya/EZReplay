@@ -28,7 +28,7 @@ public class EntityDeath extends Recordable {
     }
 
     @Override
-    public void play(IReplaySession replaySession, Player player) {
+    public void play(IReplaySession replaySession) {
         net.minecraft.server.v1_8_R3.Entity fakeEntity = ((CraftEntity) replaySession.getSpawnedEntities().get(entityId)).getHandle();
         fakeEntity.dead = true;
 
@@ -42,7 +42,7 @@ public class EntityDeath extends Recordable {
     }
 
     @Override
-    public void unplay(IReplaySession replaySession, Player player) {
+    public void unplay(IReplaySession replaySession) {
         net.minecraft.server.v1_8_R3.Entity fakeEntity = ((CraftEntity) replaySession.getSpawnedEntities().get(entityId)).getHandle();
         Entity bukkitEntity = fakeEntity.getBukkitEntity();
         fakeEntity.dead = false;

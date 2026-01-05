@@ -36,7 +36,7 @@ public class Equipment extends Recordable {
     }
 
     @Override
-    public void play(IReplaySession replaySession, Player player) {
+    public void play(IReplaySession replaySession) {
         net.minecraft.server.v1_8_R3.Entity entity = ((CraftEntity) replaySession.getSpawnedEntities().get(entityId)).getHandle();
 
         ItemStack mainHand = equipment[4].toItemStack();
@@ -80,7 +80,7 @@ public class Equipment extends Recordable {
 
 
     @Override
-    public void unplay(IReplaySession replaySession, Player player) {
+    public void unplay(IReplaySession replaySession) {
 
     }
 

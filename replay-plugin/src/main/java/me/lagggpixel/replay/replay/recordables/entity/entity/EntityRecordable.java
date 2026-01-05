@@ -35,7 +35,7 @@ public class EntityRecordable extends Recordable {
     }
 
     @Override
-    public void play(IReplaySession replaySession, Player player) {
+    public void play(IReplaySession replaySession) {
         Entity replayEntity = replaySession.getSpawnedEntities().get(entityId);
         net.minecraft.server.v1_8_R3.Entity entity = ((CraftEntity) replayEntity).getHandle();
         entity.setPositionRotation(x, y, z, yaw, pitch);
@@ -48,7 +48,7 @@ public class EntityRecordable extends Recordable {
     }
 
     @Override
-    public void unplay(IReplaySession replaySession, Player player) {
+    public void unplay(IReplaySession replaySession) {
 
     }
 

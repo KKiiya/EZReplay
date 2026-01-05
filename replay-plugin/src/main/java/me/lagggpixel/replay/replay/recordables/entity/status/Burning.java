@@ -5,10 +5,7 @@ import me.lagggpixel.replay.api.replay.content.IReplaySession;
 import me.lagggpixel.replay.api.replay.data.IRecording;
 import me.lagggpixel.replay.api.replay.data.recordable.Recordable;
 import me.lagggpixel.replay.api.replay.data.recordable.RecordableRegistry;
-import me.lagggpixel.replay.support.nms.v1_8_R3;
-import net.minecraft.server.v1_8_R3.Entity;
-import net.minecraft.server.v1_8_R3.PacketPlayOutEntityMetadata;
-import org.bukkit.craftbukkit.v1_8_R3.entity.CraftEntity;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 
 public class Burning extends Recordable {
@@ -16,14 +13,14 @@ public class Burning extends Recordable {
     @Writeable private final short entityId;
     @Writeable private final int fireTicks;
 
-    public Burning(IRecording replay, org.bukkit.entity.Entity entity) {
+    public Burning(IRecording replay, Entity entity) {
         super(replay);
         this.entityId = replay.getEntityIndex().getOrRegister(entity.getUniqueId());
         this.fireTicks = entity.getFireTicks();
     }
 
     @Override
-    public void play(IReplaySession replaySession, Player player) {
+    public void play(IReplaySession replaySession) {
         Entity fakeEntity = ((CraftEntity) replaySession.getSpawnedEntities().get(entityId)).getHandle();
         fakeEntity.setOnFire(fireTicks);
 
@@ -33,7 +30,7 @@ public class Burning extends Recordable {
     }
 
     @Override
-    public void unplay(IReplaySession replaySession, Player player) {
+    public void unplay(IReplaySession replaySession) {
 
     }
 

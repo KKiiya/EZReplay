@@ -39,7 +39,7 @@ public class BlockUpdateRecordable extends Recordable {
     }
 
     @Override
-    public void play(IReplaySession replaySession, Player player) {
+    public void play(IReplaySession replaySession) {
         if (oldBlocks == null) {
             oldBlocks = new ArrayList<>(newBlocks.size());
             for (BlockCache cache : newBlocks) {
@@ -52,7 +52,7 @@ public class BlockUpdateRecordable extends Recordable {
     }
 
     @Override
-    public void unplay(IReplaySession replaySession, Player player) {
+    public void unplay(IReplaySession replaySession) {
         if (oldBlocks == null) return;
         updateBlocks(player, oldBlocks, replaySession.getWorld());
     }

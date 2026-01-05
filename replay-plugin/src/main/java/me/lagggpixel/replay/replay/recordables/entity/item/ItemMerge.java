@@ -29,7 +29,7 @@ public class ItemMerge extends Recordable {
     }
 
     @Override
-    public void play(IReplaySession replaySession, Player player) {
+    public void play(IReplaySession replaySession) {
         try {
             CraftItem entity = (CraftItem) replaySession.getSpawnedEntities().get(entityId);
             CraftItem target = (CraftItem) replaySession.getSpawnedEntities().get(targetId);
@@ -51,7 +51,7 @@ public class ItemMerge extends Recordable {
     }
 
     @Override
-    public void unplay(IReplaySession replaySession, Player player) {
+    public void unplay(IReplaySession replaySession) {
 
     }
 

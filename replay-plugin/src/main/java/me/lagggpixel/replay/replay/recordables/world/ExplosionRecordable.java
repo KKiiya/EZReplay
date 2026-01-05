@@ -33,7 +33,7 @@ public class ExplosionRecordable extends Recordable {
     }
 
     @Override
-    public void play(IReplaySession replaySession, Player player) {
+    public void play(IReplaySession replaySession) {
         Entity tnt = replaySession.getSpawnedEntities().get(entityId);
         double x = position.getX();
         double y = position.getY();
@@ -49,7 +49,7 @@ public class ExplosionRecordable extends Recordable {
     }
 
     @Override
-    public void unplay(IReplaySession replaySession, Player player) {
+    public void unplay(IReplaySession replaySession) {
 
     }
 

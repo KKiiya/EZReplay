@@ -25,7 +25,7 @@ public class VehicleRide extends Recordable {
     }
 
     @Override
-    public void play(IReplaySession replaySession, Player player) {
+    public void play(IReplaySession replaySession) {
         Entity entity = replaySession.getSpawnedEntities().get(this.entityId);
         Entity vehicle = replaySession.getSpawnedEntities().get(this.vehicleId);
         if (entity == null || vehicle == null) return;
@@ -40,7 +40,7 @@ public class VehicleRide extends Recordable {
     }
 
     @Override
-    public void unplay(IReplaySession replaySession, Player player) {
+    public void unplay(IReplaySession replaySession) {
         Entity entity = replaySession.getSpawnedEntities().get(this.entityId);
         Entity vehicle = replaySession.getSpawnedEntities().get(this.vehicleId);
         if (entity == null) return;

@@ -27,7 +27,7 @@ public class Animation extends Recordable {
     }
 
     @Override
-    public void play(IReplaySession replaySession, Player player) {
+    public void play(IReplaySession replaySession) {
         Entity fakeEntity = ((CraftEntity) replaySession.getSpawnedEntities().get(entityId)).getHandle();
 
         PacketPlayOutAnimation animation = new PacketPlayOutAnimation(fakeEntity, animationType.getID());
@@ -55,7 +55,7 @@ public class Animation extends Recordable {
     }
 
     @Override
-    public void unplay(IReplaySession replaySession, Player player) {
+    public void unplay(IReplaySession replaySession) {
 
     }
 

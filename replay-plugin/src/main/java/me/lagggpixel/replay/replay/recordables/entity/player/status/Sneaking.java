@@ -25,7 +25,7 @@ public class Sneaking extends Recordable {
     }
 
     @Override
-    public void play(IReplaySession replaySession, Player player) {
+    public void play(IReplaySession replaySession) {
         EntityPlayer fakePlayer = (EntityPlayer) ((CraftEntity) replaySession.getSpawnedEntities().get(entityId)).getHandle();
         fakePlayer.setSneaking(isSneaking);
 
@@ -35,7 +35,7 @@ public class Sneaking extends Recordable {
     }
 
     @Override
-    public void unplay(IReplaySession replaySession, Player player) {
+    public void unplay(IReplaySession replaySession) {
         EntityPlayer fakePlayer = (EntityPlayer) ((CraftEntity) replaySession.getSpawnedEntities().get(entityId)).getHandle();
         fakePlayer.setSneaking(!isSneaking);
 

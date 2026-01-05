@@ -29,9 +29,9 @@ public abstract class Recordable implements BinarySerializable {
         return replay;
     }
 
-    public abstract void play(IReplaySession replaySession, Player player);
+    public abstract void play(IReplaySession replaySession);
 
-    public abstract void unplay(IReplaySession replaySession, Player player);
+    public abstract void unplay(IReplaySession replaySession);
 
     public abstract short getTypeId();
 

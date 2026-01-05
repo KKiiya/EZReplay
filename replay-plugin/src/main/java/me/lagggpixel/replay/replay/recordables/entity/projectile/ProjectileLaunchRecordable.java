@@ -43,7 +43,7 @@ public class ProjectileLaunchRecordable extends Recordable {
     }
 
     @Override
-    public void play(IReplaySession replaySession, Player player) {
+    public void play(IReplaySession replaySession) {
         Entity shooter = replaySession.getSpawnedEntities().get(this.shooterId);
         if (shooter == null) return;
 
@@ -97,7 +97,7 @@ public class ProjectileLaunchRecordable extends Recordable {
     }
 
     @Override
-    public void unplay(IReplaySession replaySession, Player player) {
+    public void unplay(IReplaySession replaySession) {
         Entity projectile = replaySession.getSpawnedEntities().get(this.entityId);
         if (projectile != null) {
             // Send destroy packet

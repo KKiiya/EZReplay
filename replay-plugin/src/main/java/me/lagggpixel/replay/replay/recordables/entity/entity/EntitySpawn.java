@@ -7,10 +7,7 @@ import me.lagggpixel.replay.api.replay.data.recordable.Recordable;
 import me.lagggpixel.replay.api.replay.data.recordable.RecordableRegistry;
 import me.lagggpixel.replay.api.utils.Vector3d;
 import me.lagggpixel.replay.api.utils.entity.EntityTypes;
-import me.lagggpixel.replay.support.nms.v1_8_R3;
-import net.minecraft.server.v1_8_R3.*;
-import org.bukkit.craftbukkit.v1_8_R3.CraftWorld;
-import org.bukkit.craftbukkit.v1_8_R3.entity.CraftEntity;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
@@ -27,7 +24,7 @@ public class EntitySpawn extends Recordable {
     @Writeable private final short entityId;
     @Writeable private final boolean isLiving;
 
-    public EntitySpawn(IRecording replay, org.bukkit.entity.Entity entity) {
+    public EntitySpawn(IRecording replay, Entity entity) {
         super(replay);
         this.spawnLocation = Vector3d.fromBukkitLocation(entity.getLocation());
         this.customName = entity.getCustomName();
@@ -71,7 +68,7 @@ public class EntitySpawn extends Recordable {
     }
 
     @Override
-    public void unplay(IReplaySession replaySession, Player player) {
+    public void unplay(IReplaySession replaySession) {
         Entity entity = ((CraftEntity)  replaySession.getSpawnedEntities().get(entityId)).getHandle();
 
         PacketPlayOutEntityDestroy destroy = new PacketPlayOutEntityDestroy(entity.getId());
