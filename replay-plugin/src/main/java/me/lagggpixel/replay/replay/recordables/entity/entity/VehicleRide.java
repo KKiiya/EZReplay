@@ -3,6 +3,7 @@ package me.lagggpixel.replay.replay.recordables.entity.entity;
 import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.protocol.player.User;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSetPassengers;
+import java.util.UUID;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import me.lagggpixel.replay.api.data.Writeable;
@@ -24,8 +25,8 @@ public class VehicleRide extends Recordable {
 
     @Override
     public void play(IReplaySession replaySession) {
-        Entity entity = replaySession.getSpawnedEntities().get(this.entityId);
-        Entity vehicle = replaySession.getSpawnedEntities().get(this.vehicleId);
+        UUID entity = replaySession.getSpawnedEntities().get(this.entityId);
+        UUID vehicle = replaySession.getSpawnedEntities().get(this.vehicleId);
         if (entity == null || vehicle == null) return;
         
         int fakeVehicleId = vehicleId + 100000;
@@ -41,8 +42,8 @@ public class VehicleRide extends Recordable {
 
     @Override
     public void unplay(IReplaySession replaySession) {
-        Entity entity = replaySession.getSpawnedEntities().get(this.entityId);
-        Entity vehicle = replaySession.getSpawnedEntities().get(this.vehicleId);
+        UUID entity = replaySession.getSpawnedEntities().get(this.entityId);
+        UUID vehicle = replaySession.getSpawnedEntities().get(this.vehicleId);
         if (entity == null || vehicle == null) return;
         
         int fakeVehicleId = vehicleId + 100000;

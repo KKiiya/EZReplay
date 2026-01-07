@@ -48,7 +48,7 @@ public class ProjectileLaunchRecordable extends Recordable {
 
     @Override
     public void play(IReplaySession replaySession) {
-        Entity shooter = replaySession.getSpawnedEntities().get(this.shooterId);
+        UUID shooter = replaySession.getSpawnedEntities().get(this.shooterId);
         if (shooter == null) return;
 
         int fakeEntityId = entityId + 100000;

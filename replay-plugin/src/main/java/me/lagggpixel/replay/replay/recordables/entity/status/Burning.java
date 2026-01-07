@@ -15,6 +15,7 @@ import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 public class Burning extends Recordable {
 
@@ -29,9 +30,6 @@ public class Burning extends Recordable {
 
     @Override
     public void play(IReplaySession replaySession) {
-        Entity fakeEntity = replaySession.getSpawnedEntities().get(entityId);
-        if (fakeEntity != null) fakeEntity.setFireTicks(fireTicks);
-        
         int fakeEntityId = entityId + 100000;
 
         List<EntityData<?>> metadata = new ArrayList<>();

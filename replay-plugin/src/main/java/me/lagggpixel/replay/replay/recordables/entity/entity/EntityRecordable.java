@@ -40,8 +40,6 @@ public class EntityRecordable extends Recordable {
 
     @Override
     public void play(IReplaySession replaySession) {
-        Entity replayEntity = replaySession.getSpawnedEntities().get(entityId);
-        if (replayEntity != null) replayEntity.teleport(new Location(replaySession.getWorld(), x, y, z, yaw, pitch));
         int fakeEntityId = entityId + 100000;
 
         WrapperPlayServerEntityTeleport teleportPacket = new WrapperPlayServerEntityTeleport(fakeEntityId, new Vector3d(x, y, z), yaw, pitch, true);

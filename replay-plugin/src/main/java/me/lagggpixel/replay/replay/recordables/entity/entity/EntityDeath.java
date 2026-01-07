@@ -15,6 +15,7 @@ import me.lagggpixel.replay.api.replay.content.IReplaySession;
 import me.lagggpixel.replay.api.replay.data.IRecording;
 import me.lagggpixel.replay.api.replay.data.recordable.Recordable;
 import me.lagggpixel.replay.api.replay.data.recordable.RecordableRegistry;
+
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
@@ -33,8 +34,6 @@ public class EntityDeath extends Recordable {
 
     @Override
     public void play(IReplaySession replaySession) {
-        Entity fakeEntity = replaySession.getSpawnedEntities().get(entityId);
-        if (fakeEntity != null) fakeEntity.remove();
         int fakeEntityId = entityId + 100000;
         
         for (Player viewer : replaySession.getViewers()) {

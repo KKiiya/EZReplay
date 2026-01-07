@@ -33,7 +33,7 @@ public class EntityListener implements Listener {
 
         if (entity instanceof Item) return;
         if (entity instanceof Projectile) return;
-        if (entity instanceof LivingEntity) recording.getSpawnedEntities().add(entity);
+        if (entity instanceof LivingEntity) recording.getSpawnedEntities().add(entity.getEntityId());
 
         Recordable spawn = new EntitySpawn(recording, entity);
         recording.getLastFrame().addRecordable(spawn);
@@ -63,7 +63,7 @@ public class EntityListener implements Listener {
         IRecording recording = Replay.getInstance().getReplayManager().getActiveRecording(world);
         if (recording == null) return;
 
-        recording.getSpawnedEntities().remove(entity);
+        recording.getSpawnedEntities().remove(entity.getEntityId());
 
         Recordable recordable = new EntityDeath(recording, entity);
         recording.getLastFrame().addRecordable(recordable);
@@ -123,7 +123,7 @@ public class EntityListener implements Listener {
         IRecording recording = Replay.getInstance().getReplayManager().getActiveRecording(world);
         if (recording == null) return;
         if (entity instanceof LivingEntity) return;
-        recording.getSpawnedEntities().add(entity);
+        recording.getSpawnedEntities().add(entity.getEntityId());
 
         Recordable spawn = new EntitySpawn(recording, entity);
         recording.getLastFrame().addRecordable(spawn);

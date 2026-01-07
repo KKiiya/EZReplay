@@ -99,19 +99,9 @@ public class BlockInteractRecordable extends Recordable {
         Sound sound = getSoundForInteraction(stateType, data);
         if (sound == null) return;
         
-        com.github.retrooper.packetevents.util.Vector3i soundPosition = new com.github.retrooper.packetevents.util.Vector3i(
-            blockPosition.getX() * 8,
-            blockPosition.getY() * 8,
-            blockPosition.getZ() * 8
-        );
+        com.github.retrooper.packetevents.util.Vector3i soundPosition = new com.github.retrooper.packetevents.util.Vector3i(blockPosition.getX() * 8, blockPosition.getY() * 8, blockPosition.getZ() * 8 );
         
-        WrapperPlayServerSoundEffect soundPacket = new WrapperPlayServerSoundEffect(
-            sound,
-            SoundCategory.BLOCK,
-            soundPosition,
-            1.0f,
-            1.0f
-        );
+        WrapperPlayServerSoundEffect soundPacket = new WrapperPlayServerSoundEffect(sound, SoundCategory.BLOCK, soundPosition, 1.0f, 1.0f);
         
         for (Player player : players) {
             User user = PacketEvents.getAPI().getPlayerManager().getUser(player);
@@ -130,19 +120,9 @@ public class BlockInteractRecordable extends Recordable {
         Sound sound = getSoundForPlaceBreak(stateType, actionType);
         if (sound == null) return;
         
-        com.github.retrooper.packetevents.util.Vector3i soundPosition = new com.github.retrooper.packetevents.util.Vector3i(
-            blockPosition.getX() * 8,
-            blockPosition.getY() * 8,
-            blockPosition.getZ() * 8
-        );
+        com.github.retrooper.packetevents.util.Vector3i soundPosition = new com.github.retrooper.packetevents.util.Vector3i(blockPosition.getX() * 8, blockPosition.getY() * 8, blockPosition.getZ() * 8);
         
-        WrapperPlayServerSoundEffect soundPacket = new WrapperPlayServerSoundEffect(
-            sound,
-            SoundCategory.BLOCK,
-            soundPosition,
-            1.0f,
-            0.8f
-        );
+        WrapperPlayServerSoundEffect soundPacket = new WrapperPlayServerSoundEffect(sound, SoundCategory.BLOCK, soundPosition, 1.0f, 0.8f);
         
         for (Player player : players) {
             User user = PacketEvents.getAPI().getPlayerManager().getUser(player);
@@ -160,21 +140,15 @@ public class BlockInteractRecordable extends Recordable {
         // Doors
         if (blockName.contains("door") && !blockName.contains("trapdoor")) {
             boolean doorOpen = (blockData & 0x4) != 0;
-            if (materialType == MaterialType.METAL || blockName.contains("iron")) {
-                return doorOpen ? Sounds.BLOCK_IRON_DOOR_CLOSE : Sounds.BLOCK_IRON_DOOR_OPEN;
-            } else {
-                return doorOpen ? Sounds.BLOCK_WOODEN_DOOR_CLOSE : Sounds.BLOCK_WOODEN_DOOR_OPEN;
-            }
+            if (materialType == MaterialType.METAL || blockName.contains("iron")) return doorOpen ? Sounds.BLOCK_IRON_DOOR_CLOSE : Sounds.BLOCK_IRON_DOOR_OPEN;
+            else return doorOpen ? Sounds.BLOCK_WOODEN_DOOR_CLOSE : Sounds.BLOCK_WOODEN_DOOR_OPEN;
         }
         
         // Trapdoors
         if (blockName.contains("trapdoor")) {
             boolean trapdoorOpen = (blockData & 0x4) != 0;
-            if (materialType == MaterialType.METAL || blockName.contains("iron")) {
-                return trapdoorOpen ? Sounds.BLOCK_IRON_TRAPDOOR_CLOSE : Sounds.BLOCK_IRON_TRAPDOOR_OPEN;
-            } else {
-                return trapdoorOpen ? Sounds.BLOCK_WOODEN_TRAPDOOR_CLOSE : Sounds.BLOCK_WOODEN_TRAPDOOR_OPEN;
-            }
+            if (materialType == MaterialType.METAL || blockName.contains("iron")) return trapdoorOpen ? Sounds.BLOCK_IRON_TRAPDOOR_CLOSE : Sounds.BLOCK_IRON_TRAPDOOR_OPEN;
+            else return trapdoorOpen ? Sounds.BLOCK_WOODEN_TRAPDOOR_CLOSE : Sounds.BLOCK_WOODEN_TRAPDOOR_OPEN;
         }
         
         // Fence Gates
@@ -184,38 +158,25 @@ public class BlockInteractRecordable extends Recordable {
         }
         
         // Redstone components
-        if (blockName.equals("lever")) {
-            return Sounds.BLOCK_LEVER_CLICK;
-        }
+        if (blockName.equals("lever")) return Sounds.BLOCK_LEVER_CLICK;
+        
         
         if (blockName.contains("button")) {
-            if (materialType == MaterialType.WOOD || materialType == MaterialType.NETHER_WOOD) {
-                return Sounds.BLOCK_WOODEN_BUTTON_CLICK_ON;
-            } else {
-                return Sounds.BLOCK_STONE_BUTTON_CLICK_ON;
-            }
+            if (materialType == MaterialType.WOOD || materialType == MaterialType.NETHER_WOOD) return Sounds.BLOCK_WOODEN_BUTTON_CLICK_ON;
+            else return Sounds.BLOCK_STONE_BUTTON_CLICK_ON;
         }
         
         // Pressure plates
         if (blockName.contains("pressure_plate")) {
             boolean pressed = (blockData & 0x1) != 0;
-            if (materialType == MaterialType.WOOD || materialType == MaterialType.NETHER_WOOD) {
-                return pressed ? Sounds.BLOCK_WOODEN_PRESSURE_PLATE_CLICK_ON : Sounds.BLOCK_WOODEN_PRESSURE_PLATE_CLICK_OFF;
-            } else if (materialType == MaterialType.METAL || materialType == MaterialType.HEAVY_METAL) {
-                return pressed ? Sounds.BLOCK_METAL_PRESSURE_PLATE_CLICK_ON : Sounds.BLOCK_METAL_PRESSURE_PLATE_CLICK_OFF;
-            } else {
-                return pressed ? Sounds.BLOCK_STONE_PRESSURE_PLATE_CLICK_ON : Sounds.BLOCK_STONE_PRESSURE_PLATE_CLICK_OFF;
-            }
+            if (materialType == MaterialType.WOOD || materialType == MaterialType.NETHER_WOOD) return pressed ? Sounds.BLOCK_WOODEN_PRESSURE_PLATE_CLICK_ON : Sounds.BLOCK_WOODEN_PRESSURE_PLATE_CLICK_OFF;
+            else if (materialType == MaterialType.METAL || materialType == MaterialType.HEAVY_METAL) return pressed ? Sounds.BLOCK_METAL_PRESSURE_PLATE_CLICK_ON : Sounds.BLOCK_METAL_PRESSURE_PLATE_CLICK_OFF;
+            else return pressed ? Sounds.BLOCK_STONE_PRESSURE_PLATE_CLICK_ON : Sounds.BLOCK_STONE_PRESSURE_PLATE_CLICK_OFF;
         }
         
         // Chests
-        if (blockName.equals("chest") || blockName.equals("trapped_chest")) {
-            return Sounds.BLOCK_CHEST_OPEN;
-        }
-        if (blockName.equals("ender_chest")) {
-            return Sounds.BLOCK_ENDER_CHEST_OPEN;
-        }
-        
+        if (blockName.equals("chest") || blockName.equals("trapped_chest")) return Sounds.BLOCK_CHEST_OPEN;
+        if (blockName.equals("ender_chest")) return Sounds.BLOCK_ENDER_CHEST_OPEN;
         return null;
     }
     

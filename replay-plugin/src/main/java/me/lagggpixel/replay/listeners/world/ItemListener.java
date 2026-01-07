@@ -45,7 +45,7 @@ public class ItemListener {
             IRecording recording = Replay.getInstance().getReplayManager().getActiveRecording(p.getWorld());
             if (recording == null) return;
 
-            recording.getSpawnedEntities().remove(item);
+            recording.getSpawnedEntities().remove(item.getEntityId());
             Recordable recordable = new ItemPick(recording, item, p);
             recording.getLastFrame().addRecordable(recordable);
         }
@@ -59,7 +59,7 @@ public class ItemListener {
             IRecording recording = Replay.getInstance().getReplayManager().getActiveRecording(entity.getWorld());
             if (recording == null) return;
 
-            recording.getSpawnedEntities().remove(entity);
+            recording.getSpawnedEntities().remove(entity.getEntityId());
             Recordable recordable = new ItemMerge(recording, entity, target);
             recording.getLastFrame().addRecordable(recordable);
         }
@@ -92,7 +92,7 @@ public class ItemListener {
             IRecording recording = Replay.getInstance().getReplayManager().getActiveRecording(entity.getWorld());
             if (recording == null) return;
 
-            recording.getSpawnedEntities().remove(item);
+            recording.getSpawnedEntities().remove(item.getEntityId());
             Recordable recordable = new ItemPick(recording, item, entity);
             recording.getLastFrame().addRecordable(recordable);
         }
@@ -106,7 +106,7 @@ public class ItemListener {
             IRecording recording = Replay.getInstance().getReplayManager().getActiveRecording(entity.getWorld());
             if (recording == null) return;
 
-            recording.getSpawnedEntities().remove(entity);
+            recording.getSpawnedEntities().remove(entity.getEntityId());
             Recordable recordable = new ItemMerge(recording, entity, target);
             recording.getLastFrame().addRecordable(recordable);
         }

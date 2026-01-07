@@ -13,6 +13,7 @@ import org.bukkit.inventory.meta.SkullMeta;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
+import java.util.UUID;
 
 import static me.lagggpixel.replay.utils.Utils.c;
 
@@ -36,7 +37,7 @@ public class TrackerMenu implements IMenu {
 
     private void addContents() {
         for (Short uuid : replaySession.getSpawnedEntities().keySet()) {
-            Entity entity = replaySession.getSpawnedEntities().get(uuid);
+            UUID entity = replaySession.getSpawnedEntities().get(uuid);
             if (!(entity instanceof Player)) continue;
 
             Player player = (Player) replaySession.getSpawnedEntities().get(uuid);

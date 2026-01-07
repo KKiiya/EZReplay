@@ -20,6 +20,7 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
+import java.util.UUID;
 
 public class ExplosionRecordable extends Recordable {
 
@@ -36,7 +37,7 @@ public class ExplosionRecordable extends Recordable {
 
     @Override
     public void play(IReplaySession replaySession) {
-        Entity tnt = replaySession.getSpawnedEntities().get(entityId);
+        UUID tnt = replaySession.getSpawnedEntities().get(entityId);
         int x = (int) position.getX();
         int y = (int) position.getY();
         int z = (int) position.getZ();

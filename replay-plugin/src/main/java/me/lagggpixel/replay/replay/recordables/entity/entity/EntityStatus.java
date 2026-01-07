@@ -16,18 +16,19 @@ public class EntityStatus extends Recordable {
 
     @Writeable private final short entityId;
     @Writeable private final boolean isDead;
+    @Writeable private final boolean isLiving;
 
     public EntityStatus(IRecording replay, Entity entity) {
         super(replay);
         this.entityId = replay.getEntityIndex().getOrRegister(entity.getUniqueId());
         this.isDead = entity.isDead();
+        this.isLiving = entity instanceof LivingEntity;
     }
 
     @Override
     public void play(IReplaySession replaySession) {
-        Entity entity = replaySession.getSpawnedEntities().get(entityId);
         
-        if (!(entity instanceof LivingEntity) && isDead) {
+        if (!isLiving && isDead) {
             int fakeEntityId = entityId + 100000;
 
             WrapperPlayServerDestroyEntities destroyPacket = new WrapperPlayServerDestroyEntities(fakeEntityId);

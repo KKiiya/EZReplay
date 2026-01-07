@@ -127,4 +127,14 @@ public class PacketUtils {
         skull.setNBT(tag);
         return SpigotConversionUtil.toBukkitItemStack(skull);
     }
+
+    public static ItemStack getSkull(UUID uuid) {
+        com.github.retrooper.packetevents.protocol.item.ItemStack skull = new com.github.retrooper.packetevents.protocol.item.ItemStack.Builder().type(ItemTypes.PLAYER_HEAD).amount(1).build();
+        NBTCompound tag = skull.getOrCreateTag();
+        NBTCompound skullOwner = new NBTCompound();
+        skullOwner.setTag("Id", new NBTString(uuid.toString()));
+        tag.setTag("SkullOwner", skullOwner);
+        skull.setNBT(tag);
+        return SpigotConversionUtil.toBukkitItemStack(skull);
+    }
 }
