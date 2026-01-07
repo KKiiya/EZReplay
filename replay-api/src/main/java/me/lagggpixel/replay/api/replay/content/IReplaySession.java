@@ -1,14 +1,13 @@
 package me.lagggpixel.replay.api.replay.content;
 
 import me.lagggpixel.replay.api.replay.data.IRecording;
+
 import org.bukkit.World;
-import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.HashMap;
 import java.util.List;
-import java.util.UUID;
 
 public interface IReplaySession {
     IRecording getReplay();
@@ -16,7 +15,8 @@ public interface IReplaySession {
     HashMap<Player, IControls> getPlayerControls();
 
     World getWorld();
-    HashMap<Short, UUID> getSpawnedEntities();
+    HashMap<Short, RecPlayer> getReplayPlayers();
+    HashMap<Short, RecEntity> getSpawnedEntities();
 
     List<BukkitRunnable> startedTasks();
 

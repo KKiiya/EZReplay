@@ -58,6 +58,7 @@ public class Recording implements IRecording {
     @Writeable private EntityIndex entityIndex;
     @Writeable private final List<IFrame> frames;
     @Writeable private final List<UUID> playersThatPlayed;
+    @Writeable private final Map<Short, String> playerNames;
     @Writeable private final Map<Short, Vector3d> spawnLocations;
     @Writeable private final Map<String, String> customData;
 
@@ -86,6 +87,7 @@ public class Recording implements IRecording {
         this.playersThatPlayed = world.getPlayers().stream().map(Entity::getUniqueId).collect(Collectors.toList());
         this.spawnLocations = new HashMap<>();
         this.customData = new HashMap<>();
+        this.playerNames = new HashMap<>();
     }
 
     /**
@@ -107,6 +109,7 @@ public class Recording implements IRecording {
         this.playersThatPlayed = new ArrayList<>();
         this.spawnLocations = new HashMap<>();
         this.customData = new HashMap<>();
+        this.playerNames = new HashMap<>();
         this.worldCloneName = worldName + "-" + id;
         this.finished = true;
     }
@@ -218,7 +221,9 @@ public class Recording implements IRecording {
                     ).getTaskId();
                     trackedEquipment.put(player.getEntityId(), equipmentTrackerTaskId);
                 }
+                if (!playersThatPlayed.contains(player.getUniqueId())) playersThatPlayed.add(player.getUniqueId());
                 entityIndex.getOrRegister(player.getUniqueId());
+                playerNames.put(entityIndex.getOrRegister(player.getUniqueId()), player.getName());
                 lastFrame.addRecordable(new SwordBlock(this, player));
                 if (player.isSneaking()) lastFrame.addRecordable(new Sneaking(this, player.getUniqueId(), true));
                 if (player.isSprinting()) lastFrame.addRecordable(new Sprinting(this, player.getUniqueId(), true));
@@ -573,6 +578,7 @@ public class Recording implements IRecording {
         int playerCount = in.readInt();
         for (int i = 0; i < playerCount; i++) {
             playersThatPlayed.add(new UUID(in.readLong(), in.readLong()));
+            playerNames.put(in.readShort(), in.readUTF());
         }
 
         // Spawn locations
@@ -599,5 +605,11 @@ public class Recording implements IRecording {
                 customData.put(key, null);
             }
         }
+    }
+
+    @Override
+    public String getPlayerName(UUID player) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'getPlayerName'");
     }
 }

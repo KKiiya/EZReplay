@@ -1,19 +1,16 @@
 package me.lagggpixel.replay.menu;
 
 import me.lagggpixel.replay.api.replay.content.IReplaySession;
+import me.lagggpixel.replay.api.replay.content.RecPlayer;
 import me.lagggpixel.replay.utils.PacketUtils;
 import org.bukkit.Bukkit;
-import org.bukkit.GameMode;
-import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.SkullMeta;
 import org.jetbrains.annotations.NotNull;
-
 import java.util.Arrays;
-import java.util.UUID;
 
 import static me.lagggpixel.replay.utils.Utils.c;
 
@@ -36,15 +33,12 @@ public class TrackerMenu implements IMenu {
     }
 
     private void addContents() {
-        for (Short uuid : replaySession.getSpawnedEntities().keySet()) {
-            UUID entity = replaySession.getSpawnedEntities().get(uuid);
-            if (!(entity instanceof Player)) continue;
+        for (Short uuid : replaySession.getReplayPlayers().keySet()) {
+            RecPlayer player = replaySession.getReplayPlayers().get(uuid);
 
-            Player player = (Player) replaySession.getSpawnedEntities().get(uuid);
-
-            ItemStack stack = PacketUtils.getSkull(player.getUniqueId().toString());
+            ItemStack stack = player.getSkinHead();
             SkullMeta skullMeta = (SkullMeta) stack.getItemMeta();
-            skullMeta.setDisplayName(player.getDisplayName());
+            skullMeta.setDisplayName(player.getName());
             skullMeta.setLore(Arrays.asList(
                     c("&7Health: " + "&a" + player.getHealth()),
                     "",
@@ -67,16 +61,8 @@ public class TrackerMenu implements IMenu {
         } catch (NumberFormatException ex) {
             return;
         }
-        Player target = (Player) replaySession.getSpawnedEntities().get(id);
-        switch (e.getClick()) {
-            case RIGHT:
-            case SHIFT_RIGHT:
-                player.setGameMode(GameMode.SPECTATOR);
-                player.setSpectatorTarget(target);
-                break;
-            default:
-                player.teleport(target);
-        }
+        RecPlayer target = replaySession.getReplayPlayers().get(id);
+        player.teleport(target.getPosition().toBukkitLocation(player.getWorld()));
         player.closeInventory();
     }
 

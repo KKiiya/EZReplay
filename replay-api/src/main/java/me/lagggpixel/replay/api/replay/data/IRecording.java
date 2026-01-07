@@ -180,4 +180,6 @@ public interface IRecording extends BinarySerializable {
     Map<Short, Vector3d> getSpawnLocations();
 
     Map<String, String> getCustomData();
+
+    String getPlayerName(UUID player);
 }

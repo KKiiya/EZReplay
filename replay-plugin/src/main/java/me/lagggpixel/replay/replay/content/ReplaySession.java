@@ -5,6 +5,8 @@ import lombok.NonNull;
 import me.lagggpixel.replay.Replay;
 import me.lagggpixel.replay.api.replay.content.IControls;
 import me.lagggpixel.replay.api.replay.content.IReplaySession;
+import me.lagggpixel.replay.api.replay.content.RecEntity;
+import me.lagggpixel.replay.api.replay.content.RecPlayer;
 import me.lagggpixel.replay.api.replay.data.IFrame;
 import me.lagggpixel.replay.api.replay.data.IRecording;
 import me.lagggpixel.replay.utils.PacketUtils;
@@ -31,7 +33,9 @@ public class ReplaySession implements IReplaySession {
     private final IRecording replay;
 
     @Getter
-    private final HashMap<Short, UUID> spawnedEntities;
+    private final HashMap<Short, RecPlayer> replayPlayers;
+    @Getter
+    private final HashMap<Short, RecEntity> spawnedEntities;
 
     private final List<BukkitRunnable> startedTasks;
 
@@ -53,8 +57,12 @@ public class ReplaySession implements IReplaySession {
         if (replay == null) throw new NullPointerException("Tried loading replay with ID '" + replayId + "'. Replay doesn't exist");
 
         this.spawnedEntities = new HashMap<>();
+        this.replayPlayers = new HashMap<>();
 
-        for (UUID player : replay.getPlayers()) spawnedEntities.put(replay.getEntityIndex().getOrRegister(player), player);
+        for (UUID player : replay.getPlayers()) {
+            RecPlayer recPlayer = new ReplayPlayer(replay.getEntityIndex().getOrRegister(player), player, replay.getPlayerName(player), 20.0f);
+            replayPlayers.put(replay.getEntityIndex().getOrRegister(player), recPlayer);
+        } 
 
         this.startedTasks = new ArrayList<>();
 
@@ -78,8 +86,12 @@ public class ReplaySession implements IReplaySession {
         this.replay = replay;
 
         this.spawnedEntities = new HashMap<>();
+        this.replayPlayers = new HashMap<>();
 
-        for (UUID player : replay.getPlayers()) spawnedEntities.put(replay.getEntityIndex().getOrRegister(player), player);
+        for (UUID player : replay.getPlayers()) {
+            RecPlayer recPlayer = new ReplayPlayer(replay.getEntityIndex().getOrRegister(player), player, replay.getPlayerName(player), 20.0f);
+            replayPlayers.put(replay.getEntityIndex().getOrRegister(player), recPlayer);
+        }
 
         this.startedTasks = new ArrayList<>();
 
@@ -128,8 +140,8 @@ public class ReplaySession implements IReplaySession {
         }
 
         for (Short replayPlayer : spawnedEntities.keySet()) {
-            UUID toCopy = spawnedEntities.get(replayPlayer);
-            PacketUtils.spawnFakePlayer(getViewers(), toCopy, replay.getSpawnLocation(replayPlayer).toBukkitLocation(world));
+            RecPlayer toCopy = replayPlayers.get(replayPlayer);
+            PacketUtils.spawnFakePlayer(getViewers(), toCopy.getUuid(), replay.getSpawnLocation(replayPlayer).toBukkitLocation(world));
             spawnedEntities.put(replayPlayer, toCopy);
         }
 
@@ -159,7 +171,7 @@ public class ReplaySession implements IReplaySession {
 
         while (currentFrameIndex > targetFrameIndex) {
             IFrame frame = replay.getFrames().get(--currentFrameIndex);
-            for (Player p : getViewers()) frame.unplay(this);
+            frame.unplay(this);
         }
 
         Bukkit.getScheduler().runTaskLater(Replay.getInstance(), this::resume, 20L);
@@ -173,7 +185,7 @@ public class ReplaySession implements IReplaySession {
 
         while (currentFrameIndex < targetFrameIndex) {
             IFrame frame = replay.getFrames().get(currentFrameIndex++);
-            for (Player p : getViewers()) frame.play(this);
+            frame.play(this);
         }
 
         Bukkit.getScheduler().runTaskLater(Replay.getInstance(), this::resume, 20L);
@@ -208,9 +220,7 @@ public class ReplaySession implements IReplaySession {
         this.currentFrameIndex = 0;
 
         Bukkit.getScheduler().runTaskLaterAsynchronously(Replay.getInstance(), () -> {
-            for (IFrame frame : replay.getFrames()) {
-                for (Player p : getViewers()) frame.unplay(this);
-            }
+            for (IFrame frame : replay.getFrames()) frame.unplay(this);
         }, 10L);
 
         Bukkit.getScheduler().runTaskLater(Replay.getInstance(), this::resume, 20L);
