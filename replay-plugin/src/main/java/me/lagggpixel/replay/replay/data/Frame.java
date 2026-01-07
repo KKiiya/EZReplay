@@ -67,10 +67,10 @@ public class Frame implements IFrame {
     }
 
     @Override
-    public void play(IReplaySession replaySession, Player player) {
+    public void play(IReplaySession replaySession) {
         for (Recordable recordable : recordables) {
             try {
-                recordable.play(replaySession, player);
+                recordable.play(replaySession);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -78,10 +78,10 @@ public class Frame implements IFrame {
     }
 
     @Override
-    public void unplay(IReplaySession replaySession, Player player) {
+    public void unplay(IReplaySession replaySession) {
         for (Recordable recordable : recordables) {
             try {
-                recordable.unplay(replaySession, player);
+                recordable.unplay(replaySession);
             } catch (Exception e) {
                 e.printStackTrace();
             }

@@ -14,6 +14,12 @@ import me.lagggpixel.replay.api.utils.Vector3d;
 import me.lagggpixel.replay.api.utils.block.BlockCache;
 import me.lagggpixel.replay.api.utils.data.RecordingUtils;
 import me.lagggpixel.replay.replay.content.ReplaySession;
+import me.lagggpixel.replay.replay.recordables.entity.entity.EntityStatus;
+import me.lagggpixel.replay.replay.recordables.entity.player.status.Invisible;
+import me.lagggpixel.replay.replay.recordables.entity.player.status.Sneaking;
+import me.lagggpixel.replay.replay.recordables.entity.player.status.Sprinting;
+import me.lagggpixel.replay.replay.recordables.entity.player.status.SwordBlock;
+import me.lagggpixel.replay.replay.recordables.world.block.BlockUpdateRecordable;
 import me.lagggpixel.replay.replay.tasks.EntityTrackerTask;
 import me.lagggpixel.replay.replay.tasks.EquipmentTrackerTask;
 import me.lagggpixel.replay.utils.FileUtils;
@@ -55,7 +61,7 @@ public class Recording implements IRecording {
     @Writeable private final Map<Short, Vector3d> spawnLocations;
     @Writeable private final Map<String, String> customData;
 
-    private final List<Entity> spawnedEntities;
+    private final List<Integer> spawnedEntities;
     private final Map<Integer, Integer> trackedEntities = new HashMap<>();
     private final Map<Integer, Integer> trackedEquipment = new HashMap<>();
     private final String worldCloneName;
@@ -173,7 +179,7 @@ public class Recording implements IRecording {
     }
 
     @Override
-    public List<Entity> getSpawnedEntities() {
+    public List<Integer> getSpawnedEntities() {
         return spawnedEntities;
     }
 
@@ -194,7 +200,6 @@ public class Recording implements IRecording {
 
     @Override
     public void start() {
-        IVersionSupport vs = Replay.getInstance().getVersionSupport();
         isRecording = true;
         if (finished) throw new UnsupportedOperationException("Tried resuming replay with ID '" + id + "' while finished");
 
@@ -214,21 +219,17 @@ public class Recording implements IRecording {
                     trackedEquipment.put(player.getEntityId(), equipmentTrackerTaskId);
                 }
                 entityIndex.getOrRegister(player.getUniqueId());
-                lastFrame.addRecordable(vs.createSwordBlockRecordable(this, player));
-                if (player.isSneaking()) {
-                    lastFrame.addRecordable(vs.createSneakingRecordable(this, player.getUniqueId(), true));
-                }
-                if (player.isSprinting()) {
-                    lastFrame.addRecordable(vs.createSprintRecordable(this, player.getUniqueId(), true));
-                }
-                if (player.hasPotionEffect(PotionEffectType.INVISIBILITY)) {
-                    lastFrame.addRecordable(vs.createInvisibilityRecordable(this, player, true));
-                }
+                lastFrame.addRecordable(new SwordBlock(this, player));
+                if (player.isSneaking()) lastFrame.addRecordable(new Sneaking(this, player.getUniqueId(), true));
+                if (player.isSprinting()) lastFrame.addRecordable(new Sprinting(this, player.getUniqueId(), true));
+                if (player.hasPotionEffect(PotionEffectType.INVISIBILITY)) lastFrame.addRecordable(new Invisible(this, player.getUniqueId(), true));
             }
 
             // Entity handling
             List<Entity> deadEntities = new ArrayList<>();
-            for (Entity entity : getSpawnedEntities()) {
+            for (Integer entityId : getSpawnedEntities()) {
+                Entity entity = world.getEntities().stream().filter(e -> e.getEntityId() == entityId).findFirst().orElse(null);
+                if (entity == null) continue;
                 if (entity.isDead()) {
                     deadEntities.add(entity);
                     if (EntityTrackerTask.isTracked(entity)) {
@@ -237,9 +238,7 @@ public class Recording implements IRecording {
                         trackedEntities.remove(entity.getEntityId());
                         EntityTrackerTask.untrackEntity(entity);
                     }
-                } else {
-                    entityIndex.getOrRegister(entity.getUniqueId());
-                }
+                } else entityIndex.getOrRegister(entity.getUniqueId());
                 
                 if (!(entity instanceof Item) && !(entity instanceof Projectile)) {
                     if (!EntityTrackerTask.isTracked(entity)) {
@@ -251,13 +250,11 @@ public class Recording implements IRecording {
                         trackedEntities.put(entity.getEntityId(), taskId);
                     }
                 }
-                lastFrame.addRecordable(vs.createEntityStatusRecordable(this, entity));
+                lastFrame.addRecordable(new EntityStatus(this, entity));
             }
 
-            for (Entity entity : deadEntities) {
-                lastFrame.addRecordable(vs.createEntityDeathRecordable(this, entity));
-            }
-            getSpawnedEntities().removeAll(deadEntities);
+            for (Entity entity : deadEntities) lastFrame.addRecordable(new EntityStatus(this, entity));
+            getSpawnedEntities().removeAll(deadEntities.stream().map(Entity::getEntityId).collect(Collectors.toList()));
 
             if (tick > 0) {
                 long previousTick = tick - 1;
@@ -267,7 +264,7 @@ public class Recording implements IRecording {
                     caches.sort(Comparator.comparing(cache -> cache.getMaterial() == Material.AIR));
                     
                     IFrame previousFrame = frames.get(frames.size() - 2);
-                    Recordable blockRecordable = vs.createBlockUpdateRecordable(this, caches);
+                    Recordable blockRecordable = new BlockUpdateRecordable(this, caches);
                     previousFrame.addRecordable(blockRecordable);
                     
                     blockUpdates.remove(previousTick);
@@ -288,8 +285,8 @@ public class Recording implements IRecording {
             for (Entity entity : world.getEntities()) {
                 if (entity instanceof Player) continue;
                 if (entity instanceof Item) continue;
-                spawnedEntities.add(entity);
-                lastFrame.addRecordable(vs.createEntitySpawnRecordable(this, entity));
+                spawnedEntities.add(entity.getEntityId());
+                lastFrame.addRecordable(new EntityStatus(this, entity));
             }
         }, 5L);
 
@@ -317,7 +314,9 @@ public class Recording implements IRecording {
 
         }
 
-        for (Entity entity : getSpawnedEntities()) {
+        for (Integer entityId : getSpawnedEntities()) {
+            Entity entity = world.getEntities().stream().filter(e -> e.getEntityId() == entityId).findFirst().orElse(null);
+            if (entity == null) continue;
             if (EntityTrackerTask.isTracked(entity)) {
                 int taskId = trackedEntities.get(entity.getEntityId());
                 Bukkit.getScheduler().cancelTask(taskId);
@@ -343,7 +342,9 @@ public class Recording implements IRecording {
 
         }
 
-        for (Entity entity : getSpawnedEntities()) {
+        for (Integer entityId : getSpawnedEntities()) {
+            Entity entity = world.getEntities().stream().filter(e -> e.getEntityId() == entityId).findFirst().orElse(null);
+            if (entity == null) continue;
             if (EntityTrackerTask.isTracked(entity)) {
                 int taskId = trackedEntities.get(entity.getEntityId());
                 Bukkit.getScheduler().cancelTask(taskId);
@@ -357,10 +358,10 @@ public class Recording implements IRecording {
 
     @Override
     public Entity getSpawnedEntity(int id) {
-        return spawnedEntities.stream()
-                .filter(e -> e.getEntityId() == id)
-                .findFirst()
-                .orElseThrow(() -> new NoSuchElementException("Entity with ID " + id + " not found"));
+        if (spawnedEntities.isEmpty()) return null;
+        if (!spawnedEntities.contains(id)) return null;
+        for (Entity entity : world.getEntities()) if (entity.getEntityId() == id) return entity;
+        return null;
     }
 
     @Override
@@ -435,19 +436,16 @@ public class Recording implements IRecording {
             @Override
             public void run() {
                 FileUtils.decompressWorldFromCache(world, world.getName() + "-" + id);  // Decompress asynchronously
-
                 // Back to main thread to load the world and teleport players
                 new BukkitRunnable() {
                     @Override
                     public void run() {
                         WorldCreator creator = new WorldCreator(worldCloneName);
-                        World worldClone = Replay.getInstance().getVersionSupport().setStatic(creator);
+                        World worldClone = Bukkit.createWorld(creator);
                         worldClone.setAutoSave(false);
                         worldClone.getEntities().forEach(Entity::remove);
 
-                        for (Player player : players) {
-                            new ReplaySession(worldClone, id, worldClone.getSpawnLocation(), player);
-                        }
+                        for (Player player : players) new ReplaySession(worldClone, id, worldClone.getSpawnLocation(), player);
                     }
 
                 }.runTask(Replay.getInstance()); // Run on the main server thread
@@ -473,25 +471,23 @@ public class Recording implements IRecording {
         
         // Track previous frame's recordables for delta encoding
         Set<Recordable.RecordableSignature> previousRecordables = new HashSet<>();
-        
-        for (int i = 0; i < frames.size(); i++) {
-            IFrame frame = frames.get(i);
-            
+
+        for (IFrame frame : frames) {
             // Get current frame's recordables
-            Set<Recordable.RecordableSignature> currentRecordables = RecordingUtils.getRecordableSignatures(frame);
-            
+            Set<RecordableSignature> currentRecordable = RecordingUtils.getRecordableSignatures(frame);
+
             // Calculate additions and removals
-            Set<Recordable.RecordableSignature> additions = new HashSet<>(currentRecordables);
+            Set<RecordableSignature> additions = new HashSet<>(currentRecordable);
             additions.removeAll(previousRecordables);
 
-            Set<Recordable.RecordableSignature> removals = new HashSet<>(previousRecordables);
-            removals.removeAll(currentRecordables);
-            
+            Set<RecordableSignature> removals = new HashSet<>(previousRecordables);
+            removals.removeAll(currentRecordable);
+
             // Write delta frame
             RecordingUtils.writeDeltaFrame(out, frame, additions, removals);
 
             // Update previous state
-            previousRecordables = currentRecordables;
+            previousRecordables = currentRecordable;
         }
 
         // Players (unchanged - already efficient)

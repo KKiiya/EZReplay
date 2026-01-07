@@ -6,19 +6,22 @@ import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.util.Vector;
 
-/**
- * @author Lagggpixel
- * @since May 01, 2024
- */
-@Getter
-public class Vector3d {
-    @Getter @Writeable protected final double x;
-    @Getter @Writeable protected final double y;
-    @Getter @Writeable protected final double z;
+public class Vector3i {
+    @Getter @Writeable protected final int x;
+    @Getter @Writeable protected final int y;
+    @Getter @Writeable protected final int z;
     @Getter @Writeable protected final float yaw;
     @Getter @Writeable protected final float pitch;
 
-    public Vector3d(double x, double y, double z) {
+    public Vector3i() {
+        this.x = 0;
+        this.y = 0;
+        this.z = 0;
+        this.yaw = 0;
+        this.pitch = 0;
+    }
+
+    public Vector3i(int x, int y, int z) {
         this.x = x;
         this.y = y;
         this.z = z;
@@ -26,7 +29,7 @@ public class Vector3d {
         this.pitch = 0;
     }
 
-    public Vector3d(double x, double y, double z, float yaw, float pitch) {
+    public Vector3i(int x, int y, int z, float yaw, float pitch) {
         this.x = x;
         this.y = y;
         this.z = z;
@@ -34,12 +37,20 @@ public class Vector3d {
         this.pitch = pitch;
     }
 
+    public Vector3i(Vector vector) {
+        this.x = (int) vector.getX();
+        this.y = (int) vector.getY();
+        this.z = (int) vector.getZ();
+        this.yaw = 0;
+        this.pitch = 0;
+    }
+
     public Location toBukkitLocation(World world) {
         return new Location(world, x, y, z, yaw, pitch);
     }
 
-    public Vector3i toVector3i() {
-        return new Vector3i((int) this.x, (int) this.y, (int) this.z, this.yaw, this.pitch);
+    public Vector3d toVector3d() {
+        return new Vector3d(this.x, this.y, this.z, this.yaw, this.pitch);
     }
 
     public Vector toBukkitVector() {
@@ -52,12 +63,12 @@ public class Vector3d {
         return this.x == var2.x && this.y == var2.y && this.z == var2.z && this.yaw == var2.yaw && this.pitch == var2.pitch;
     }
 
-    public static Vector3d fromVector3i(Vector3i vec) {
-        return new Vector3d(vec.getX(), vec.getY(), vec.getZ(), vec.getYaw(), vec.getPitch());
+    public static Vector3i fromVector3d(Vector3d vec) {
+        return new Vector3i((int) vec.getX(), (int) vec.getY(), (int) vec.getZ(), vec.getYaw(), vec.getPitch());
     }
 
-    public static Vector3d fromBukkitVector(Vector vec) {
-        return new Vector3d(vec.getX(), vec.getY(), vec.getZ());
+    public static Vector3i fromBukkitVector(Vector vec) {
+        return new Vector3i((int) vec.getX(), (int) vec.getY(), (int) vec.getZ());
     }
 
     public static Vector3d fromBukkitLocation(Location loc) {

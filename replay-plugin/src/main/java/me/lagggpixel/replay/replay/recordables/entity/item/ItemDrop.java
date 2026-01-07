@@ -1,26 +1,28 @@
 package me.lagggpixel.replay.replay.recordables.entity.item;
 
+import com.github.retrooper.packetevents.PacketEvents;
+import com.github.retrooper.packetevents.protocol.entity.type.EntityTypes;
+import com.github.retrooper.packetevents.protocol.player.User;
+import com.github.retrooper.packetevents.util.Vector3d;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerDestroyEntities;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityVelocity;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSpawnEntity;
 import me.lagggpixel.replay.api.data.Writeable;
 import me.lagggpixel.replay.api.replay.content.IReplaySession;
 import me.lagggpixel.replay.api.replay.data.IRecording;
 import me.lagggpixel.replay.api.replay.data.recordable.Recordable;
 import me.lagggpixel.replay.api.replay.data.recordable.RecordableRegistry;
-import me.lagggpixel.replay.api.utils.Vector3d;
-import me.lagggpixel.replay.api.utils.entity.EntityTypes;
 import me.lagggpixel.replay.api.utils.item.ItemData;
-import me.lagggpixel.replay.support.nms.v1_8_R3;
-import net.minecraft.server.v1_8_R3.*;
-import org.bukkit.craftbukkit.v1_8_R3.CraftWorld;
-import org.bukkit.craftbukkit.v1_8_R3.entity.CraftEntity;
-import org.bukkit.craftbukkit.v1_8_R3.inventory.CraftItemStack;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemStack;
+
+import java.util.Optional;
+import java.util.UUID;
 
 public class ItemDrop extends Recordable {
 
     @Writeable private final ItemData data;
-    @Writeable private final Vector3d location;
+    @Writeable private final me.lagggpixel.replay.api.utils.Vector3d location;
     @Writeable private final double motX;
     @Writeable private final double motY;
     @Writeable private final double motZ;
@@ -28,7 +30,7 @@ public class ItemDrop extends Recordable {
 
     public ItemDrop(IRecording replay, Item item) {
         super(replay);
-        this.location = Vector3d.fromBukkitLocation(item.getLocation());
+        this.location = me.lagggpixel.replay.api.utils.Vector3d.fromBukkitLocation(item.getLocation());
         this.entityId = replay.getEntityIndex().getOrRegister(item.getUniqueId());
         this.motX = item.getVelocity().getX();
         this.motY = item.getVelocity().getY();
@@ -38,32 +40,29 @@ public class ItemDrop extends Recordable {
 
     @Override
     public void play(IReplaySession replaySession) {
-        World world = ((CraftWorld) replaySession.getWorld()).getHandle();
-        ItemStack itemStack = data.toItemStack();
-        net.minecraft.server.v1_8_R3.ItemStack nmsStack = CraftItemStack.asNMSCopy(itemStack);
-        nmsStack.count = data.getAmount();
+        int fakeEntityId = entityId + 100000;
+        Vector3d position = new Vector3d(location.getX(), location.getY(), location.getZ());
 
-        EntityItem entityItem = new EntityItem(world, location.getX(), location.getY(), location.getZ(), nmsStack);
-        entityItem.motX = this.motX;
-        entityItem.motY = this.motY;
-        entityItem.motZ = this.motZ;
+        WrapperPlayServerSpawnEntity spawnPacket = new WrapperPlayServerSpawnEntity(fakeEntityId, Optional.of(UUID.randomUUID()), EntityTypes.ITEM, position, 0f, 0f, 0f, 0, Optional.of(new Vector3d(motX, motY, motZ)));
+        WrapperPlayServerEntityVelocity velocityPacket = new WrapperPlayServerEntityVelocity(fakeEntityId, new Vector3d(motX, motY, motZ));
 
-        PacketPlayOutSpawnEntity spawn = new PacketPlayOutSpawnEntity(entityItem, EntityTypes.ITEM_STACK);
-        PacketPlayOutEntityMetadata metadata = new PacketPlayOutEntityMetadata(entityItem.getId(), entityItem.getDataWatcher(), true);
-        PacketPlayOutEntityVelocity entityVelocity = new PacketPlayOutEntityVelocity(entityItem);
-        PacketPlayOutEntity.PacketPlayOutRelEntityMove movement = new PacketPlayOutEntity.PacketPlayOutRelEntityMove(entityItem.getId(), (byte) motX, (byte) motY, (byte) motZ, false);
-
-        replaySession.getSpawnedEntities().put(entityId, entityItem.getBukkitEntity());
-        v1_8_R3.sendPackets(player, spawn, metadata, entityVelocity, movement);
+        for (Player viewer : replaySession.getViewers()) {
+            User user = PacketEvents.getAPI().getPlayerManager().getUser(viewer);
+            user.sendPacket(spawnPacket);
+            user.sendPacket(velocityPacket);
+        }
     }
 
     @Override
     public void unplay(IReplaySession replaySession) {
-        Entity entity = ((CraftEntity)  replaySession.getSpawnedEntities().get(entityId)).getHandle();
+        int fakeEntityId = entityId + 100000;
 
-        PacketPlayOutEntityDestroy destroy = new PacketPlayOutEntityDestroy(entity.getId());
+        WrapperPlayServerDestroyEntities destroyPacket = new WrapperPlayServerDestroyEntities(fakeEntityId);
 
-        v1_8_R3.sendPacket(player, destroy);
+        for (Player viewer : replaySession.getViewers()) {
+            User user = PacketEvents.getAPI().getPlayerManager().getUser(viewer);
+            user.sendPacket(destroyPacket);
+        }
     }
 
     @Override

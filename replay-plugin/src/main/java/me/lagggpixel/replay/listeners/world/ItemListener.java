@@ -3,6 +3,9 @@ package me.lagggpixel.replay.listeners.world;
 import me.lagggpixel.replay.Replay;
 import me.lagggpixel.replay.api.replay.data.IRecording;
 import me.lagggpixel.replay.api.replay.data.recordable.Recordable;
+import me.lagggpixel.replay.replay.recordables.entity.item.ItemDrop;
+import me.lagggpixel.replay.replay.recordables.entity.item.ItemMerge;
+import me.lagggpixel.replay.replay.recordables.entity.item.ItemPick;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
@@ -28,7 +31,7 @@ public class ItemListener {
             IRecording recording = Replay.getInstance().getReplayManager().getActiveRecording(entity.getWorld());
             if (recording == null) return;
 
-            Recordable recordable = Replay.getInstance().getVersionSupport().createItemDropRecordable(recording, item);
+            Recordable recordable = new ItemDrop(recording, item);
             recording.getLastFrame().addRecordable(recordable);
         }
 
@@ -43,7 +46,7 @@ public class ItemListener {
             if (recording == null) return;
 
             recording.getSpawnedEntities().remove(item);
-            Recordable recordable = Replay.getInstance().getVersionSupport().createItemPickRecordable(recording, item, p);
+            Recordable recordable = new ItemPick(recording, item, p);
             recording.getLastFrame().addRecordable(recordable);
         }
 
@@ -57,7 +60,7 @@ public class ItemListener {
             if (recording == null) return;
 
             recording.getSpawnedEntities().remove(entity);
-            Recordable recordable = Replay.getInstance().getVersionSupport().createItemMergeRecordable(recording, entity, target);
+            Recordable recordable = new ItemMerge(recording, entity, target);
             recording.getLastFrame().addRecordable(recordable);
         }
     }
@@ -75,7 +78,7 @@ public class ItemListener {
             IRecording recording = Replay.getInstance().getReplayManager().getActiveRecording(entity.getWorld());
             if (recording == null) return;
 
-            Recordable recordable = Replay.getInstance().getVersionSupport().createItemDropRecordable(recording, item);
+            Recordable recordable = new ItemPick(recording, item, e.getEntity());
             recording.getLastFrame().addRecordable(recordable);
         }
 
@@ -90,7 +93,7 @@ public class ItemListener {
             if (recording == null) return;
 
             recording.getSpawnedEntities().remove(item);
-            Recordable recordable = Replay.getInstance().getVersionSupport().createItemPickRecordable(recording, item, entity);
+            Recordable recordable = new ItemPick(recording, item, entity);
             recording.getLastFrame().addRecordable(recordable);
         }
 
@@ -104,7 +107,7 @@ public class ItemListener {
             if (recording == null) return;
 
             recording.getSpawnedEntities().remove(entity);
-            Recordable recordable = Replay.getInstance().getVersionSupport().createItemMergeRecordable(recording, entity, target);
+            Recordable recordable = new ItemMerge(recording, entity, target);
             recording.getLastFrame().addRecordable(recordable);
         }
     }

@@ -1,19 +1,21 @@
 package me.lagggpixel.replay.replay.recordables.world;
 
+import com.github.retrooper.packetevents.PacketEvents;
+import com.github.retrooper.packetevents.protocol.player.User;
+import com.github.retrooper.packetevents.protocol.sound.SoundCategory;
+import com.github.retrooper.packetevents.util.Vector3d;
+import com.github.retrooper.packetevents.util.Vector3f;
+import com.github.retrooper.packetevents.util.Vector3i;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerDestroyEntities;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerExplosion;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSoundEffect;
+import com.github.retrooper.packetevents.protocol.sound.Sounds;
 import me.lagggpixel.replay.api.data.Writeable;
 import me.lagggpixel.replay.api.replay.content.IReplaySession;
 import me.lagggpixel.replay.api.replay.data.IRecording;
 import me.lagggpixel.replay.api.replay.data.recordable.Recordable;
 import me.lagggpixel.replay.api.replay.data.recordable.RecordableRegistry;
-import me.lagggpixel.replay.api.utils.Vector3d;
-import me.lagggpixel.replay.support.nms.v1_8_R3;
-import net.minecraft.server.v1_8_R3.PacketPlayOutEntityDestroy;
-import net.minecraft.server.v1_8_R3.PacketPlayOutExplosion;
-import net.minecraft.server.v1_8_R3.PacketPlayOutNamedSoundEffect;
-import net.minecraft.server.v1_8_R3.Vec3D;
 import org.bukkit.Location;
-import org.bukkit.Sound;
-import org.bukkit.craftbukkit.v1_8_R3.CraftSound;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 
@@ -22,29 +24,38 @@ import java.util.ArrayList;
 public class ExplosionRecordable extends Recordable {
 
     @Writeable private final short entityId;
-    @Writeable private final Vector3d position;
+    @Writeable private final me.lagggpixel.replay.api.utils.Vector3d position;
     @Writeable private final float strength;
 
     public ExplosionRecordable(IRecording replay, Location location, Entity entity, float radius) {
         super(replay);
         this.entityId = replay.getEntityIndex().getOrRegister(entity.getUniqueId());
-        this.position = Vector3d.fromBukkitLocation(location);
+        this.position = me.lagggpixel.replay.api.utils.Vector3d.fromBukkitLocation(location);
         this.strength = radius;
     }
 
     @Override
     public void play(IReplaySession replaySession) {
         Entity tnt = replaySession.getSpawnedEntities().get(entityId);
-        double x = position.getX();
-        double y = position.getY();
-        double z = position.getZ();
-        PacketPlayOutExplosion explosion = new PacketPlayOutExplosion(x, y, z, strength, new ArrayList<>(), new Vec3D(0, 0, 0));
-        PacketPlayOutNamedSoundEffect sound = new PacketPlayOutNamedSoundEffect(CraftSound.getSound(Sound.EXPLODE), x, y, z, 1.0f, 0.8f);
-        v1_8_R3.sendPackets(player, explosion, sound);
+        int x = (int) position.getX();
+        int y = (int) position.getY();
+        int z = (int) position.getZ();
 
+        WrapperPlayServerExplosion explosionPacket = new WrapperPlayServerExplosion(new Vector3d(x, y, z), strength, new ArrayList<>(), new Vector3f(0, 0, 0));
+        WrapperPlayServerSoundEffect soundPacket = new WrapperPlayServerSoundEffect(Sounds.ENTITY_GENERIC_EXPLODE, SoundCategory.BLOCK, new Vector3i(x, y, z), 1.0f, 0.8f);
+
+        WrapperPlayServerDestroyEntities destroyPacket = null;
         if (tnt != null) {
-            PacketPlayOutEntityDestroy destroy = new PacketPlayOutEntityDestroy(tnt.getEntityId());
-            v1_8_R3.sendPacket(player, destroy);
+            int fakeEntityId = entityId + 100000;
+            destroyPacket = new WrapperPlayServerDestroyEntities(fakeEntityId);
+        }
+
+        for (Player viewer : replaySession.getViewers()) {
+            User user = PacketEvents.getAPI().getPlayerManager().getUser(viewer);
+
+            user.sendPacket(explosionPacket);
+            user.sendPacket(soundPacket);
+            if (destroyPacket != null) user.sendPacket(destroyPacket);
         }
     }
 

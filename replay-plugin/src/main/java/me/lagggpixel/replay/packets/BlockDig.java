@@ -1,14 +1,14 @@
 package me.lagggpixel.replay.packets;
 
 import com.github.retrooper.packetevents.event.PacketListener;
-import com.github.retrooper.packetevents.event.PacketSendEvent;
+import com.github.retrooper.packetevents.event.PacketReceiveEvent;
 import com.github.retrooper.packetevents.protocol.packettype.PacketType;
-import com.github.retrooper.packetevents.protocol.player.DiggingAction;
-import com.github.retrooper.packetevents.protocol.player.User;
-import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerAcknowledgePlayerDigging;
+import com.github.retrooper.packetevents.util.Vector3i;
+import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerDigging;
 import me.lagggpixel.replay.Replay;
 import me.lagggpixel.replay.api.replay.data.IRecording;
 import me.lagggpixel.replay.api.replay.data.recordable.Recordable;
+import me.lagggpixel.replay.api.utils.Vector3d;
 import me.lagggpixel.replay.replay.recordables.world.block.BlockDigRecordable;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
@@ -16,18 +16,20 @@ import org.bukkit.entity.Player;
 public class BlockDig implements PacketListener {
 
     @Override
-    public void onPacketSend(PacketSendEvent e) {
-        User user = e.getUser();
-        if (e.getPacketType() != PacketType.Play.Server.ACKNOWLEDGE_PLAYER_DIGGING) return;
-        WrapperPlayServerAcknowledgePlayerDigging packet = new WrapperPlayServerAcknowledgePlayerDigging(e);
-        DiggingAction action = packet.getAction();
+    public void onPacketReceive(PacketReceiveEvent e) {
+        if (e.getPacketType() != PacketType.Play.Client.PLAYER_DIGGING) return;
+        WrapperPlayClientPlayerDigging packet = new WrapperPlayClientPlayerDigging(e);
+
         Player p = e.getPlayer();
         World world = p.getWorld();
+
         IRecording recording = Replay.getInstance().getReplayManager().getActiveRecording(world);
         if (recording == null) return;
         if (!recording.isRecording()) return;
-        if (action != DiggingAction.CANCELLED_DIGGING && action != DiggingAction.FINISHED_DIGGING && action != DiggingAction.START_DIGGING) return;
-        Recordable recordable = new BlockDigRecordable(recording, p, , action);
 
+        Vector3i packetPos = packet.getBlockPosition();
+        Vector3d pos = new Vector3d(packetPos.getX(), packetPos.getY(), packetPos.getZ());
+        Recordable recordable = new BlockDigRecordable(recording, p, pos.toVector3i(), packet.getSequence());
+        recording.getLastFrame().addRecordable(recordable);
     }
 }

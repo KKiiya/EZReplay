@@ -3,6 +3,7 @@ package me.lagggpixel.replay.listeners.replaysession;
 import me.lagggpixel.replay.Replay;
 import me.lagggpixel.replay.api.replay.content.IControls;
 import me.lagggpixel.replay.api.replay.content.IReplaySession;
+import me.lagggpixel.replay.utils.PacketUtils;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -66,7 +67,7 @@ public class SessionListener implements Listener {
         if (e.getAction() != Action.RIGHT_CLICK_AIR && e.getAction() != Action.RIGHT_CLICK_BLOCK) return;
 
         IControls controls = replaySession.getPlayerControls().get(player);
-        String control = Replay.getInstance().getVersionSupport().getItemTag(item, "Replay-Control");
+        String control = PacketUtils.getItemTag(item, "Replay-Control");
 
         if (control == null) return;
 

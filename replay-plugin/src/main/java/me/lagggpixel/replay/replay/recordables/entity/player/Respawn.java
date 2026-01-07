@@ -5,9 +5,11 @@ import me.lagggpixel.replay.api.replay.content.IReplaySession;
 import me.lagggpixel.replay.api.replay.data.IRecording;
 import me.lagggpixel.replay.api.replay.data.recordable.Recordable;
 import me.lagggpixel.replay.api.replay.data.recordable.RecordableRegistry;
-import me.lagggpixel.replay.support.nms.v1_8_R3;
+import me.lagggpixel.replay.utils.PacketUtils;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
+
+import java.util.UUID;
 
 public class Respawn extends Recordable {
 
@@ -31,9 +33,9 @@ public class Respawn extends Recordable {
 
     @Override
     public void play(IReplaySession replaySession) {
-        Player fakePlayer = (Player) replaySession.getSpawnedEntities().get(entityId);
+        UUID fakePlayer = replaySession.getSpawnedEntities().get(entityId);
         Location spawnLocation = new Location(replaySession.getWorld(), x, y, z, yaw, pitch);
-        v1_8_R3.getInstance().spawnFakePlayer(fakePlayer, player, spawnLocation);
+        PacketUtils.spawnFakePlayer(replaySession.getViewers(), fakePlayer, spawnLocation);
     }
 
     @Override

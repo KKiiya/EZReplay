@@ -1,17 +1,24 @@
 package me.lagggpixel.replay.replay.recordables.world.block;
 
+import com.github.retrooper.packetevents.PacketEvents;
+import com.github.retrooper.packetevents.protocol.player.User;
+import com.github.retrooper.packetevents.protocol.sound.Sound;
+import com.github.retrooper.packetevents.protocol.sound.SoundCategory;
+import com.github.retrooper.packetevents.protocol.sound.Sounds;
+import com.github.retrooper.packetevents.protocol.world.MaterialType;
+import com.github.retrooper.packetevents.protocol.world.states.WrappedBlockState;
+import com.github.retrooper.packetevents.protocol.world.states.type.StateType;
+import com.github.retrooper.packetevents.protocol.world.states.type.StateTypes;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerBlockChange;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSoundEffect;
 import me.lagggpixel.replay.api.data.Writeable;
 import me.lagggpixel.replay.api.replay.content.IReplaySession;
 import me.lagggpixel.replay.api.replay.data.recordable.Recordable;
 import me.lagggpixel.replay.api.replay.data.recordable.RecordableRegistry;
+import me.lagggpixel.replay.api.utils.Vector3i;
 import me.lagggpixel.replay.api.utils.block.BlockAction;
 import me.lagggpixel.replay.api.replay.data.IRecording;
 import me.lagggpixel.replay.api.utils.block.BlockCache;
-import me.lagggpixel.replay.support.nms.v1_8_R3;
-import net.minecraft.server.v1_8_R3.*;
-import org.bukkit.Material;
-import org.bukkit.craftbukkit.v1_8_R3.CraftWorld;
-import org.bukkit.craftbukkit.v1_8_R3.util.CraftMagicNumbers;
 import org.bukkit.entity.Player;
 
 /**
@@ -22,17 +29,17 @@ import org.bukkit.entity.Player;
  */
 public class BlockInteractRecordable extends Recordable {
 
-    @Writeable private final Material material;
+    @Writeable private final int material;
     @Writeable private final byte data;
-    @Writeable private final BlockPosition blockPosition;
+    @Writeable private final Vector3i blockPosition;
     @Writeable private final BlockAction actionType;
     @Writeable private final boolean playSound;
 
     public BlockInteractRecordable(IRecording replay, BlockCache cache, BlockAction actionType, boolean playSound) {
         super(replay);
-        this.material = cache.getMaterial();
+        this.material = cache.getMaterial().ordinal();
         this.data = cache.getData();
-        this.blockPosition = new BlockPosition(cache.getX(), cache.getY(), cache.getZ());
+        this.blockPosition = new Vector3i(cache.getX(), cache.getY(), cache.getZ());
         this.actionType = actionType;
         this.playSound = playSound;
     }
@@ -41,17 +48,13 @@ public class BlockInteractRecordable extends Recordable {
     public void play(IReplaySession replaySession) {
         if (actionType == BlockAction.INTERACT) {
             // For interactions, we need to send the actual block state change
-            sendBlockChange(player);
+            sendBlockChange(replaySession.getViewers());
             
             // Play sound if enabled
-            if (playSound) {
-                playInteractionSound(player);
-            }
+            if (playSound) playInteractionSound(replaySession.getViewers());
         } else if (actionType == BlockAction.PLACE || actionType == BlockAction.BREAK) {
             // For place/break, just play the sound
-            if (playSound) {
-                playPlaceBreakSound(player);
-            }
+            if (playSound) playPlaceBreakSound(replaySession.getViewers());
         }
     }
 
@@ -71,153 +74,195 @@ public class BlockInteractRecordable extends Recordable {
      * Sends the actual block state change to the player
      * This is what makes doors actually open/close properly
      */
-    private void sendBlockChange(Player player) {
-        // Get NMS block data
-        Block nmsBlock = CraftMagicNumbers.getBlock(material);
-        IBlockData blockData = nmsBlock.fromLegacyData(data);
-        
+    private void sendBlockChange(Iterable<Player> players) {
         // Send block change packet
-        PacketPlayOutBlockChange packet = new PacketPlayOutBlockChange(
-            ((CraftWorld) player.getWorld()).getHandle(),
-            blockPosition
-        );
-        
-        // Use reflection to set the block data in the packet
-        try {
-            java.lang.reflect.Field blockField = packet.getClass().getDeclaredField("block");
-            blockField.setAccessible(true);
-            blockField.set(packet, blockData);
-        } catch (Exception e) {
-            e.printStackTrace();
+        String materialName = MaterialType.values()[material].name();
+        StateType stateType = StateTypes.getByName("minecraft:" + materialName.toLowerCase());
+        if (stateType == null) return;
+        WrappedBlockState blockState = WrappedBlockState.getDefaultState(stateType);
+        com.github.retrooper.packetevents.util.Vector3i position = new com.github.retrooper.packetevents.util.Vector3i(blockPosition.getX(), blockPosition.getY(), blockPosition.getZ());
+        WrapperPlayServerBlockChange packet = new WrapperPlayServerBlockChange(position, blockState);
+        for (Player player : players) {
+            User user = PacketEvents.getAPI().getPlayerManager().getUser(player);
+            user.sendPacket(packet);
         }
-        
-        v1_8_R3.sendPacket(player, packet);
     }
 
     /**
      * Plays the interaction sound (door creak, lever click, etc.)
      */
-    private void playInteractionSound(Player player) {
-        Block nmsBlock = CraftMagicNumbers.getBlock(material);
-        Block.StepSound stepSound = nmsBlock.stepSound;
+    private void playInteractionSound(Iterable<Player> players) {
+        String materialName = MaterialType.values()[material].name();
+        StateType stateType = StateTypes.getByName("minecraft:" + materialName.toLowerCase());
+        if (stateType == null) return;
         
-        String soundName = getSoundForInteraction(material);
-        if (soundName == null) {
-            // Fallback to step sound
-            soundName = stepSound.getStepSound();
-        }
+        Sound sound = getSoundForInteraction(stateType, data);
+        if (sound == null) return;
         
-        PacketPlayOutNamedSoundEffect soundPacket = new PacketPlayOutNamedSoundEffect(
-            soundName,
-            blockPosition.getX() + 0.5,
-            blockPosition.getY() + 0.5,
-            blockPosition.getZ() + 0.5,
-            stepSound.getVolume1() * 0.75f,
-            stepSound.getVolume2()
+        com.github.retrooper.packetevents.util.Vector3i soundPosition = new com.github.retrooper.packetevents.util.Vector3i(
+            blockPosition.getX() * 8,
+            blockPosition.getY() * 8,
+            blockPosition.getZ() * 8
         );
         
-        v1_8_R3.sendPacket(player, soundPacket);
+        WrapperPlayServerSoundEffect soundPacket = new WrapperPlayServerSoundEffect(
+            sound,
+            SoundCategory.BLOCK,
+            soundPosition,
+            1.0f,
+            1.0f
+        );
+        
+        for (Player player : players) {
+            User user = PacketEvents.getAPI().getPlayerManager().getUser(player);
+            user.sendPacket(soundPacket);
+        }
     }
 
     /**
      * Plays place/break sounds
      */
-    private void playPlaceBreakSound(Player player) {
-        Block nmsBlock = CraftMagicNumbers.getBlock(material);
-        Block.StepSound stepSound = nmsBlock.stepSound;
+    private void playPlaceBreakSound(Iterable<Player> players) {
+        String materialName = MaterialType.values()[material].name();
+        StateType stateType = StateTypes.getByName("minecraft:" + materialName.toLowerCase());
+        if (stateType == null) return;
         
-        String soundName;
-        if (actionType == BlockAction.BREAK) {
-            soundName = stepSound.getBreakSound();
-        } else {
-            soundName = stepSound.getPlaceSound();
-        }
+        Sound sound = getSoundForPlaceBreak(stateType, actionType);
+        if (sound == null) return;
         
-        PacketPlayOutNamedSoundEffect soundPacket = new PacketPlayOutNamedSoundEffect(
-            soundName,
-            blockPosition.getX() + 0.5,
-            blockPosition.getY() + 0.5,
-            blockPosition.getZ() + 0.5,
-            stepSound.getVolume1(),
-            stepSound.getVolume2() / 1.3f
+        com.github.retrooper.packetevents.util.Vector3i soundPosition = new com.github.retrooper.packetevents.util.Vector3i(
+            blockPosition.getX() * 8,
+            blockPosition.getY() * 8,
+            blockPosition.getZ() * 8
         );
         
-        v1_8_R3.sendPacket(player, soundPacket);
+        WrapperPlayServerSoundEffect soundPacket = new WrapperPlayServerSoundEffect(
+            sound,
+            SoundCategory.BLOCK,
+            soundPosition,
+            1.0f,
+            0.8f
+        );
+        
+        for (Player player : players) {
+            User user = PacketEvents.getAPI().getPlayerManager().getUser(player);
+            user.sendPacket(soundPacket);
+        }
     }
 
     /**
-     * Gets the appropriate sound for block interactions
+     * Gets the appropriate sound for block interactions using PacketEvents StateType
      */
-    private String getSoundForInteraction(Material material) {
-        switch (material) {
-            // Doors
-            case WOODEN_DOOR:
-            case SPRUCE_DOOR:
-            case BIRCH_DOOR:
-            case JUNGLE_DOOR:
-            case ACACIA_DOOR:
-            case DARK_OAK_DOOR:
-                // Check door state to determine open/close sound
-                boolean isOpen = (data & 0x4) != 0;
-                return isOpen ? "random.door_close" : "random.door_open";
-            
-            case IRON_DOOR_BLOCK:
-                return "random.door_open";
-            
-            // Trapdoors
-            case TRAP_DOOR:
-                boolean trapdoorOpen = (data & 0x4) != 0;
-                return trapdoorOpen ? "random.door_close" : "random.door_open";
-                
-            case IRON_TRAPDOOR:
-                return "random.door_open";
-            
-            // Gates
-            case FENCE_GATE:
-            case SPRUCE_FENCE_GATE:
-            case BIRCH_FENCE_GATE:
-            case JUNGLE_FENCE_GATE:
-            case ACACIA_FENCE_GATE:
-            case DARK_OAK_FENCE_GATE:
-                boolean gateOpen = (data & 0x4) != 0;
-                return gateOpen ? "random.door_close" : "random.door_open";
-            
-            // Redstone components - FIXED
-            case LEVER:
-                // Lever has distinct on/off sounds
-                boolean leverOn = (data & 0x8) != 0;
-                return leverOn ? "random.click" : "random.click";
-            
-            case STONE_BUTTON:
-                return "random.click";
-                
-            case WOOD_BUTTON:
-                return "random.wood_click";
-            
-            // Pressure plates - FIXED
-            case STONE_PLATE:
-                // Stone pressure plate
-                return "random.click";
-                
-            case WOOD_PLATE:
-                // Wood pressure plate
-                return "random.wood_click";
-                
-            case GOLD_PLATE:
-            case IRON_PLATE:
-                // Metal pressure plates
-                return "random.click";
-            
-            // Chests
-            case CHEST:
-            case TRAPPED_CHEST:
-                return "random.chestopen";
-            
-            case ENDER_CHEST:
-                return "random.chestopen";
-            
+    private Sound getSoundForInteraction(StateType stateType, byte blockData) {
+        String blockName = stateType.getName().toLowerCase();
+        MaterialType materialType = stateType.getMaterialType();
+        
+        // Doors
+        if (blockName.contains("door") && !blockName.contains("trapdoor")) {
+            boolean doorOpen = (blockData & 0x4) != 0;
+            if (materialType == MaterialType.METAL || blockName.contains("iron")) {
+                return doorOpen ? Sounds.BLOCK_IRON_DOOR_CLOSE : Sounds.BLOCK_IRON_DOOR_OPEN;
+            } else {
+                return doorOpen ? Sounds.BLOCK_WOODEN_DOOR_CLOSE : Sounds.BLOCK_WOODEN_DOOR_OPEN;
+            }
+        }
+        
+        // Trapdoors
+        if (blockName.contains("trapdoor")) {
+            boolean trapdoorOpen = (blockData & 0x4) != 0;
+            if (materialType == MaterialType.METAL || blockName.contains("iron")) {
+                return trapdoorOpen ? Sounds.BLOCK_IRON_TRAPDOOR_CLOSE : Sounds.BLOCK_IRON_TRAPDOOR_OPEN;
+            } else {
+                return trapdoorOpen ? Sounds.BLOCK_WOODEN_TRAPDOOR_CLOSE : Sounds.BLOCK_WOODEN_TRAPDOOR_OPEN;
+            }
+        }
+        
+        // Fence Gates
+        if (blockName.contains("fence_gate")) {
+            boolean gateOpen = (blockData & 0x4) != 0;
+            return gateOpen ? Sounds.BLOCK_FENCE_GATE_CLOSE : Sounds.BLOCK_FENCE_GATE_OPEN;
+        }
+        
+        // Redstone components
+        if (blockName.equals("lever")) {
+            return Sounds.BLOCK_LEVER_CLICK;
+        }
+        
+        if (blockName.contains("button")) {
+            if (materialType == MaterialType.WOOD || materialType == MaterialType.NETHER_WOOD) {
+                return Sounds.BLOCK_WOODEN_BUTTON_CLICK_ON;
+            } else {
+                return Sounds.BLOCK_STONE_BUTTON_CLICK_ON;
+            }
+        }
+        
+        // Pressure plates
+        if (blockName.contains("pressure_plate")) {
+            boolean pressed = (blockData & 0x1) != 0;
+            if (materialType == MaterialType.WOOD || materialType == MaterialType.NETHER_WOOD) {
+                return pressed ? Sounds.BLOCK_WOODEN_PRESSURE_PLATE_CLICK_ON : Sounds.BLOCK_WOODEN_PRESSURE_PLATE_CLICK_OFF;
+            } else if (materialType == MaterialType.METAL || materialType == MaterialType.HEAVY_METAL) {
+                return pressed ? Sounds.BLOCK_METAL_PRESSURE_PLATE_CLICK_ON : Sounds.BLOCK_METAL_PRESSURE_PLATE_CLICK_OFF;
+            } else {
+                return pressed ? Sounds.BLOCK_STONE_PRESSURE_PLATE_CLICK_ON : Sounds.BLOCK_STONE_PRESSURE_PLATE_CLICK_OFF;
+            }
+        }
+        
+        // Chests
+        if (blockName.equals("chest") || blockName.equals("trapped_chest")) {
+            return Sounds.BLOCK_CHEST_OPEN;
+        }
+        if (blockName.equals("ender_chest")) {
+            return Sounds.BLOCK_ENDER_CHEST_OPEN;
+        }
+        
+        return null;
+    }
+    
+    /**
+     * Gets the appropriate sound for place/break actions using PacketEvents StateType and MaterialType
+     */
+    private Sound getSoundForPlaceBreak(StateType stateType, BlockAction action) {
+        boolean isBreak = action == BlockAction.BREAK;
+        MaterialType materialType = stateType.getMaterialType();
+        
+        // Use MaterialType enum from PacketEvents for proper sound selection
+        switch (materialType) {
+            case WOOD:
+            case NETHER_WOOD:
+            case BAMBOO:
+            case BAMBOO_SAPLING:
+                return isBreak ? Sounds.BLOCK_WOOD_BREAK : Sounds.BLOCK_WOOD_PLACE;
+            case METAL:
+            case HEAVY_METAL:
+                return isBreak ? Sounds.BLOCK_METAL_BREAK : Sounds.BLOCK_METAL_PLACE;
+            case GLASS:
+            case BUILDABLE_GLASS:
+                return isBreak ? Sounds.BLOCK_GLASS_BREAK : Sounds.BLOCK_GLASS_PLACE;
+            case SAND:
+                return isBreak ? Sounds.BLOCK_SAND_BREAK : Sounds.BLOCK_SAND_PLACE;
+            case DIRT:
+                return isBreak ? Sounds.BLOCK_ROOTED_DIRT_BREAK : Sounds.BLOCK_ROOTED_DIRT_PLACE;
+            case GRASS:
+            case LEAVES:
+            case PLANT:
+            case REPLACEABLE_PLANT:
+            case WATER_PLANT:
+            case REPLACEABLE_WATER_PLANT:
+            case SPONGE:
+                return isBreak ? Sounds.BLOCK_GRASS_BREAK : Sounds.BLOCK_GRASS_PLACE;
+            case WOOL:
+            case CLOTH_DECORATION:
+                return isBreak ? Sounds.BLOCK_WOOL_BREAK : Sounds.BLOCK_WOOL_PLACE;
+            case SNOW:
+            case TOP_SNOW:
+                return isBreak ? Sounds.BLOCK_SNOW_BREAK : Sounds.BLOCK_SNOW_PLACE;
+            case CLAY:
+                return isBreak ? Sounds.BLOCK_GRAVEL_BREAK : Sounds.BLOCK_GRAVEL_PLACE;
+            case SCULK:
+                return isBreak ? Sounds.BLOCK_SCULK_BREAK : Sounds.BLOCK_SCULK_PLACE;
             default:
-                return null;
+                return isBreak ? Sounds.BLOCK_STONE_BREAK : Sounds.BLOCK_STONE_PLACE;
         }
     }
 }

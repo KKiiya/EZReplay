@@ -4,6 +4,7 @@ import me.lagggpixel.replay.Replay;
 import me.lagggpixel.replay.api.replay.content.IControls;
 import me.lagggpixel.replay.api.replay.content.IReplaySession;
 import me.lagggpixel.replay.menu.TrackerMenu;
+import me.lagggpixel.replay.utils.PacketUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -17,14 +18,12 @@ import java.util.HashMap;
 
 public class Controls implements IControls {
 
-    private final IVersionSupport vs;
     private final HashMap<Integer, ItemStack> oldInventory;
     private final IReplaySession replaySession;
     private final Player player;
     private boolean isInDelay = false;
 
     public Controls(IReplaySession replaySession, Player player) {
-        this.vs = Replay.getInstance().getVersionSupport();
         this.oldInventory = new HashMap<>();
         this.replaySession = replaySession;
         this.player = player;
@@ -40,12 +39,12 @@ public class Controls implements IControls {
         inv.clear();
 
         ItemStack tracker = new ItemStack(Material.COMPASS);
-        ItemStack decreaseSpeed = vs.getSkull("http://textures.minecraft.net/texture/118a2dd5bef0b073b13271a7eeb9cfea7afe8593c57a93821e43175572461812");
-        ItemStack rewind = vs.getSkull("http://textures.minecraft.net/texture/864f779a8e3ffa231143fa69b96b14ee35c16d669e19c75fd1a7da4bf306c");
-        ItemStack pauseResume = vs.getSkull("http://textures.minecraft.net/texture/b46f95582cef626b5562ed656b8a1ce877108d066635378f3269fea34a770494");
-        ItemStack forward = vs.getSkull("http://textures.minecraft.net/texture/d9eccc5c1c79aa7826a15a7f5f12fb40328157c5242164ba2aef47e5de9a5cfc");
-        ItemStack increaseSpeed = vs.getSkull("http://textures.minecraft.net/texture/d99f28332bcc349f42023c29e6e641f4b10a6b1e48718cae557466d51eb922");
-        ItemStack resetReplay = vs.getSkull("http://textures.minecraft.net/texture/3a4fab3fd97eb7ecf48ab4fd327e093e886f4e217aab69585313c27a5035831a");
+        ItemStack decreaseSpeed = PacketUtils.getSkull("http://textures.minecraft.net/texture/118a2dd5bef0b073b13271a7eeb9cfea7afe8593c57a93821e43175572461812");
+        ItemStack rewind = PacketUtils.getSkull("http://textures.minecraft.net/texture/864f779a8e3ffa231143fa69b96b14ee35c16d669e19c75fd1a7da4bf306c");
+        ItemStack pauseResume = PacketUtils.getSkull("http://textures.minecraft.net/texture/b46f95582cef626b5562ed656b8a1ce877108d066635378f3269fea34a770494");
+        ItemStack forward = PacketUtils.getSkull("http://textures.minecraft.net/texture/d9eccc5c1c79aa7826a15a7f5f12fb40328157c5242164ba2aef47e5de9a5cfc");
+        ItemStack increaseSpeed = PacketUtils.getSkull("http://textures.minecraft.net/texture/d99f28332bcc349f42023c29e6e641f4b10a6b1e48718cae557466d51eb922");
+        ItemStack resetReplay = PacketUtils.getSkull("http://textures.minecraft.net/texture/3a4fab3fd97eb7ecf48ab4fd327e093e886f4e217aab69585313c27a5035831a");
 
         ItemMeta trackerMeta = tracker.getItemMeta();
         trackerMeta.setDisplayName(ChatColor.GOLD + "Player Tracker");
@@ -82,13 +81,13 @@ public class Controls implements IControls {
         resetReplayMeta.setLore(Arrays.asList(ChatColor.GRAY + "Click to reset the", ChatColor.GRAY + "replay to the beginning."));
         resetReplay.setItemMeta(resetReplayMeta);
 
-        inv.setItem(0, vs.setItemTag(tracker, "Replay-Control", "tracker"));
-        inv.setItem(2, vs.setItemTag(decreaseSpeed, "Replay-Control", "decreaseSpeed"));
-        inv.setItem(3, vs.setItemTag(rewind, "Replay-Control", "rewind"));
-        inv.setItem(4, vs.setItemTag(pauseResume, "Replay-Control", "pauseResume"));
-        inv.setItem(5, vs.setItemTag(forward, "Replay-Control", "forward"));
-        inv.setItem(6, vs.setItemTag(increaseSpeed, "Replay-Control", "increaseSpeed"));
-        inv.setItem(7, vs.setItemTag(resetReplay, "Replay-Control", "resetReplay"));
+        inv.setItem(0, PacketUtils.setItemTag(tracker, "Replay-Control", "tracker"));
+        inv.setItem(2, PacketUtils.setItemTag(decreaseSpeed, "Replay-Control", "decreaseSpeed"));
+        inv.setItem(3, PacketUtils.setItemTag(rewind, "Replay-Control", "rewind"));
+        inv.setItem(4, PacketUtils.setItemTag(pauseResume, "Replay-Control", "pauseResume"));
+        inv.setItem(5, PacketUtils.setItemTag(forward, "Replay-Control", "forward"));
+        inv.setItem(6, PacketUtils.setItemTag(increaseSpeed, "Replay-Control", "increaseSpeed"));
+        inv.setItem(7, PacketUtils.setItemTag(resetReplay, "Replay-Control", "resetReplay"));
     }
 
     @Override
@@ -111,38 +110,38 @@ public class Controls implements IControls {
                 case "decreaseSpeed":
                     replaySession.setSpeed(replaySession.getSpeed() - 5);
                     for (Player player : replaySession.getViewers()) {
-                        vs.sendActionBar(player, ChatColor.RED + "Speed decreased to " + ChatColor.YELLOW + "x" + replaySession.getSpeedAsDouble());
+                        PacketUtils.sendActionBar(player, ChatColor.RED + "Speed decreased to " + ChatColor.YELLOW + "x" + replaySession.getSpeedAsDouble());
                     }
                     break;
                 case "rewind":
                     replaySession.rewind(10);
                     for (Player player : replaySession.getViewers()) {
-                        vs.sendActionBar(player, ChatColor.AQUA + "Rewound 10 seconds");
+                        PacketUtils.sendActionBar(player, ChatColor.AQUA + "Rewound 10 seconds");
                     }
                     break;
                 case "pauseResume":
                     if (replaySession.isPaused()) {
                         replaySession.resume();
                         for (Player player : replaySession.getViewers()) {
-                            vs.sendActionBar(player, ChatColor.GREEN + "Playback resumed");
+                            PacketUtils.sendActionBar(player, ChatColor.GREEN + "Playback resumed");
                         }
                     } else {
                         replaySession.pause();
                         for (Player player : replaySession.getViewers()) {
-                            vs.sendActionBar(player, ChatColor.RED + "Playback paused");
+                            PacketUtils.sendActionBar(player, ChatColor.RED + "Playback paused");
                         }
                     }
                     break;
                 case "forward":
                     replaySession.fastForward(10);
                     for (Player player : replaySession.getViewers()) {
-                        vs.sendActionBar(player, ChatColor.AQUA + "Fast forwarded 10 seconds");
+                        PacketUtils.sendActionBar(player, ChatColor.AQUA + "Fast forwarded 10 seconds");
                     }
                     break;
                 case "increaseSpeed":
                     replaySession.setSpeed(replaySession.getSpeed() + 5);
                     for (Player player : replaySession.getViewers()) {
-                        vs.sendActionBar(player, ChatColor.GREEN + "Speed increased to " + ChatColor.YELLOW + "x" + replaySession.getSpeedAsDouble());
+                        PacketUtils.sendActionBar(player, ChatColor.GREEN + "Speed increased to " + ChatColor.YELLOW + "x" + replaySession.getSpeedAsDouble());
                     }
                     break;
                 case "resetReplay":

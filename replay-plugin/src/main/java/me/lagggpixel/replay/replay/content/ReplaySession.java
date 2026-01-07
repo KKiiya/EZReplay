@@ -7,12 +7,12 @@ import me.lagggpixel.replay.api.replay.content.IControls;
 import me.lagggpixel.replay.api.replay.content.IReplaySession;
 import me.lagggpixel.replay.api.replay.data.IFrame;
 import me.lagggpixel.replay.api.replay.data.IRecording;
+import me.lagggpixel.replay.utils.PacketUtils;
 import me.lagggpixel.replay.utils.Utils;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.World;
-import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 
@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.UUID;
 
 public class ReplaySession implements IReplaySession {
-    private final IVersionSupport vs;
 
     @Getter
     private final World world;
@@ -32,7 +31,7 @@ public class ReplaySession implements IReplaySession {
     private final IRecording replay;
 
     @Getter
-    private final HashMap<Short, Entity> spawnedEntities;
+    private final HashMap<Short, UUID> spawnedEntities;
 
     private final List<BukkitRunnable> startedTasks;
 
@@ -46,7 +45,6 @@ public class ReplaySession implements IReplaySession {
     }
 
     public ReplaySession(World world, String replayId, Location spawnLocation, Player... players) {
-        this.vs = Replay.getInstance().getVersionSupport();
         this.world = world;
         this.playersWatching = new ArrayList<>();
         this.playerControls = new HashMap<>();
@@ -56,10 +54,7 @@ public class ReplaySession implements IReplaySession {
 
         this.spawnedEntities = new HashMap<>();
 
-        for (UUID player : replay.getPlayers()) {
-            Player NPC = vs.createNPCCopy(this, Bukkit.getOfflinePlayer(player));
-            spawnedEntities.put(replay.getEntityIndex().getOrRegister(player), NPC);
-        }
+        for (UUID player : replay.getPlayers()) spawnedEntities.put(replay.getEntityIndex().getOrRegister(player), player);
 
         this.startedTasks = new ArrayList<>();
 
@@ -76,7 +71,6 @@ public class ReplaySession implements IReplaySession {
     }
 
     public ReplaySession(World world, IRecording replay, Player... players) {
-        this.vs = Replay.getInstance().getVersionSupport();
         this.world = world;
         this.playersWatching = new ArrayList<>();
         this.playerControls = new HashMap<>();
@@ -85,10 +79,7 @@ public class ReplaySession implements IReplaySession {
 
         this.spawnedEntities = new HashMap<>();
 
-        for (UUID player : replay.getPlayers()) {
-            Player NPC = vs.createNPCCopy(this, Bukkit.getOfflinePlayer(player));
-            spawnedEntities.put(replay.getEntityIndex().getOrRegister(player), NPC);
-        }
+        for (UUID player : replay.getPlayers()) spawnedEntities.put(replay.getEntityIndex().getOrRegister(player), player);
 
         this.startedTasks = new ArrayList<>();
 
@@ -137,11 +128,9 @@ public class ReplaySession implements IReplaySession {
         }
 
         for (Short replayPlayer : spawnedEntities.keySet()) {
-            if (!(spawnedEntities.get(replayPlayer) instanceof Player)) continue;
-            Player fakePlayer = (Player) spawnedEntities.get(replayPlayer);
-            for (Player viewer : getViewers()) {
-                vs.spawnFakePlayer(fakePlayer, viewer, replay.getSpawnLocation(replayPlayer).toBukkitLocation(world));
-            }
+            UUID toCopy = spawnedEntities.get(replayPlayer);
+            PacketUtils.spawnFakePlayer(getViewers(), toCopy, replay.getSpawnLocation(replayPlayer).toBukkitLocation(world));
+            spawnedEntities.put(replayPlayer, toCopy);
         }
 
         isPaused = false;
@@ -170,9 +159,7 @@ public class ReplaySession implements IReplaySession {
 
         while (currentFrameIndex > targetFrameIndex) {
             IFrame frame = replay.getFrames().get(--currentFrameIndex);
-            for (Player p : getViewers()) {
-                frame.unplay(this, p);
-            }
+            for (Player p : getViewers()) frame.unplay(this);
         }
 
         Bukkit.getScheduler().runTaskLater(Replay.getInstance(), this::resume, 20L);
@@ -186,9 +173,7 @@ public class ReplaySession implements IReplaySession {
 
         while (currentFrameIndex < targetFrameIndex) {
             IFrame frame = replay.getFrames().get(currentFrameIndex++);
-            for (Player p : getViewers()) {
-                frame.play(this, p);
-            }
+            for (Player p : getViewers()) frame.play(this);
         }
 
         Bukkit.getScheduler().runTaskLater(Replay.getInstance(), this::resume, 20L);
@@ -224,9 +209,7 @@ public class ReplaySession implements IReplaySession {
 
         Bukkit.getScheduler().runTaskLaterAsynchronously(Replay.getInstance(), () -> {
             for (IFrame frame : replay.getFrames()) {
-                for (Player p : getViewers()) {
-                    frame.unplay(this, p);
-                }
+                for (Player p : getViewers()) frame.unplay(this);
             }
         }, 10L);
 
@@ -250,7 +233,7 @@ public class ReplaySession implements IReplaySession {
             if (isPaused) return;
 
             for (Player p : getViewers()) {
-                frame.play(this, p);
+                frame.play(this);
                 p.setLevel(currentFrameIndex/20);
                 p.setExp((float) currentFrameIndex/replay.getFrames().size());
             }

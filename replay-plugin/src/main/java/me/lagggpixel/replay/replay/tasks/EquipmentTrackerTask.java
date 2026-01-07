@@ -1,10 +1,10 @@
 package me.lagggpixel.replay.replay.tasks;
 
-import me.lagggpixel.replay.Replay;
 import me.lagggpixel.replay.api.replay.data.IFrame;
 import me.lagggpixel.replay.api.replay.data.IRecording;
 import me.lagggpixel.replay.api.replay.data.recordable.Recordable;
 import me.lagggpixel.replay.api.utils.item.ItemData;
+import me.lagggpixel.replay.replay.recordables.entity.entity.Equipment;
 import org.bukkit.entity.*;
 
 import java.util.ArrayList;
@@ -30,7 +30,7 @@ public class EquipmentTrackerTask implements Runnable {
 
         for (int i = 0; i < currentEquipment.length; i++) {
             if (!currentEquipment[i].equals(previousEquipment[i])) {
-                Recordable recordable = Replay.getInstance().getVersionSupport().createEquipmentRecordable(replay, player);
+                Recordable recordable = new Equipment(replay, player);
                 lastFrame.addRecordable(recordable);
             }
         }

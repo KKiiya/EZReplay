@@ -4,6 +4,12 @@ import me.lagggpixel.replay.Replay;
 import me.lagggpixel.replay.api.replay.data.IRecording;
 import me.lagggpixel.replay.api.replay.data.recordable.Recordable;
 import me.lagggpixel.replay.api.utils.entity.AnimationType;
+import me.lagggpixel.replay.replay.recordables.entity.entity.Animation;
+import me.lagggpixel.replay.replay.recordables.entity.entity.EntityDeath;
+import me.lagggpixel.replay.replay.recordables.entity.entity.EntitySpawn;
+import me.lagggpixel.replay.replay.recordables.entity.entity.VehicleRide;
+import me.lagggpixel.replay.replay.recordables.entity.projectile.ProjectileLaunchRecordable;
+import me.lagggpixel.replay.replay.recordables.world.ExplosionRecordable;
 import org.bukkit.World;
 import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
@@ -29,7 +35,7 @@ public class EntityListener implements Listener {
         if (entity instanceof Projectile) return;
         if (entity instanceof LivingEntity) recording.getSpawnedEntities().add(entity);
 
-        Recordable spawn = Replay.getInstance().getVersionSupport().createEntitySpawnRecordable(recording, entity);
+        Recordable spawn = new EntitySpawn(recording, entity);
         recording.getLastFrame().addRecordable(spawn);
     }
 
@@ -45,7 +51,7 @@ public class EntityListener implements Listener {
 
         if (!(entity instanceof LivingEntity)) return;
 
-        Recordable spawn = Replay.getInstance().getVersionSupport().createAnimationRecordable(recording, entity, AnimationType.SWING_MAIN_HAND);
+        Recordable spawn = new Animation(recording, entity, AnimationType.SWING_MAIN_HAND);
         recording.getLastFrame().addRecordable(spawn);
     }
 
@@ -59,7 +65,7 @@ public class EntityListener implements Listener {
 
         recording.getSpawnedEntities().remove(entity);
 
-        Recordable recordable = Replay.getInstance().getVersionSupport().createEntityDeathRecordable(recording, entity);
+        Recordable recordable = new EntityDeath(recording, entity);
         recording.getLastFrame().addRecordable(recordable);
     }
 
@@ -73,7 +79,7 @@ public class EntityListener implements Listener {
         IRecording recording = Replay.getInstance().getReplayManager().getActiveRecording(world);
         if (recording == null) return;
 
-        Recordable explosion = Replay.getInstance().getVersionSupport().createExplosionRecordable(recording, entity.getLocation(), e.getEntity(), e.getRadius());
+        Recordable explosion = new ExplosionRecordable(recording, entity.getLocation(), e.getEntity(), e.getRadius());
         recording.getLastFrame().addRecordable(explosion);
     }
 
@@ -88,7 +94,7 @@ public class EntityListener implements Listener {
         IRecording recording = Replay.getInstance().getReplayManager().getActiveRecording(world);
         if (recording == null) return;
 
-        Recordable damage = Replay.getInstance().getVersionSupport().createAnimationRecordable(recording, entity, AnimationType.HURT);
+        Recordable damage = new Animation(recording, entity, AnimationType.HURT);
         recording.getLastFrame().addRecordable(damage);
     }
 
@@ -105,7 +111,7 @@ public class EntityListener implements Listener {
         IRecording recording = Replay.getInstance().getReplayManager().getActiveRecording(world);
         if (recording == null) return;
 
-        Recordable spawn = Replay.getInstance().getVersionSupport().createProjectileLaunchRecordable(recording, (Entity) shooter, projectile);
+        Recordable spawn = new ProjectileLaunchRecordable(recording, (Entity) shooter, projectile);
         recording.getLastFrame().addRecordable(spawn);
     }
     
@@ -119,7 +125,7 @@ public class EntityListener implements Listener {
         if (entity instanceof LivingEntity) return;
         recording.getSpawnedEntities().add(entity);
 
-        Recordable spawn = Replay.getInstance().getVersionSupport().createEntitySpawnRecordable(recording, entity);
+        Recordable spawn = new EntitySpawn(recording, entity);
         recording.getLastFrame().addRecordable(spawn);
     }
 
@@ -134,7 +140,7 @@ public class EntityListener implements Listener {
         IRecording recording = Replay.getInstance().getReplayManager().getActiveRecording(world);
         if (recording == null) return;
 
-        Recordable ride = Replay.getInstance().getVersionSupport().createEntityRideRecordable(recording, vehicle, entity);
+        Recordable ride = new VehicleRide(recording, vehicle, entity);
         recording.getLastFrame().addRecordable(ride);
     }
 }

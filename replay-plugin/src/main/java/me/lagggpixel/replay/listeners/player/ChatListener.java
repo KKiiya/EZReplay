@@ -3,6 +3,7 @@ package me.lagggpixel.replay.listeners.player;
 import me.lagggpixel.replay.Replay;
 import me.lagggpixel.replay.api.replay.data.IRecording;
 import me.lagggpixel.replay.api.replay.data.recordable.Recordable;
+import me.lagggpixel.replay.replay.recordables.player.ChatRecordable;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -20,7 +21,7 @@ public class ChatListener implements Listener {
         if (recording == null) return;
         if (!recording.isRecordingChat()) return;
 
-        Recordable recordable = Replay.getInstance().getVersionSupport().createChatRecordable(recording, player.getUniqueId(), e.getFormat(), e.getMessage());
+        Recordable recordable = new ChatRecordable(recording, player.getUniqueId(), e.getMessage());
         recording.getLastFrame().addRecordable(recordable);
     }
 }

@@ -13,18 +13,16 @@ public class ChatRecordable extends Recordable {
 
     @Writeable private final short entityId;
     @Writeable private final String format;
-    @Writeable private final String content;
 
-    public ChatRecordable(IRecording replay, UUID sender, String format, String content) {
+    public ChatRecordable(IRecording replay, UUID sender, String format) {
         super(replay);
         this.entityId = replay.getEntityIndex().getOrRegister(sender);
         this.format = format;
-        this.content = content;
     }
 
     @Override
     public void play(IReplaySession replaySession) {
-        player.sendMessage(format);
+        for (Player viewer : replaySession.getViewers()) viewer.sendMessage(format);
     }
 
     @Override

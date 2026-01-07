@@ -1,16 +1,18 @@
 package me.lagggpixel.replay.replay.recordables.entity.item;
 
+import com.github.retrooper.packetevents.PacketEvents;
+import com.github.retrooper.packetevents.protocol.player.User;
+import com.github.retrooper.packetevents.protocol.sound.SoundCategory;
+import com.github.retrooper.packetevents.protocol.sound.Sounds;
+import com.github.retrooper.packetevents.util.Vector3i;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerCollectItem;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerDestroyEntities;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSoundEffect;
 import me.lagggpixel.replay.api.data.Writeable;
 import me.lagggpixel.replay.api.replay.content.IReplaySession;
 import me.lagggpixel.replay.api.replay.data.IRecording;
 import me.lagggpixel.replay.api.replay.data.recordable.Recordable;
 import me.lagggpixel.replay.api.replay.data.recordable.RecordableRegistry;
-import me.lagggpixel.replay.support.nms.v1_8_R3;
-import net.minecraft.server.v1_8_R3.PacketPlayOutCollect;
-import net.minecraft.server.v1_8_R3.PacketPlayOutEntityDestroy;
-import net.minecraft.server.v1_8_R3.PacketPlayOutNamedSoundEffect;
-import org.bukkit.Sound;
-import org.bukkit.craftbukkit.v1_8_R3.CraftSound;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
@@ -34,14 +36,19 @@ public class ItemPick extends Recordable {
 
     @Override
     public void play(IReplaySession replaySession) {
-        int subItemId = replaySession.getSpawnedEntities().get(itemId).getEntityId();
-        int subCollectorId = replaySession.getSpawnedEntities().get(collectorId).getEntityId();
+        int fakeItemId = itemId + 100000;
+        int fakeCollectorId = collectorId + 100000;
 
-        PacketPlayOutCollect collect = new PacketPlayOutCollect(subItemId, subCollectorId);
-        PacketPlayOutNamedSoundEffect pickUpSound = new PacketPlayOutNamedSoundEffect(CraftSound.getSound(Sound.ITEM_PICKUP), x, y, z, 0.7f, 1.4f);
-        PacketPlayOutEntityDestroy destroy = new PacketPlayOutEntityDestroy(itemId);
+        WrapperPlayServerCollectItem collectPacket = new WrapperPlayServerCollectItem(fakeItemId, fakeCollectorId, 1);
+        WrapperPlayServerSoundEffect soundPacket = new WrapperPlayServerSoundEffect(Sounds.ENTITY_ITEM_PICKUP, SoundCategory.PLAYER, new Vector3i((int) x, (int) y, (int) z), 0.7f, 1.4f);
+        WrapperPlayServerDestroyEntities destroyPacket = new WrapperPlayServerDestroyEntities(fakeItemId);
 
-        v1_8_R3.sendPackets(player, collect, pickUpSound, destroy);
+        for (Player viewer : replaySession.getViewers()) {
+            User user = PacketEvents.getAPI().getPlayerManager().getUser(viewer);
+            user.sendPacket(collectPacket);
+            user.sendPacket(soundPacket);
+            user.sendPacket(destroyPacket);
+        }
     }
 
     @Override

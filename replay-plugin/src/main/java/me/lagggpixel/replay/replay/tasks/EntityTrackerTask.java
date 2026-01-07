@@ -5,6 +5,7 @@ import me.lagggpixel.replay.api.replay.data.IFrame;
 import me.lagggpixel.replay.api.replay.data.IRecording;
 import me.lagggpixel.replay.api.replay.data.recordable.Recordable;
 import me.lagggpixel.replay.api.utils.Vector3d;
+import me.lagggpixel.replay.replay.recordables.entity.entity.EntityRecordable;
 import org.bukkit.Location;
 import org.bukkit.entity.Entity;
 import java.util.ArrayList;
@@ -33,7 +34,7 @@ public class EntityTrackerTask implements Runnable {
         Vector3d currentPosition = new Vector3d(loc.getX(), loc.getY(), loc.getZ());
 
         if (!currentPosition.equals(previousPosition)) {
-            Recordable recordable = Replay.getInstance().getVersionSupport().createEntityMovementRecordable(replay, entity);
+            Recordable recordable = new EntityRecordable(replay, entity);
             IFrame lastFrame = replay.getLastFrame();
             lastFrame.addRecordable(recordable);
         }

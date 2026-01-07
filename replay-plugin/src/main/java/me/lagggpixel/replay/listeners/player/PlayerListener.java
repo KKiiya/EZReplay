@@ -1,10 +1,12 @@
 package me.lagggpixel.replay.listeners.player;
 
-import me.lagggpixel.replay.Replay;
 import me.lagggpixel.replay.api.replay.data.IRecording;
 import me.lagggpixel.replay.api.replay.data.recordable.Recordable;
 import me.lagggpixel.replay.api.utils.entity.AnimationType;
 import me.lagggpixel.replay.replay.ReplayManager;
+import me.lagggpixel.replay.replay.recordables.entity.entity.Animation;
+import me.lagggpixel.replay.replay.recordables.entity.entity.EntityRecordable;
+import me.lagggpixel.replay.replay.recordables.entity.player.Respawn;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -23,7 +25,7 @@ public class PlayerListener implements Listener {
         if (recording == null) return;
         if (player.getVehicle() != null) return;
 
-        Recordable movement = Replay.getInstance().getVersionSupport().createEntityMovementRecordable(recording, player);
+        Recordable movement = new EntityRecordable(recording, player);
         recording.getLastFrame().addRecordable(movement);
     }
 
@@ -34,7 +36,7 @@ public class PlayerListener implements Listener {
         IRecording recording = ReplayManager.getInstance().getActiveRecording(player.getWorld());
         if (recording == null) return;
 
-        Recordable respawn = Replay.getInstance().getVersionSupport().createPlayerRespawnRecordable(recording, player);
+        Recordable respawn = new Respawn(recording, player);
         recording.getLastFrame().addRecordable(respawn);
     }
 
@@ -48,7 +50,7 @@ public class PlayerListener implements Listener {
         IRecording recording = ReplayManager.getInstance().getActiveRecording(player.getWorld());
         if (recording == null) return;
 
-        Recordable animation = Replay.getInstance().getVersionSupport().createAnimationRecordable(recording, player, AnimationType.SWING_MAIN_HAND);
+        Recordable animation = new Animation(recording, player, AnimationType.SWING_MAIN_HAND);
         recording.getLastFrame().addRecordable(animation);
     }
 

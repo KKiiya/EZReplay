@@ -1,7 +1,7 @@
 package me.lagggpixel.replay.menu;
 
-import me.lagggpixel.replay.Replay;
 import me.lagggpixel.replay.api.replay.content.IReplaySession;
+import me.lagggpixel.replay.utils.PacketUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.entity.Entity;
@@ -18,13 +18,11 @@ import static me.lagggpixel.replay.utils.Utils.c;
 
 public class TrackerMenu implements IMenu {
 
-    private final IVersionSupport vs;
     private final IReplaySession replaySession;
     private final Player player;
     private Inventory inv;
 
     public TrackerMenu(IReplaySession replaySession, Player player) {
-        this.vs = Replay.getInstance().getVersionSupport();
         this.replaySession = replaySession;
         this.player = player;
         createInventory();
@@ -43,10 +41,8 @@ public class TrackerMenu implements IMenu {
 
             Player player = (Player) replaySession.getSpawnedEntities().get(uuid);
 
-            ItemStack stack = new ItemStack(vs.getPlayerHeadMaterial());
-            stack.setDurability((short) 3);
+            ItemStack stack = PacketUtils.getSkull(player.getUniqueId().toString());
             SkullMeta skullMeta = (SkullMeta) stack.getItemMeta();
-            skullMeta.setOwner(player.getName());
             skullMeta.setDisplayName(player.getDisplayName());
             skullMeta.setLore(Arrays.asList(
                     c("&7Health: " + "&a" + player.getHealth()),
@@ -56,14 +52,14 @@ public class TrackerMenu implements IMenu {
             ));
             stack.setItemMeta(skullMeta);
 
-            inv.addItem(vs.setItemTag(stack, "player", uuid.toString()));
+            inv.addItem(PacketUtils.setItemTag(stack, "player", uuid.toString()));
         }
     }
 
     @Override
     public void onInventoryClick(InventoryClickEvent e) {
         ItemStack item = e.getCurrentItem();
-        String uuid = vs.getItemTag(item, "player");
+        String uuid = PacketUtils.getItemTag(item, "player");
         short id = -1;
         try {
             id = Short.parseShort(uuid);

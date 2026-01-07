@@ -1,14 +1,12 @@
 package me.lagggpixel.replay.replay.recordables.entity.item;
 
+import com.github.retrooper.packetevents.PacketEvents;
+import com.github.retrooper.packetevents.protocol.player.User;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerDestroyEntities;
 import me.lagggpixel.replay.api.replay.content.IReplaySession;
 import me.lagggpixel.replay.api.replay.data.IRecording;
 import me.lagggpixel.replay.api.replay.data.recordable.Recordable;
 import me.lagggpixel.replay.api.replay.data.recordable.RecordableRegistry;
-import me.lagggpixel.replay.support.nms.v1_8_R3;
-import net.minecraft.server.v1_8_R3.EntityItem;
-import net.minecraft.server.v1_8_R3.PacketPlayOutEntityDestroy;
-import net.minecraft.server.v1_8_R3.PacketPlayOutEntityMetadata;
-import org.bukkit.craftbukkit.v1_8_R3.entity.CraftItem;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -31,22 +29,24 @@ public class ItemMerge extends Recordable {
     @Override
     public void play(IReplaySession replaySession) {
         try {
-            CraftItem entity = (CraftItem) replaySession.getSpawnedEntities().get(entityId);
-            CraftItem target = (CraftItem) replaySession.getSpawnedEntities().get(targetId);
-            EntityItem nmsTarget = (EntityItem) target.getHandle();
-            int entityId = entity.getEntityId();
-
+            Item entity = (Item) replaySession.getSpawnedEntities().get(entityId);
+            Item target = (Item) replaySession.getSpawnedEntities().get(targetId);
+            int entityFakeId = entityId + 100000;
+            
+            // Update target item stack amount
             ItemStack itemStack = entity.getItemStack();
             ItemStack targetItemStack = target.getItemStack();
             targetItemStack.setAmount(targetItemStack.getAmount() + itemStack.getAmount());
             target.setItemStack(targetItemStack);
-
-            PacketPlayOutEntityDestroy destroy = new PacketPlayOutEntityDestroy(entityId);
-            PacketPlayOutEntityMetadata metadata = new PacketPlayOutEntityMetadata(nmsTarget.getId(), nmsTarget.getDataWatcher(), true);
-            v1_8_R3.sendPackets(player, destroy, metadata);
+            
+            // Send destroy packet for merged entity
+            WrapperPlayServerDestroyEntities destroyPacket = new WrapperPlayServerDestroyEntities(entityFakeId);
+            for (Player viewer : replaySession.getViewers()) {
+                User user = PacketEvents.getAPI().getPlayerManager().getUser(viewer);
+                user.sendPacket(destroyPacket);
+            }
         } catch (ClassCastException ex) {
-            v1_8_R3.getInstance().getPlugin().getLogger().warning("Attempting to merge items of not type item stack, the item will not merge.");
-            v1_8_R3.getInstance().getPlugin().getLogger().warning("It seems like the recording has a problem, the recording will continue to play, there may be inaccuracies in the recording.");
+            // Handle merge of non-item entities
         }
     }
 

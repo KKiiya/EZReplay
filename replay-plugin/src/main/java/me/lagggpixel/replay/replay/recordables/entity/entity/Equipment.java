@@ -1,22 +1,24 @@
 package me.lagggpixel.replay.replay.recordables.entity.entity;
 
+import com.github.retrooper.packetevents.PacketEvents;
+import com.github.retrooper.packetevents.protocol.item.ItemStack;
+import com.github.retrooper.packetevents.protocol.item.type.ItemTypes;
+import com.github.retrooper.packetevents.protocol.player.EquipmentSlot;
+import com.github.retrooper.packetevents.protocol.player.User;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityEquipment;
 import me.lagggpixel.replay.api.data.Writeable;
 import me.lagggpixel.replay.api.replay.content.IReplaySession;
 import me.lagggpixel.replay.api.replay.data.recordable.Recordable;
 import me.lagggpixel.replay.api.replay.data.IRecording;
-
 import me.lagggpixel.replay.api.replay.data.recordable.RecordableRegistry;
 import me.lagggpixel.replay.api.utils.item.ItemData;
-import me.lagggpixel.replay.support.nms.v1_8_R3;
-import net.minecraft.server.v1_8_R3.EntityHuman;
-import net.minecraft.server.v1_8_R3.PacketPlayOutEntityEquipment;
-import org.bukkit.craftbukkit.v1_8_R3.entity.CraftEntity;
-import org.bukkit.craftbukkit.v1_8_R3.inventory.CraftItemStack;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.EquipmentSlot;
-import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 
 public class Equipment extends Recordable {
 
@@ -37,45 +39,36 @@ public class Equipment extends Recordable {
 
     @Override
     public void play(IReplaySession replaySession) {
-        net.minecraft.server.v1_8_R3.Entity entity = ((CraftEntity) replaySession.getSpawnedEntities().get(entityId)).getHandle();
+        int fakeEntityId = entityId + 100000;
+        
+        org.bukkit.inventory.ItemStack mainHand = equipment[4].toItemStack();
+        org.bukkit.inventory.ItemStack helmet = equipment[0].toItemStack();
+        org.bukkit.inventory.ItemStack chestplate = equipment[1].toItemStack();
+        org.bukkit.inventory.ItemStack leggings = equipment[2].toItemStack();
+        org.bukkit.inventory.ItemStack boots = equipment[3].toItemStack();
 
-        ItemStack mainHand = equipment[4].toItemStack();
-        ItemStack helmet = equipment[0].toItemStack();
-        ItemStack chestplate = equipment[1].toItemStack();
-        ItemStack leggings = equipment[2].toItemStack();
-        ItemStack boots = equipment[3].toItemStack();
+        List<com.github.retrooper.packetevents.protocol.player.Equipment> equipmentList = new ArrayList<>();
 
-        if (isPlayer) {
-            EntityHuman human = (EntityHuman) entity;
-            human.a(CraftItemStack.asNMSCopy(mainHand), 1);
-        }
-        if (helmet != null) entity.setEquipment(0, CraftItemStack.asNMSCopy(helmet));
-        if (chestplate != null) entity.setEquipment(1, CraftItemStack.asNMSCopy(chestplate));
-        if (leggings != null) entity.setEquipment(2, CraftItemStack.asNMSCopy(leggings));
-        if (boots != null)  entity.setEquipment(3, CraftItemStack.asNMSCopy(boots));
+        if (mainHand != null) equipmentList.add(new com.github.retrooper.packetevents.protocol.player.Equipment(EquipmentSlot.MAIN_HAND, convertToPacketEventsItem(mainHand)));
 
-        int entityId = entity.getId();
-        if (mainHand != null) {
-            PacketPlayOutEntityEquipment mainHandPacket = new PacketPlayOutEntityEquipment(entityId, EquipmentSlot.HAND.ordinal(), CraftItemStack.asNMSCopy(mainHand));
-            v1_8_R3.sendPacket(player, mainHandPacket);
-        }
-        if (helmet != null) {
-            PacketPlayOutEntityEquipment helmetPacket = new PacketPlayOutEntityEquipment(entityId, EquipmentSlot.HEAD.ordinal(), CraftItemStack.asNMSCopy(helmet));
-            v1_8_R3.sendPacket(player, helmetPacket);
-        }
-        if (chestplate != null) {
-            PacketPlayOutEntityEquipment chestplatePacket = new PacketPlayOutEntityEquipment(entityId, EquipmentSlot.CHEST.ordinal(), CraftItemStack.asNMSCopy(chestplate));
-            v1_8_R3.sendPacket(player, chestplatePacket);
-        }
-        if (leggings != null) {
-            PacketPlayOutEntityEquipment leggingsPacket = new PacketPlayOutEntityEquipment(entityId, EquipmentSlot.LEGS.ordinal(), CraftItemStack.asNMSCopy(leggings));
-            v1_8_R3.sendPacket(player, leggingsPacket);
-        }
-        if (boots != null) {
-            PacketPlayOutEntityEquipment bootsPacket = new PacketPlayOutEntityEquipment(entityId, EquipmentSlot.FEET.ordinal(), CraftItemStack.asNMSCopy(boots));
-            v1_8_R3.sendPacket(player, bootsPacket);
-        }
+        if (helmet != null) equipmentList.add(new com.github.retrooper.packetevents.protocol.player.Equipment(EquipmentSlot.HELMET, convertToPacketEventsItem(helmet)));
+        if (chestplate != null) equipmentList.add(new com.github.retrooper.packetevents.protocol.player.Equipment(EquipmentSlot.CHEST_PLATE, convertToPacketEventsItem(chestplate)));
+        if (leggings != null) equipmentList.add(new com.github.retrooper.packetevents.protocol.player.Equipment(EquipmentSlot.LEGGINGS, convertToPacketEventsItem(leggings)));
+        if (boots != null) equipmentList.add(new com.github.retrooper.packetevents.protocol.player.Equipment(EquipmentSlot.BOOTS, convertToPacketEventsItem(boots)));
+        WrapperPlayServerEntityEquipment packet = new WrapperPlayServerEntityEquipment(fakeEntityId, equipmentList);
 
+        for (Player viewer : replaySession.getViewers()) {
+            User user = PacketEvents.getAPI().getPlayerManager().getUser(viewer);
+            if (!equipmentList.isEmpty()) user.sendPacket(packet);
+        }
+    }
+    
+    private ItemStack convertToPacketEventsItem(org.bukkit.inventory.ItemStack bukkitStack) {
+        if (bukkitStack == null) return ItemStack.EMPTY;
+        return ItemStack.builder()
+            .type(Objects.requireNonNull(ItemTypes.getByName("minecraft:" + bukkitStack.getType().name().toLowerCase())))
+            .amount(bukkitStack.getAmount())
+            .build();
     }
 
 

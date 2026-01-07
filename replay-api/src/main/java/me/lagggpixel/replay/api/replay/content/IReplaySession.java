@@ -8,6 +8,7 @@ import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.UUID;
 
 public interface IReplaySession {
     IRecording getReplay();
@@ -15,7 +16,7 @@ public interface IReplaySession {
     HashMap<Player, IControls> getPlayerControls();
 
     World getWorld();
-    HashMap<Short, Entity> getSpawnedEntities();
+    HashMap<Short, UUID> getSpawnedEntities();
 
     List<BukkitRunnable> startedTasks();
 

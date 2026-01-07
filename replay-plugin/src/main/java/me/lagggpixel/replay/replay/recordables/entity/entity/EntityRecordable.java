@@ -1,11 +1,15 @@
 package me.lagggpixel.replay.replay.recordables.entity.entity;
 
+import com.github.retrooper.packetevents.PacketEvents;
+import com.github.retrooper.packetevents.protocol.player.User;
+import com.github.retrooper.packetevents.util.Vector3d;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityRotation;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityTeleport;
 import me.lagggpixel.replay.api.data.Writeable;
 import me.lagggpixel.replay.api.replay.content.IReplaySession;
 import me.lagggpixel.replay.api.replay.data.recordable.Recordable;
 import me.lagggpixel.replay.api.replay.data.IRecording;
 import me.lagggpixel.replay.api.replay.data.recordable.RecordableRegistry;
-import me.lagggpixel.replay.support.nms.v1_8_R3;
 import org.bukkit.Location;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
@@ -37,14 +41,16 @@ public class EntityRecordable extends Recordable {
     @Override
     public void play(IReplaySession replaySession) {
         Entity replayEntity = replaySession.getSpawnedEntities().get(entityId);
-        net.minecraft.server.v1_8_R3.Entity entity = ((CraftEntity) replayEntity).getHandle();
-        entity.setPositionRotation(x, y, z, yaw, pitch);
+        if (replayEntity != null) replayEntity.teleport(new Location(replaySession.getWorld(), x, y, z, yaw, pitch));
+        int fakeEntityId = entityId + 100000;
 
-        PacketPlayOutEntityTeleport positionPacket = new PacketPlayOutEntityTeleport(entity);
-        PacketPlayOutEntityHeadRotation headRotation = new PacketPlayOutEntityHeadRotation(entity, (byte) ((yaw * 256.0F) / 360.0F));
-        PacketPlayOutEntity.PacketPlayOutEntityLook entityLook = new PacketPlayOutEntity.PacketPlayOutEntityLook(entity.getId(), (byte) ((yaw * 256.0F) / 360.0F), (byte) ((pitch * 256.0F) / 360.0F), true);
-        PacketPlayOutEntityMetadata metadata = new PacketPlayOutEntityMetadata(entity.getId(), entity.getDataWatcher(), true);
-        v1_8_R3.sendPackets(player, positionPacket, headRotation, entityLook, metadata);
+        WrapperPlayServerEntityTeleport teleportPacket = new WrapperPlayServerEntityTeleport(fakeEntityId, new Vector3d(x, y, z), yaw, pitch, true);
+        WrapperPlayServerEntityRotation rotationPacket = new WrapperPlayServerEntityRotation(fakeEntityId, yaw, pitch, true);
+        for (Player viewer : replaySession.getViewers()) {
+            User user = PacketEvents.getAPI().getPlayerManager().getUser(viewer);
+            user.sendPacket(rotationPacket);
+            user.sendPacket(teleportPacket);
+        }
     }
 
     @Override

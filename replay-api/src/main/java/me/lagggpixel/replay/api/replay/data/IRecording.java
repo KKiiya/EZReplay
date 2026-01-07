@@ -88,7 +88,7 @@ public interface IRecording extends BinarySerializable {
     /**
      * Get the spawned entities during the replay
      */
-    List<Entity> getSpawnedEntities();
+    List<Integer> getSpawnedEntities();
 
     /**
      * Get the players that started playing

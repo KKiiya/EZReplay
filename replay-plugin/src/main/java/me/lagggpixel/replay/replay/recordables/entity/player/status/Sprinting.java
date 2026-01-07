@@ -1,16 +1,19 @@
 package me.lagggpixel.replay.replay.recordables.entity.player.status;
 
+import com.github.retrooper.packetevents.PacketEvents;
+import com.github.retrooper.packetevents.protocol.entity.data.EntityData;
+import com.github.retrooper.packetevents.protocol.entity.data.EntityDataTypes;
+import com.github.retrooper.packetevents.protocol.player.User;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityMetadata;
 import me.lagggpixel.replay.api.data.Writeable;
 import me.lagggpixel.replay.api.replay.content.IReplaySession;
 import me.lagggpixel.replay.api.replay.data.IRecording;
 import me.lagggpixel.replay.api.replay.data.recordable.Recordable;
 import me.lagggpixel.replay.api.replay.data.recordable.RecordableRegistry;
-import me.lagggpixel.replay.support.nms.v1_8_R3;
-import net.minecraft.server.v1_8_R3.EntityPlayer;
-import net.minecraft.server.v1_8_R3.PacketPlayOutEntityMetadata;
-import org.bukkit.craftbukkit.v1_8_R3.entity.CraftEntity;
 import org.bukkit.entity.Player;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 public class Sprinting extends Recordable {
@@ -26,22 +29,32 @@ public class Sprinting extends Recordable {
 
     @Override
     public void play(IReplaySession replaySession) {
-        EntityPlayer fakePlayer = (EntityPlayer) ((CraftEntity) replaySession.getSpawnedEntities().get(entityId)).getHandle();
-        fakePlayer.setSprinting(isSprinting);
+        int fakeEntityId = entityId + 100000;
 
-        PacketPlayOutEntityMetadata playerMetadata = new PacketPlayOutEntityMetadata(fakePlayer.getId(), fakePlayer.getDataWatcher(), true);
+        List<EntityData<?>> metadata = new ArrayList<>();
+        byte flags = isSprinting ? (byte) 0x08 : (byte) 0x00;
+        metadata.add(new EntityData<>(0, EntityDataTypes.BYTE, flags));
+        WrapperPlayServerEntityMetadata metadataPacket = new WrapperPlayServerEntityMetadata(fakeEntityId, metadata);
 
-        v1_8_R3.sendPacket(player, playerMetadata);
+        for (Player viewer : replaySession.getViewers()) {
+            User user = PacketEvents.getAPI().getPlayerManager().getUser(viewer);
+            user.sendPacket(metadataPacket);
+        }
     }
 
     @Override
     public void unplay(IReplaySession replaySession) {
-        EntityPlayer fakePlayer = (EntityPlayer) ((CraftEntity) replaySession.getSpawnedEntities().get(entityId)).getHandle();
-        fakePlayer.setSprinting(!isSprinting);
+        int fakeEntityId = entityId + 100000;
 
-        PacketPlayOutEntityMetadata playerMetadata = new PacketPlayOutEntityMetadata(fakePlayer.getId(), fakePlayer.getDataWatcher(), true);
+        List<EntityData<?>> metadata = new ArrayList<>();
+        byte flags = !isSprinting ? (byte) 0x08 : (byte) 0x00;
+        metadata.add(new EntityData<>(0, EntityDataTypes.BYTE, flags));
+        WrapperPlayServerEntityMetadata metadataPacket = new WrapperPlayServerEntityMetadata(fakeEntityId, metadata);
 
-        v1_8_R3.sendPacket(player, playerMetadata);
+        for (Player viewer : replaySession.getViewers()) {
+            User user = PacketEvents.getAPI().getPlayerManager().getUser(viewer);
+            user.sendPacket(metadataPacket);
+        }
     }
 
     @Override

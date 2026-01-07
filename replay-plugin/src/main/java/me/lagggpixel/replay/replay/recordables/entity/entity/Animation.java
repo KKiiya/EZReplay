@@ -1,12 +1,14 @@
 package me.lagggpixel.replay.replay.recordables.entity.entity;
 
+import com.github.retrooper.packetevents.PacketEvents;
+import com.github.retrooper.packetevents.protocol.player.User;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityAnimation;
 import me.lagggpixel.replay.api.data.Writeable;
 import me.lagggpixel.replay.api.replay.content.IReplaySession;
 import me.lagggpixel.replay.api.replay.data.recordable.Recordable;
 import me.lagggpixel.replay.api.replay.data.recordable.RecordableRegistry;
 import me.lagggpixel.replay.api.utils.entity.AnimationType;
 import me.lagggpixel.replay.api.replay.data.IRecording;
-import org.bukkit.Sound;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 
@@ -28,30 +30,33 @@ public class Animation extends Recordable {
 
     @Override
     public void play(IReplaySession replaySession) {
-        Entity fakeEntity = ((CraftEntity) replaySession.getSpawnedEntities().get(entityId)).getHandle();
+        int fakeEntityId = entityId + 100000;
+        
+        for (Player viewer : replaySession.getViewers()) {
+            User user = PacketEvents.getAPI().getPlayerManager().getUser(viewer);
 
-        PacketPlayOutAnimation animation = new PacketPlayOutAnimation(fakeEntity, animationType.getID());
-        if (animationType == AnimationType.HURT || animationType == AnimationType.CRITICAL_HIT || animationType == AnimationType.MAGIC_CRITICAL_HIT) {
-            if (animationType == AnimationType.CRITICAL_HIT) {
-                PacketPlayOutAnimation critical = new PacketPlayOutAnimation(fakeEntity, AnimationType.CRITICAL_HIT.getID());
-                v1_8_R3.sendPacket(player, critical);
-            } else if (animationType == AnimationType.MAGIC_CRITICAL_HIT) {
-                PacketPlayOutAnimation magicCritical = new PacketPlayOutAnimation(fakeEntity, AnimationType.MAGIC_CRITICAL_HIT.getID());
-                v1_8_R3.sendPacket(player, magicCritical);
-            }
-
-            try {
-                Sound hurtSound = type == EntityType.PLAYER ? Sound.HURT_FLESH : Sound.valueOf(type.toString() + "_HURT");
-                PacketPlayOutNamedSoundEffect sound = new PacketPlayOutNamedSoundEffect(CraftSound.getSound(hurtSound), fakeEntity.locX, fakeEntity.locY, fakeEntity.locZ, 1.0F, 1.0F);
-                v1_8_R3.sendPacket(player, sound);
-            } catch (IllegalArgumentException ex) {
-                v1_8_R3.getInstance().getPlugin().getLogger().warning("Sound " + type + "_HURT" + " not found.");
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
+            // Convert AnimationType to PacketEvents animation type
+            WrapperPlayServerEntityAnimation.EntityAnimationType peAnimationType = convertAnimationType(animationType);
+            WrapperPlayServerEntityAnimation animationPacket = new WrapperPlayServerEntityAnimation(fakeEntityId, peAnimationType);
+            user.sendPacket(animationPacket);
+            
+            // Note: Sound effects for hurt/critical hits would require additional handling
+            // with WrapperPlayServerSoundEffect if needed
         }
-
-        v1_8_R3.sendPacket(player, animation);
+    }
+    
+    private WrapperPlayServerEntityAnimation.EntityAnimationType convertAnimationType(AnimationType type) {
+        // Map custom AnimationType to PacketEvents AnimationType
+        // You may need to adjust this mapping based on your AnimationType enum
+        switch (type) {
+            case SWING_OFF_HAND: return WrapperPlayServerEntityAnimation.EntityAnimationType.SWING_OFF_HAND;
+            case HURT: return WrapperPlayServerEntityAnimation.EntityAnimationType.HURT;
+            case CRITICAL_HIT: return WrapperPlayServerEntityAnimation.EntityAnimationType.CRITICAL_HIT;
+            case MAGIC_CRITICAL_HIT: return WrapperPlayServerEntityAnimation.EntityAnimationType.MAGIC_CRITICAL_HIT;
+            case LEAVE_BED: return WrapperPlayServerEntityAnimation.EntityAnimationType.WAKE_UP;
+            case SWING_MAIN_HAND:
+            default: return WrapperPlayServerEntityAnimation.EntityAnimationType.SWING_MAIN_ARM;
+        }
     }
 
     @Override

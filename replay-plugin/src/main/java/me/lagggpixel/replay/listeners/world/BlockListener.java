@@ -11,6 +11,8 @@ import me.lagggpixel.replay.api.utils.block.BlockEventType;
 import me.lagggpixel.replay.api.utils.entity.AnimationType;
 import me.lagggpixel.replay.api.utils.block.BlockAction;
 import me.lagggpixel.replay.replay.ReplayManager;
+import me.lagggpixel.replay.replay.recordables.entity.entity.Animation;
+import me.lagggpixel.replay.replay.recordables.world.block.BlockInteractRecordable;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
@@ -34,14 +36,10 @@ public class BlockListener implements Listener {
         XMaterial blockType = XMaterial.matchXMaterial(block.getType());
 
         // CRITICAL: Skip server-managed blocks
-        if (isServerManagedBlock(blockType, e.getEventType())) {
-            return;
-        }
+        if (isServerManagedBlock(blockType, e.getEventType())) return;
 
         // Skip liquid flow events (but not source placement/removal)
-        if (e.getEventType() == BlockEventType.FROM_TO) {
-            return; // Let physics handle during replay
-        }
+        if (e.getEventType() == BlockEventType.FROM_TO) return;
 
         IRecording recording = ReplayManager.getInstance().getActiveRecording(world);
         if (recording == null) return;
@@ -51,12 +49,8 @@ public class BlockListener implements Listener {
         if (action == null) return;
 
         // For certain events, delay to capture complete multi-block structures
-        if (shouldBatchUpdate(e.getEventType(), blockType)) {
-            scheduleBatchedUpdate(recording, frame, block, action, e);
-        } else {
-            // Immediate recording for player actions
-            scheduleImmediateUpdate(recording, frame, block, action, e);
-        }
+        if (shouldBatchUpdate(e.getEventType(), blockType)) scheduleBatchedUpdate(recording, frame, block, action, e);
+        else scheduleImmediateUpdate(recording, frame, block, action, e);
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
@@ -68,15 +62,10 @@ public class BlockListener implements Listener {
         XMaterial changed = XMaterial.matchXMaterial(e.getChangedType());
         
         // CRITICAL: Comprehensive physics filtering
-        if (shouldIgnorePhysics(block, current, changed)) {
-            return;
-        }
-        
+        if (shouldIgnorePhysics(block, current, changed)) return;
         // Don't record physics for server-managed blocks
-        if (isServerManagedBlock(current, BlockEventType.PHYSICS)) {
-            return;
-        }
-        
+        if (isServerManagedBlock(current, BlockEventType.PHYSICS)) return;
+
         e.setCancelled(callBlockChangeEvent(null, block, BlockEventType.PHYSICS));
     }
 
@@ -184,9 +173,7 @@ public class BlockListener implements Listener {
         
         // Schedule all exploded blocks to be recorded together
         Bukkit.getScheduler().runTask(Replay.getInstance(), () -> {
-            for (Block block : e.blockList()) {
-                recording.addBlockUpdate(frame, block);
-            }
+            for (Block block : e.blockList()) recording.addBlockUpdate(frame, block);
         });
     }
 
@@ -202,12 +189,7 @@ public class BlockListener implements Listener {
         Block block = e.getBlock();
         
         // If breaking a liquid source, record it explicitly
-        if (isLiquidSource(block)) {
-            // This will clear the source and let physics handle flow removal
-            callBlockChangeEvent(e.getPlayer(), block, BlockEventType.BREAK);
-        } else {
-            callBlockChangeEvent(e.getPlayer(), block, BlockEventType.BREAK);
-        }
+        if (isLiquidSource(block)) callBlockChangeEvent(e.getPlayer(), block, BlockEventType.BREAK);
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
@@ -215,11 +197,7 @@ public class BlockListener implements Listener {
         Block block = e.getBlock();
         
         // Explicitly track source block placement
-        if (isLiquidSource(block)) {
-            callBlockChangeEvent(e.getPlayer(), block, BlockEventType.PLACE);
-        } else {
-            callBlockChangeEvent(e.getPlayer(), block, BlockEventType.PLACE);
-        }
+        callBlockChangeEvent(e.getPlayer(), block, BlockEventType.PLACE);
     }
 
     @EventHandler
@@ -300,7 +278,7 @@ public class BlockListener implements Listener {
         
         Block block = e.getClickedBlock();
         
-        if (!Replay.getInstance().getVersionSupport().isInteractable(block)) return;
+        // add return condition if block is interactable block
         if (e.useInteractedBlock() == Event.Result.DENY) return;
         
         Player player = e.getPlayer();
@@ -435,8 +413,7 @@ public class BlockListener implements Listener {
             
             boolean playSound = shouldPlaySound(e, block);
             BlockCache cache = new BlockCache(block);
-            Recordable recordable = Replay.getInstance().getVersionSupport()
-                    .createBlockRecordable(recording, cache, action, playSound);
+            Recordable recordable = new BlockInteractRecordable(recording, cache, action, playSound);
             frame.addRecordable(recordable);
         }, 2L);
     }
@@ -451,8 +428,7 @@ public class BlockListener implements Listener {
             
             boolean playSound = shouldPlaySound(e, block);
             BlockCache cache = new BlockCache(block);
-            Recordable recordable = Replay.getInstance().getVersionSupport()
-                    .createBlockRecordable(recording, cache, action, playSound);
+            Recordable recordable = new BlockInteractRecordable(recording, cache, action, playSound);
             frame.addRecordable(recordable);
         });
     }
@@ -498,8 +474,7 @@ public class BlockListener implements Listener {
     }
 
     private void addSwingAnimation(Player player, IRecording recording) {
-        Recordable animation = Replay.getInstance().getVersionSupport()
-                .createAnimationRecordable(recording, player, AnimationType.SWING_MAIN_HAND);
+        Recordable animation = new Animation(recording, player, AnimationType.SWING_MAIN_HAND);
         recording.getLastFrame().addRecordable(animation);
     }
 
@@ -542,14 +517,10 @@ public class BlockListener implements Listener {
         
         if (isUpperHalf) {
             Block lower = door.getRelative(BlockFace.DOWN);
-            if (isDoor(lower.getType())) {
-                return lower;
-            }
+            if (isDoor(lower.getType())) return lower;
         } else {
             Block upper = door.getRelative(BlockFace.UP);
-            if (isDoor(upper.getType())) {
-                return upper;
-            }
+            if (isDoor(upper.getType())) return upper;
         }
         
         return null;
@@ -560,9 +531,7 @@ public class BlockListener implements Listener {
         
         for (BlockFace face : new BlockFace[]{BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST, BlockFace.WEST}) {
             Block adjacent = chest.getRelative(face);
-            if (adjacent.getType() == chestType) {
-                return adjacent;
-            }
+            if (adjacent.getType() == chestType) return adjacent;
         }
         
         return null;
