@@ -1,12 +1,11 @@
 package me.lagggpixel.replay.replay.content;
 
-import java.util.UUID;
-
+import me.lagggpixel.replay.api.replay.content.RecPlayer;
+import me.lagggpixel.replay.utils.PacketUtils;
 import org.bukkit.entity.EntityType;
 import org.bukkit.inventory.ItemStack;
 
-import me.lagggpixel.replay.api.replay.content.RecPlayer;
-import me.lagggpixel.replay.utils.PacketUtils;
+import java.util.UUID;
 
 public class ReplayPlayer extends RecPlayer {
     

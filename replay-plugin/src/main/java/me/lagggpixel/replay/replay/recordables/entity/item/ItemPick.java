@@ -13,9 +13,14 @@ import me.lagggpixel.replay.api.replay.content.IReplaySession;
 import me.lagggpixel.replay.api.replay.data.IRecording;
 import me.lagggpixel.replay.api.replay.data.recordable.Recordable;
 import me.lagggpixel.replay.api.replay.data.recordable.RecordableRegistry;
+import me.lagggpixel.replay.api.serializer.ReplayByteBuffer;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
+import org.jetbrains.annotations.NotNull;
+
+import static me.lagggpixel.replay.api.serializer.ReplayByteBuffer.DOUBLE;
+import static me.lagggpixel.replay.api.serializer.ReplayByteBuffer.SHORT;
 
 public class ItemPick extends Recordable {
 
@@ -24,6 +29,15 @@ public class ItemPick extends Recordable {
     @Writeable private final double x;
     @Writeable private final double y;
     @Writeable private final double z;
+
+    public ItemPick(ReplayByteBuffer reader) {
+        super(null);
+        this.itemId = reader.read(SHORT);
+        this.collectorId = reader.read(SHORT);
+        this.x = reader.read(DOUBLE);
+        this.y = reader.read(DOUBLE);
+        this.z = reader.read(DOUBLE);
+    }
 
     public ItemPick(IRecording replay, Item item, Entity collector) {
         super(replay);
@@ -59,5 +73,14 @@ public class ItemPick extends Recordable {
     @Override
     public short getTypeId() {
         return RecordableRegistry.ITEM_PICK;
+    }
+
+    @Override
+    public void write(@NotNull ReplayByteBuffer writer) {
+        writer.write(SHORT, itemId);
+        writer.write(SHORT, collectorId);
+        writer.write(DOUBLE, x);
+        writer.write(DOUBLE, y);
+        writer.write(DOUBLE, z);
     }
 }

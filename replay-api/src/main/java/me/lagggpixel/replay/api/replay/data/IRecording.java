@@ -17,7 +17,7 @@ import java.util.UUID;
  * @author Lagggpixel
  * @since May 10, 2024
  */
-public interface IRecording extends BinarySerializable {
+public interface IRecording  {
 
     /**
      * Get the codec version of the replay format

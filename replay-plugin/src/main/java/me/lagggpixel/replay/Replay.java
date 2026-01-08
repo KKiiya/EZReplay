@@ -6,21 +6,26 @@ import lombok.Getter;
 import me.lagggpixel.replay.api.IReplay;
 import me.lagggpixel.replay.api.replay.IReplayManager;
 import me.lagggpixel.replay.api.replay.IReplaySessionManager;
+import me.lagggpixel.replay.commands.DebugCommand;
 import me.lagggpixel.replay.commands.ReplayMenu;
 import me.lagggpixel.replay.commands.Startrecording;
 import me.lagggpixel.replay.commands.Stoprecording;
 import me.lagggpixel.replay.listeners.InventoryListener;
 import me.lagggpixel.replay.listeners.player.ChatListener;
 import me.lagggpixel.replay.listeners.player.PlayerListener;
-import me.lagggpixel.replay.listeners.world.*;
 import me.lagggpixel.replay.listeners.replaysession.SessionListener;
+import me.lagggpixel.replay.listeners.world.BlockListener;
+import me.lagggpixel.replay.listeners.world.EntityListener;
+import me.lagggpixel.replay.listeners.world.ItemListener;
 import me.lagggpixel.replay.replay.ReplayManager;
 import me.lagggpixel.replay.replay.ReplaySessionManager;
 import me.lagggpixel.replay.utils.FileUtils;
+import me.lagggpixel.replay.utils.RecordingFileProcessor;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
+
 import java.util.Objects;
 
 public final class Replay extends JavaPlugin implements IReplay {
@@ -33,6 +38,9 @@ public final class Replay extends JavaPlugin implements IReplay {
     private IReplayManager replayManager;
     @Getter
     private IReplaySessionManager replaySessionManager;
+
+    @Getter
+    private RecordingFileProcessor recordingFileProcessor;
 
     @Override
     public void onLoad() {
@@ -50,6 +58,7 @@ public final class Replay extends JavaPlugin implements IReplay {
         isLegacyServer = VERSION.equals("1.8.8") || VERSION.equalsIgnoreCase("1.12.2");
         replayManager = ReplayManager.init();
         replaySessionManager = ReplaySessionManager.init();
+        this.recordingFileProcessor = new RecordingFileProcessor();
 
         registerListener(
                 new InventoryListener(),
@@ -69,6 +78,7 @@ public final class Replay extends JavaPlugin implements IReplay {
         Objects.requireNonNull(getCommand("replay")).setExecutor(new ReplayMenu());
         Objects.requireNonNull(getCommand("startrecording")).setExecutor(new Startrecording());
         Objects.requireNonNull(getCommand("stoprecording")).setExecutor(new Stoprecording());
+        Objects.requireNonNull(getCommand("debug")).setExecutor(new DebugCommand());
     }
 
     @Override

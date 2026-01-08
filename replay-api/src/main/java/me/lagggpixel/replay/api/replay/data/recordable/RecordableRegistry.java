@@ -1,13 +1,14 @@
 package me.lagggpixel.replay.api.replay.data.recordable;
 
 import me.lagggpixel.replay.api.replay.data.EntityIndex;
+import me.lagggpixel.replay.api.serializer.ReplayByteBuffer;
 import me.lagggpixel.replay.api.utils.NMSVersion;
 
 import java.io.DataInputStream;
 
 public class RecordableRegistry {
 
-    private static final String BASE_PACKAGE = "me.lagggpixel.replay.support.nms." + NMSVersion.getVersion() + ".recordable.";
+    private static final String BASE_PACKAGE = "me.lagggpixel.replay.replay.recordables.";
 
     private RecordableRegistry() {
     }
@@ -41,7 +42,7 @@ public class RecordableRegistry {
     public static final short VEHICLE_RIDE = 21;
 
 
-    public static Recordable create(short typeId, DataInputStream in, EntityIndex index) {
+    public static Recordable create(short typeId, ReplayByteBuffer in) {
         try {
             String className = getClassName(typeId);
             if (className == null)
@@ -49,8 +50,8 @@ public class RecordableRegistry {
 
             Class<?> clazz = Class.forName(className);
             return (Recordable) clazz
-                    .getConstructor(DataInputStream.class, EntityIndex.class)
-                    .newInstance(in, index);
+                    .getConstructor(ReplayByteBuffer.class)
+                    .newInstance(in);
         } catch (Exception e) {
             throw new RuntimeException("Failed to create recordable for ID " + typeId, e);
         }

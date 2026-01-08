@@ -32,8 +32,11 @@ public class Controls implements IControls {
 
     @Override
     public void giveItems() {
+        if (player == null) {
+            return;
+        }
         PlayerInventory inv = player.getInventory();
-        for (int i = 0; i < player.getInventory().getSize(); i++) {
+        for (int i = 0; i < inv.getSize(); i++) {
             oldInventory.put(i, inv.getItem(i));
         }
         inv.clear();
@@ -46,49 +49,80 @@ public class Controls implements IControls {
         ItemStack increaseSpeed = PacketUtils.getSkull("http://textures.minecraft.net/texture/d99f28332bcc349f42023c29e6e641f4b10a6b1e48718cae557466d51eb922");
         ItemStack resetReplay = PacketUtils.getSkull("http://textures.minecraft.net/texture/3a4fab3fd97eb7ecf48ab4fd327e093e886f4e217aab69585313c27a5035831a");
 
-        ItemMeta trackerMeta = tracker.getItemMeta();
-        trackerMeta.setDisplayName(ChatColor.GOLD + "Player Tracker");
-        trackerMeta.setLore(Arrays.asList(ChatColor.GRAY + "Track players during", ChatColor.GRAY + "the replay."));
-        tracker.setItemMeta(trackerMeta);
+        applyMeta(tracker,
+                ChatColor.GOLD + "Player Tracker",
+                ChatColor.GRAY + "Track players during",
+                ChatColor.GRAY + "the replay."
+        );
 
-        ItemMeta decreaseSpeedMeta = decreaseSpeed.getItemMeta();
-        decreaseSpeedMeta.setDisplayName(ChatColor.RED + "Decrease Speed");
-        decreaseSpeedMeta.setLore(Arrays.asList(ChatColor.GRAY + "Click to decrease", ChatColor.GRAY + "the playback speed."));
-        decreaseSpeed.setItemMeta(decreaseSpeedMeta);
+        applyMeta(decreaseSpeed,
+                ChatColor.RED + "Decrease Speed",
+                ChatColor.GRAY + "Click to decrease",
+                ChatColor.GRAY + "the playback speed."
+        );
 
-        ItemMeta rewindMeta = rewind.getItemMeta();
-        rewindMeta.setDisplayName(ChatColor.GOLD + "Rewind");
-        rewindMeta.setLore(Arrays.asList(ChatColor.GRAY + "Click to rewind", ChatColor.GRAY + "the playback."));
-        rewind.setItemMeta(rewindMeta);
+        applyMeta(rewind,
+                ChatColor.GOLD + "Rewind",
+                ChatColor.GRAY + "Click to rewind",
+                ChatColor.GRAY + "the playback."
+        );
 
-        ItemMeta pauseResumeMeta = pauseResume.getItemMeta();
-        pauseResumeMeta.setDisplayName(ChatColor.YELLOW + "Pause/Resume");
-        pauseResumeMeta.setLore(Arrays.asList(ChatColor.GRAY + "Click to pause or", ChatColor.GRAY + "resume the playback."));
-        pauseResume.setItemMeta(pauseResumeMeta);
+        applyMeta(pauseResume,
+                ChatColor.YELLOW + "Pause/Resume",
+                ChatColor.GRAY + "Click to pause or",
+                ChatColor.GRAY + "resume the playback."
+        );
 
-        ItemMeta forwardMeta = forward.getItemMeta();
-        forwardMeta.setDisplayName(ChatColor.GREEN + "Fast Forward");
-        forwardMeta.setLore(Arrays.asList(ChatColor.GRAY + "Click to fast forward", ChatColor.GRAY + "the playback."));
-        forward.setItemMeta(forwardMeta);
+        applyMeta(forward,
+                ChatColor.GREEN + "Fast Forward",
+                ChatColor.GRAY + "Click to fast forward",
+                ChatColor.GRAY + "the playback."
+        );
 
-        ItemMeta increaseSpeedMeta = increaseSpeed.getItemMeta();
-        increaseSpeedMeta.setDisplayName(ChatColor.BLUE + "Increase Speed");
-        increaseSpeedMeta.setLore(Arrays.asList(ChatColor.GRAY + "Click to increase", ChatColor.GRAY + "the playback speed."));
-        increaseSpeed.setItemMeta(increaseSpeedMeta);
+        applyMeta(increaseSpeed,
+                ChatColor.BLUE + "Increase Speed",
+                ChatColor.GRAY + "Click to increase",
+                ChatColor.GRAY + "the playback speed."
+        );
 
-        ItemMeta resetReplayMeta = resetReplay.getItemMeta();
-        resetReplayMeta.setDisplayName(ChatColor.GOLD + "Reset Replay");
-        resetReplayMeta.setLore(Arrays.asList(ChatColor.GRAY + "Click to reset the", ChatColor.GRAY + "replay to the beginning."));
-        resetReplay.setItemMeta(resetReplayMeta);
+        applyMeta(resetReplay,
+                ChatColor.GOLD + "Reset Replay",
+                ChatColor.GRAY + "Click to reset the",
+                ChatColor.GRAY + "replay to the beginning."
+        );
 
-        inv.setItem(0, PacketUtils.setItemTag(tracker, "Replay-Control", "tracker"));
-        inv.setItem(2, PacketUtils.setItemTag(decreaseSpeed, "Replay-Control", "decreaseSpeed"));
-        inv.setItem(3, PacketUtils.setItemTag(rewind, "Replay-Control", "rewind"));
-        inv.setItem(4, PacketUtils.setItemTag(pauseResume, "Replay-Control", "pauseResume"));
-        inv.setItem(5, PacketUtils.setItemTag(forward, "Replay-Control", "forward"));
-        inv.setItem(6, PacketUtils.setItemTag(increaseSpeed, "Replay-Control", "increaseSpeed"));
-        inv.setItem(7, PacketUtils.setItemTag(resetReplay, "Replay-Control", "resetReplay"));
+        inv.setItem(0, safeTag(tracker, "tracker"));
+        inv.setItem(2, safeTag(decreaseSpeed, "decreaseSpeed"));
+        inv.setItem(3, safeTag(rewind, "rewind"));
+        inv.setItem(4, safeTag(pauseResume, "pauseResume"));
+        inv.setItem(5, safeTag(forward, "forward"));
+        inv.setItem(6, safeTag(increaseSpeed, "increaseSpeed"));
+        inv.setItem(7, safeTag(resetReplay, "resetReplay"));
     }
+
+    private void applyMeta(ItemStack item, String name, String... lore) {
+        if (item == null) {
+            return;
+        }
+
+        ItemMeta meta = item.getItemMeta();
+        if (meta == null) {
+            return;
+        }
+
+        meta.setDisplayName(name);
+        meta.setLore(Arrays.asList(lore));
+        item.setItemMeta(meta);
+    }
+
+    private ItemStack safeTag(ItemStack item, String value) {
+        if (item == null) {
+            return null;
+        }
+
+        return PacketUtils.setItemTag(item, "Replay-Control", value);
+    }
+
 
     @Override
     public void giveOriginalInventory() {

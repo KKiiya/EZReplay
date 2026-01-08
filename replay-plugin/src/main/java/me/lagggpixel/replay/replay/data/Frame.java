@@ -1,19 +1,20 @@
 package me.lagggpixel.replay.replay.data;
 
 import me.lagggpixel.replay.api.replay.content.IReplaySession;
-import me.lagggpixel.replay.api.replay.data.EntityIndex;
-import me.lagggpixel.replay.api.replay.data.recordable.Recordable;
 import me.lagggpixel.replay.api.replay.data.IFrame;
 import me.lagggpixel.replay.api.replay.data.IRecording;
+import me.lagggpixel.replay.api.replay.data.recordable.Recordable;
 import me.lagggpixel.replay.api.replay.data.recordable.RecordableRegistry;
-import org.bukkit.entity.Player;
+import me.lagggpixel.replay.api.serializer.ReplayByteBuffer;
+import org.jetbrains.annotations.NotNull;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
+import static me.lagggpixel.replay.api.serializer.ReplayByteBuffer.INT;
+import static me.lagggpixel.replay.api.serializer.ReplayByteBuffer.SHORT;
 
 public class Frame implements IFrame {
 
@@ -29,13 +30,13 @@ public class Frame implements IFrame {
         this(replay, new ArrayList<>(Arrays.asList(recordables)));
     }
 
-    public Frame(DataInputStream in, EntityIndex index) throws IOException {
-        int recordableCount = in.readShort();
+    public Frame(ReplayByteBuffer reader) throws IOException {
+        int recordableCount = reader.read(INT);
         this.recordables = new ArrayList<>(recordableCount);
 
         for (int i = 0; i < recordableCount; i++) {
-            short typeId = in.readShort();
-            Recordable recordable = RecordableRegistry.create(typeId, in, index);
+            short typeId = reader.read(SHORT);
+            Recordable recordable = RecordableRegistry.create(typeId, reader);
             this.recordables.add(recordable);
         }
 
@@ -88,24 +89,13 @@ public class Frame implements IFrame {
         }
     }
 
+
     @Override
-    public void write(DataOutputStream out) throws IOException {
-        out.writeShort(recordables.size());
+    public void write(@NotNull ReplayByteBuffer writer) {
+        writer.write(INT, recordables.size());
         for (Recordable recordable : recordables) {
-            out.writeShort(recordable.getTypeId());
-            recordable.write(out);
-        }
-    }
-
-    @Override
-    public void read(DataInputStream in, EntityIndex index) throws IOException {
-        int recordableCount = in.readShort();
-        this.recordables.clear();
-
-        for (int i = 0; i < recordableCount; i++) {
-            short typeId = in.readShort();
-            Recordable recordable = RecordableRegistry.create(typeId, in, index);
-            this.recordables.add(recordable);
+            writer.write(SHORT, recordable.getTypeId());
+            recordable.write(writer);
         }
     }
 }

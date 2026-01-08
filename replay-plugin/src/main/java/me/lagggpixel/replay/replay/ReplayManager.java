@@ -3,19 +3,13 @@ package me.lagggpixel.replay.replay;
 import lombok.Getter;
 import me.lagggpixel.replay.Replay;
 import me.lagggpixel.replay.api.replay.IReplayManager;
-import me.lagggpixel.replay.api.replay.data.EntityIndex;
 import me.lagggpixel.replay.api.replay.data.IRecording;
-import me.lagggpixel.replay.api.utils.Vector3d;
-import me.lagggpixel.replay.replay.data.Frame;
 import me.lagggpixel.replay.replay.data.Recording;
 import me.lagggpixel.replay.utils.LogUtil;
-import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.DataInputStream;
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -42,71 +36,26 @@ public class ReplayManager implements IReplayManager {
         return instance;
     }
 
+    @Override
     public File saveReplay(IRecording replay) {
         replayById.put(replay.getID().toString(), replay);
         return replay.toFile();
     }
 
+    public void cacheReplay(IRecording replay) {
+        replayById.put(replay.getID().toString(), replay);
+    }
+
     public IRecording loadReplay(UUID id) {
-        File folder = new File(Replay.getInstance().getDataFolder(), "replays");
-        File file = new File(folder, id + ".ezrpl");
+        File folder = new File(Replay.getInstance().getDataFolder(), "recordings");
+        File file = new File(folder, id + ".replay");
         if (!file.exists()) {
             throw new IllegalArgumentException("Replay file not found: " + file.getAbsolutePath());
         }
-
-        try (DataInputStream in = new DataInputStream(new java.io.BufferedInputStream(new java.io.FileInputStream(file)))) {
-            // Recreate the recording object from file
-            EntityIndex index = new EntityIndex();
-
-            short codecVersion = in.readShort(); // Read version early to validate
-            long mostSigBits = in.readLong();
-            long leastSigBits = in.readLong();
-            String worldName = in.readUTF();
-
-            Recording recording = new Recording(codecVersion, new UUID(mostSigBits, leastSigBits), worldName, index, new ArrayList<>());
-            recording.getEntityIndex().read(in);
-
-            int frameCount = in.readShort();
-            for (int i = 0; i < frameCount; i++) {
-                Frame frame = new Frame(recording);
-                frame.read(in, index);
-                recording.getFrames().add(frame);
-            }
-
-            int playerCount = in.readShort();
-            for (int i = 0; i < playerCount; i++) {
-                long msb = in.readLong();
-                long lsb = in.readLong();
-                recording.getPlayers().add(new UUID(msb, lsb));
-            }
-
-            int spawnLocationCount = in.readShort();
-            for (int i = 0; i < spawnLocationCount; i++) {
-                short entityId = in.readShort();
-                double x = in.readDouble();
-                double y = in.readDouble();
-                double z = in.readDouble();
-                float yaw = in.readFloat();
-                float pitch = in.readFloat();
-                recording.getSpawnLocations().put(entityId, new Vector3d(x, y, z, yaw, pitch));
-            }
-
-            int customDataCount = in.readShort();
-            for (int i = 0; i < customDataCount; i++) {
-                String key = in.readUTF();
-                String value = in.readUTF();
-                recording.getCustomData().put(key, value);
-            }
-
-            // Add to replay manager
-            Replay.getInstance().getReplayManager().getReplays().add(recording);
-            replayById.put(id.toString(), recording);
-            Bukkit.getLogger().info("Successfully loaded replay: " + id);
-            return recording;
-        } catch (IOException e) {
-            e.printStackTrace();
-            throw new RuntimeException("Failed to load replay: " + id, e);
-        }
+        IRecording recording = Replay.getInstance().getRecordingFileProcessor().loadRecording(file);
+        if (recording == null) return null;
+        replayById.put(recording.getID().toString(), recording);
+        return recording;
     }
 
     public IRecording loadReplay(String id) {

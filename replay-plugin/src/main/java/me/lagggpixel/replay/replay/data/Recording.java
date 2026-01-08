@@ -8,11 +8,8 @@ import me.lagggpixel.replay.api.replay.data.EntityIndex;
 import me.lagggpixel.replay.api.replay.data.IFrame;
 import me.lagggpixel.replay.api.replay.data.IRecording;
 import me.lagggpixel.replay.api.replay.data.recordable.Recordable;
-import me.lagggpixel.replay.api.replay.data.recordable.Recordable.RecordableSignature;
-import me.lagggpixel.replay.api.replay.data.recordable.RecordableRegistry;
 import me.lagggpixel.replay.api.utils.Vector3d;
 import me.lagggpixel.replay.api.utils.block.BlockCache;
-import me.lagggpixel.replay.api.utils.data.RecordingUtils;
 import me.lagggpixel.replay.replay.content.ReplaySession;
 import me.lagggpixel.replay.replay.recordables.entity.entity.EntityDeath;
 import me.lagggpixel.replay.replay.recordables.entity.entity.EntityStatus;
@@ -24,7 +21,6 @@ import me.lagggpixel.replay.replay.recordables.world.block.BlockUpdateRecordable
 import me.lagggpixel.replay.replay.tasks.EntityTrackerTask;
 import me.lagggpixel.replay.replay.tasks.EquipmentTrackerTask;
 import me.lagggpixel.replay.utils.FileUtils;
-
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
@@ -34,15 +30,9 @@ import org.bukkit.entity.Projectile;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 
-import java.io.BufferedOutputStream;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.zip.GZIPOutputStream;
 
 public class Recording implements IRecording {
 
@@ -102,7 +92,7 @@ public class Recording implements IRecording {
     public Recording(short codec, UUID id, String worldName, EntityIndex index, List<IFrame> frames) {
         this.CODEC_VERSION = codec;
         this.id = id;
-        this.world = null;
+        this.world = Bukkit.getWorld(worldName);
         this.worldName = worldName;
         this.entityIndex = index;
         this.frames = frames;
@@ -165,21 +155,7 @@ public class Recording implements IRecording {
 
     @Override
     public File toFile() {
-        File folder = new File(Replay.getInstance().getDataFolder(), "replays");
-        if (!folder.exists() && !folder.mkdirs()) {
-            throw new IllegalStateException("Failed to create replay folder: " + folder.getAbsolutePath());
-        }
-
-        File file = new File(folder, id + ".rpl");
-        try (GZIPOutputStream gzip = new GZIPOutputStream(new BufferedOutputStream(new FileOutputStream(file)), 8192);
-             DataOutputStream out = new DataOutputStream(gzip)) {
-            write(out);
-        } catch (IOException e) {
-            e.printStackTrace();
-            throw new RuntimeException("Failed to save replay file for ID " + id, e);
-        }
-
-        return file;
+        return Replay.getInstance().getRecordingFileProcessor().createRecordingFile(this);
     }
 
     @Override
@@ -457,154 +433,6 @@ public class Recording implements IRecording {
         }.runTaskAsynchronously(Replay.getInstance());
     }
 
-    
-    @Override
-    public void write(DataOutputStream out) throws IOException {
-        out.writeShort(CODEC_VERSION);
-
-        // Core metadata
-        out.writeLong(id.getMostSignificantBits());
-        out.writeLong(id.getLeastSignificantBits());
-        out.writeUTF(worldName);
-
-        // Entity index
-        entityIndex.write(out);
-
-        // OPTIMIZATION: Write frame count and use delta encoding
-        out.writeInt(frames.size());
-        
-        // Track previous frame's recordables for delta encoding
-        Set<Recordable.RecordableSignature> previousRecordables = new HashSet<>();
-
-        for (IFrame frame : frames) {
-            // Get current frame's recordables
-            Set<RecordableSignature> currentRecordable = RecordingUtils.getRecordableSignatures(frame);
-
-            // Calculate additions and removals
-            Set<RecordableSignature> additions = new HashSet<>(currentRecordable);
-            additions.removeAll(previousRecordables);
-
-            Set<RecordableSignature> removals = new HashSet<>(previousRecordables);
-            removals.removeAll(currentRecordable);
-
-            // Write delta frame
-            RecordingUtils.writeDeltaFrame(out, frame, additions, removals);
-
-            // Update previous state
-            previousRecordables = currentRecordable;
-        }
-
-        // Players (unchanged - already efficient)
-        out.writeInt(playersThatPlayed.size());
-        for (UUID playerId : playersThatPlayed) {
-            out.writeLong(playerId.getMostSignificantBits());
-            out.writeLong(playerId.getLeastSignificantBits());
-        }
-
-        // OPTIMIZATION: Use VarInt for spawn locations to save space
-        RecordingUtils.writeVarInt(out, spawnLocations.size());
-        for (Map.Entry<Short, Vector3d> entry : spawnLocations.entrySet()) {
-            out.writeShort(entry.getKey());
-            Vector3d loc = entry.getValue();
-            
-            // Use float instead of double (4 bytes vs 8 bytes each)
-            out.writeFloat((float) loc.getX());
-            out.writeFloat((float) loc.getY());
-            out.writeFloat((float) loc.getZ());
-            out.writeFloat(loc.getYaw());
-            out.writeFloat(loc.getPitch());
-        }
-
-        // Custom data (use compression-friendly format)
-        RecordingUtils.writeVarInt(out, customData.size());
-        for (Map.Entry<String, String> entry : customData.entrySet()) {
-            RecordingUtils.writeCompressedString(out, entry.getKey());
-            if (entry.getValue() != null) {
-                out.writeBoolean(true);
-                RecordingUtils.writeCompressedString(out, entry.getValue());
-            } else {
-                out.writeBoolean(false);
-            }
-        }
-    }
-
-
-    @Override
-    public void read(DataInputStream in, EntityIndex index) throws IOException {
-        CODEC_VERSION = in.readShort();
-
-        this.id = new UUID(in.readLong(), in.readLong());
-        this.worldName = in.readUTF();
-
-        // Entity index
-        index.read(in);
-        this.entityIndex = index;
-
-        // Frames with delta decoding
-        frames.clear();
-        int frameCount = in.readInt();
-        
-        Set<RecordableSignature> currentState = new HashSet<>();
-        
-        for (int i = 0; i < frameCount; i++) {
-            Frame frame = new Frame(this);
-
-            int addCount = RecordingUtils.readVarInt(in);
-            int removeCount = RecordingUtils.readVarInt(in);
-
-            // Read additions
-            for (int j = 0; j < addCount; j++) {
-                short typeId = in.readShort();
-                Recordable recordable = RecordableRegistry.create(typeId, in, index);
-                recordable.read(in, index);
-                frame.addRecordable(recordable);
-                
-                currentState.add(new RecordableSignature(recordable));
-            }
-            
-            // Read removals
-            for (int j = 0; j < removeCount; j++) {
-                short typeId = in.readShort();
-                RecordableSignature sig = RecordableSignature.readIdentifier(in, typeId);
-                currentState.remove(sig);
-            }
-            
-            frames.add(frame);
-        }
-
-        // Players
-        playersThatPlayed.clear();
-        int playerCount = in.readInt();
-        for (int i = 0; i < playerCount; i++) {
-            playersThatPlayed.add(new UUID(in.readLong(), in.readLong()));
-            playerNames.put(in.readShort(), in.readUTF());
-        }
-
-        // Spawn locations
-        spawnLocations.clear();
-        int spawnLocationCount = RecordingUtils.readVarInt(in);
-        for (int i = 0; i < spawnLocationCount; i++) {
-            short entityId = in.readShort();
-            float x = in.readFloat();
-            float y = in.readFloat();
-            float z = in.readFloat();
-            float yaw = in.readFloat();
-            float pitch = in.readFloat();
-            spawnLocations.put(entityId, new Vector3d(x, y, z, yaw, pitch));
-        }
-
-        // Custom data
-        customData.clear();
-        int customDataCount = RecordingUtils.readVarInt(in);
-        for (int i = 0; i < customDataCount; i++) {
-            String key = RecordingUtils.readCompressedString(in);
-            if (in.readBoolean()) {
-                customData.put(key, RecordingUtils.readCompressedString(in));
-            } else {
-                customData.put(key, null);
-            }
-        }
-    }
 
     @Override
     public String getPlayerName(UUID player) {
