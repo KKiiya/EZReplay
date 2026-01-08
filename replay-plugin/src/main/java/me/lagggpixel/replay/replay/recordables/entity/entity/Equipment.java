@@ -42,6 +42,7 @@ public class Equipment extends Recordable {
             // Create ItemData from serialized values
             org.bukkit.inventory.ItemStack item = new org.bukkit.inventory.ItemStack(material, amount);
             item.setDurability(data);
+            if (enchanted) item.addUnsafeEnchantment(org.bukkit.enchantments.Enchantment.DURABILITY, 1);
             this.equipment[i] = new ItemData(item);
         }
     }
