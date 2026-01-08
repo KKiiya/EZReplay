@@ -3,7 +3,6 @@ package me.lagggpixel.replay.replay.recordables.entity.item;
 import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.protocol.player.User;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerDestroyEntities;
-
 import me.lagggpixel.replay.api.data.Writeable;
 import me.lagggpixel.replay.api.replay.content.IReplaySession;
 import me.lagggpixel.replay.api.replay.data.IRecording;
@@ -14,7 +13,7 @@ import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
-import static me.lagggpixel.replay.api.serializer.ReplayByteBuffer.*;
+import static me.lagggpixel.replay.api.serializer.ReplayByteBuffer.SHORT;
 
 /**
  * @author Lagggpixel

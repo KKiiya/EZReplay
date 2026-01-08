@@ -21,7 +21,6 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Optional;
-import java.util.UUID;
 
 import static me.lagggpixel.replay.api.serializer.ReplayByteBuffer.*;
 

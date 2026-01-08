@@ -20,7 +20,6 @@ import me.lagggpixel.replay.replay.recordables.world.block.BlockUpdateRecordable
 import me.lagggpixel.replay.replay.tasks.EntityTrackerTask;
 import me.lagggpixel.replay.replay.tasks.EquipmentTrackerTask;
 import me.lagggpixel.replay.utils.FileUtils;
-
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
@@ -30,15 +29,9 @@ import org.bukkit.entity.Projectile;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 
-import java.io.BufferedOutputStream;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.zip.GZIPOutputStream;
 
 public class Recording implements IRecording {
 
@@ -98,7 +91,7 @@ public class Recording implements IRecording {
     public Recording(short codec, UUID id, String worldName, EntityIndex index, List<IFrame> frames) {
         this.CODEC_VERSION = codec;
         this.id = id;
-        this.world = null;
+        this.world = Bukkit.getWorld(worldName);
         this.worldName = worldName;
         this.entityIndex = index;
         this.frames = frames;
@@ -161,21 +154,7 @@ public class Recording implements IRecording {
 
     @Override
     public File toFile() {
-        File folder = new File(Replay.getInstance().getDataFolder(), "replays");
-        if (!folder.exists() && !folder.mkdirs()) {
-            throw new IllegalStateException("Failed to create replay folder: " + folder.getAbsolutePath());
-        }
-
-        File file = new File(folder, id + ".rpl");
-        try (GZIPOutputStream gzip = new GZIPOutputStream(new BufferedOutputStream(new FileOutputStream(file)), 8192);
-             DataOutputStream out = new DataOutputStream(gzip)) {
-            write(out);
-        } catch (IOException e) {
-            e.printStackTrace();
-            throw new RuntimeException("Failed to save replay file for ID " + id, e);
-        }
-
-        return file;
+        return Replay.getInstance().getRecordingFileProcessor().createRecordingFile(this);
     }
 
     @Override
@@ -453,18 +432,6 @@ public class Recording implements IRecording {
                 }.runTask(Replay.getInstance()); // Run on the main server thread
             }
         }.runTaskAsynchronously(Replay.getInstance());
-    }
-
-    
-    @Override
-    public void write(DataOutputStream out) throws IOException {
-
-
-    }
-
-    @Override
-    public void read(DataInputStream in) throws IOException {
-
     }
 
 

@@ -10,7 +10,8 @@ import me.lagggpixel.replay.api.utils.Vector3i;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
-import static me.lagggpixel.replay.api.serializer.ReplayByteBuffer.*;
+import static me.lagggpixel.replay.api.serializer.ReplayByteBuffer.INT;
+import static me.lagggpixel.replay.api.serializer.ReplayByteBuffer.SHORT;
 
 public class BlockDigRecordable extends Recordable {
     @Writeable private final Vector3i position;

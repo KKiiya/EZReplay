@@ -10,3 +10,5 @@ commands:
     description: Starts recording the current world
   stoprecording:
     description: Stops recording the current world
+  debug:
+    description: A debug command

@@ -14,6 +14,8 @@ public class EntityIndex implements ReplayByteBuffer.Writer {
     private final Map<Short, UUID> idToUuid = new HashMap<>();
     private short nextId = 1; // 0 can be reserved for "invalid"
 
+    public EntityIndex() {}
+
     public EntityIndex(ReplayByteBuffer reader) {
         int size = reader.read(VAR_INT);
         if (size <= 0) {

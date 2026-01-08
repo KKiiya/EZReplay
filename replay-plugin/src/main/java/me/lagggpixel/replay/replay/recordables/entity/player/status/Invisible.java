@@ -18,7 +18,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-import static me.lagggpixel.replay.api.serializer.ReplayByteBuffer.*;
+import static me.lagggpixel.replay.api.serializer.ReplayByteBuffer.BOOLEAN;
+import static me.lagggpixel.replay.api.serializer.ReplayByteBuffer.SHORT;
 
 public class Invisible extends Recordable {
 

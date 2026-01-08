@@ -17,9 +17,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
-import static me.lagggpixel.replay.api.serializer.ReplayByteBuffer.*;
+import static me.lagggpixel.replay.api.serializer.ReplayByteBuffer.INT;
+import static me.lagggpixel.replay.api.serializer.ReplayByteBuffer.SHORT;
 
 public class Burning extends Recordable {
 

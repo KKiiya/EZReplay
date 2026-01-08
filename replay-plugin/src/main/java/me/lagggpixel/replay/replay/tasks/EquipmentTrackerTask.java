@@ -5,7 +5,7 @@ import me.lagggpixel.replay.api.replay.data.IRecording;
 import me.lagggpixel.replay.api.replay.data.recordable.Recordable;
 import me.lagggpixel.replay.api.utils.item.ItemData;
 import me.lagggpixel.replay.replay.recordables.entity.entity.Equipment;
-import org.bukkit.entity.*;
+import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
 import java.util.List;

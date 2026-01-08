@@ -15,7 +15,6 @@ import me.lagggpixel.replay.api.replay.content.IReplaySession;
 import me.lagggpixel.replay.api.replay.data.IRecording;
 import me.lagggpixel.replay.api.replay.data.recordable.Recordable;
 import me.lagggpixel.replay.api.replay.data.recordable.RecordableRegistry;
-
 import me.lagggpixel.replay.api.serializer.ReplayByteBuffer;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Entity;

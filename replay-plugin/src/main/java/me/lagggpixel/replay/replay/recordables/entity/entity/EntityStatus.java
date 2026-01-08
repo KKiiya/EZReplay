@@ -14,7 +14,8 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
-import static me.lagggpixel.replay.api.serializer.ReplayByteBuffer.*;
+import static me.lagggpixel.replay.api.serializer.ReplayByteBuffer.BOOLEAN;
+import static me.lagggpixel.replay.api.serializer.ReplayByteBuffer.SHORT;
 
 public class EntityStatus extends Recordable {
 

@@ -8,6 +8,7 @@ import com.github.retrooper.packetevents.protocol.player.User;
 import com.github.retrooper.packetevents.util.Vector3d;
 import com.github.retrooper.packetevents.wrapper.PacketWrapper;
 import com.github.retrooper.packetevents.wrapper.play.server.*;
+import io.github.retrooper.packetevents.adventure.serializer.gson.GsonComponentSerializer;
 import me.lagggpixel.replay.api.data.Writeable;
 import me.lagggpixel.replay.api.replay.content.IReplaySession;
 import me.lagggpixel.replay.api.replay.data.IRecording;
@@ -15,6 +16,7 @@ import me.lagggpixel.replay.api.replay.data.recordable.Recordable;
 import me.lagggpixel.replay.api.replay.data.recordable.RecordableRegistry;
 import me.lagggpixel.replay.api.serializer.ReplayByteBuffer;
 import me.lagggpixel.replay.utils.SerializerUtil;
+import net.kyori.adventure.text.Component;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
@@ -24,7 +26,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 import static me.lagggpixel.replay.api.serializer.ReplayByteBuffer.*;
 
@@ -56,7 +57,7 @@ public class EntitySpawn extends Recordable {
     public EntitySpawn(IRecording replay, Entity entity) {
         super(replay);
         this.spawnLocation = me.lagggpixel.replay.api.utils.Vector3d.fromBukkitLocation(entity.getLocation());
-        this.customName = entity.getCustomName();
+        this.customName = entity.getCustomName() != null ? entity.getCustomName() : "";
         this.isCustomNameVisible = entity.isCustomNameVisible();
         this.entityType = entity.getType();
         this.entityId = replay.getEntityIndex().getOrRegister(entity.getUniqueId());
@@ -85,14 +86,21 @@ public class EntitySpawn extends Recordable {
 
         Vector3d position = new Vector3d(spawnLocation.getX(), spawnLocation.getY(), spawnLocation.getZ());
         com.github.retrooper.packetevents.protocol.entity.type.EntityType peEntityType = convertEntityType(entityType);
-
-        // Prepare entity metadata for custom name if present
         List<EntityData<?>> metadata = new ArrayList<>();
-        if (customName != null) {
-            metadata.add(new EntityData<>(2, EntityDataTypes.OPTIONAL_COMPONENT, Optional.of(customName)));
-            metadata.add(new EntityData<>(3, EntityDataTypes.BOOLEAN, isCustomNameVisible));
+        if (customName != null && !customName.isEmpty()) {
+            String json = GsonComponentSerializer.gson().serialize(Component.text(customName));
+            metadata.add(new EntityData<>(
+                    2,
+                    EntityDataTypes.OPTIONAL_COMPONENT,
+                    Optional.of(json)
+            ));
+        } else {
+            metadata.add(new EntityData<>(
+                    2,
+                    EntityDataTypes.OPTIONAL_COMPONENT,
+                    Optional.empty()
+            ));
         }
-
         PacketWrapper<?> spawnPacket;
         if (isLiving) spawnPacket = new WrapperPlayServerSpawnLivingEntity(fakeEntityId, java.util.UUID.randomUUID(), peEntityType, position, spawnLocation.getYaw(), spawnLocation.getPitch(), spawnLocation.getYaw(), new Vector3d(motX, motY, motZ), metadata);
         else spawnPacket = new WrapperPlayServerSpawnEntity(fakeEntityId, Optional.of(java.util.UUID.randomUUID()), peEntityType, position, spawnLocation.getPitch(), spawnLocation.getYaw(), spawnLocation.getYaw(), 0, Optional.of(new Vector3d(motX, motY, motZ)));

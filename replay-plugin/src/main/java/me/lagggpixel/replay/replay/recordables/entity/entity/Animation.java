@@ -5,16 +5,17 @@ import com.github.retrooper.packetevents.protocol.player.User;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityAnimation;
 import me.lagggpixel.replay.api.data.Writeable;
 import me.lagggpixel.replay.api.replay.content.IReplaySession;
+import me.lagggpixel.replay.api.replay.data.IRecording;
 import me.lagggpixel.replay.api.replay.data.recordable.Recordable;
 import me.lagggpixel.replay.api.replay.data.recordable.RecordableRegistry;
 import me.lagggpixel.replay.api.serializer.ReplayByteBuffer;
 import me.lagggpixel.replay.api.utils.entity.AnimationType;
-import me.lagggpixel.replay.api.replay.data.IRecording;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
-import static me.lagggpixel.replay.api.serializer.ReplayByteBuffer.*;
+import static me.lagggpixel.replay.api.serializer.ReplayByteBuffer.INT;
+import static me.lagggpixel.replay.api.serializer.ReplayByteBuffer.SHORT;
 
 public class Animation extends Recordable {
 
@@ -28,8 +29,8 @@ public class Animation extends Recordable {
     public Animation(ReplayByteBuffer reader) {
         super(null);
         this.entityId = reader.read(SHORT);
-        this.type = EntityType.values()[reader.read(INT)];
         this.animationType = AnimationType.getById(reader.read(INT));
+        this.type = EntityType.values()[reader.read(INT)];
     }
 
     public Animation(IRecording replay, org.bukkit.entity.Entity animatedEntity, AnimationType animationType) {

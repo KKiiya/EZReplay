@@ -11,7 +11,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.UUID;
 
-import static me.lagggpixel.replay.api.serializer.ReplayByteBuffer.*;
+import static me.lagggpixel.replay.api.serializer.ReplayByteBuffer.SHORT;
+import static me.lagggpixel.replay.api.serializer.ReplayByteBuffer.STRING;
 
 public class ChatRecordable extends Recordable {
 
