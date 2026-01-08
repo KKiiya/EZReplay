@@ -134,20 +134,20 @@ public final class ReplayByteBufferTypes {
                     return 2;
                 } else if ((value & (0xFFFFFFFF << 21)) == 0) {
                     buffer.ensureSize(3);
-                    var nio = buffer.nioBuffer();
+                    java.nio.ByteBuffer nio = buffer.nioBuffer();
                     nio.put(index, (byte) (value & 0x7F | 0x80));
                     nio.put(index + 1, (byte) ((value >>> 7) & 0x7F | 0x80));
                     nio.put(index + 2, (byte) (value >>> 14));
                     return 3;
                 } else if ((value & (0xFFFFFFFF << 28)) == 0) {
                     buffer.ensureSize(4);
-                    var nio = buffer.nioBuffer();
+                    java.nio.ByteBuffer nio = buffer.nioBuffer();
                     nio.putInt(index, (value & 0x7F | 0x80) << 24 | (((value >>> 7) & 0x7F | 0x80) << 16)
                             | ((value >>> 14) & 0x7F | 0x80) << 8 | (value >>> 21));
                     return 4;
                 } else {
                     buffer.ensureSize(5);
-                    var nio = buffer.nioBuffer();
+                    java.nio.ByteBuffer nio = buffer.nioBuffer();
                     nio.putInt(index, (value & 0x7F | 0x80) << 24 | ((value >>> 7) & 0x7F | 0x80) << 16
                             | ((value >>> 14) & 0x7F | 0x80) << 8 | ((value >>> 21) & 0x7F | 0x80));
                     nio.put(index + 4, (byte) (value >>> 28));
@@ -207,7 +207,11 @@ public final class ReplayByteBufferTypes {
     static final TypeImpl<byte[]> RAW_BYTES = new TypeImpl<>(byte[].class,
             (buffer, value) -> {
                 buffer.ensureSize(value.length);
-                buffer.nioBuffer().put(buffer.writeIndex(), value);
+                java.nio.ByteBuffer nio = buffer.nioBuffer();
+                int position = nio.position();
+                nio.position(buffer.writeIndex());
+                nio.put(value);
+                nio.position(position);
                 return value.length;
             },
             buffer -> {
@@ -215,7 +219,11 @@ public final class ReplayByteBufferTypes {
                 final int length = limit - buffer.readIndex();
                 assert length > 0 : "Invalid remaining: " + length;
                 final byte[] bytes = new byte[length];
-                buffer.nioBuffer().get(buffer.readIndex(), bytes);
+                java.nio.ByteBuffer nio = buffer.nioBuffer();
+                int position = nio.position();
+                nio.position(buffer.readIndex());
+                nio.get(bytes);
+                nio.position(position);
                 buffer.readIndex(buffer.readIndex() + length);
                 return bytes;
             }
@@ -231,7 +239,11 @@ public final class ReplayByteBufferTypes {
             buffer -> {
                 final int length = buffer.read(VAR_INT);
                 byte[] bytes = new byte[length];
-                buffer.nioBuffer().get(buffer.readIndex(), bytes);
+                java.nio.ByteBuffer nio = buffer.nioBuffer();
+                int position = nio.position();
+                nio.position(buffer.readIndex());
+                nio.get(bytes, 0, length);
+                nio.position(position);
                 buffer.readIndex(buffer.readIndex() + length);
                 return new String(bytes, StandardCharsets.UTF_8);
             }
@@ -258,7 +270,7 @@ public final class ReplayByteBufferTypes {
             }
     );
 
-    public static final ReplayByteBuffer.Type<ItemStack> ITEMSTACK = new ReplayByteBuffer.Type<>() {
+    public static final ReplayByteBuffer.Type<ItemStack> ITEMSTACK = new ReplayByteBuffer.Type<ItemStack>() {
 
         @Override
         public ReplayByteBuffer.TypeWriter<ItemStack> writer() {
@@ -319,7 +331,11 @@ public final class ReplayByteBufferTypes {
             buffer -> {
                 final int length = buffer.read(VAR_INT);
                 final byte[] bytes = new byte[length];
-                buffer.nioBuffer().get(buffer.readIndex(), bytes);
+                java.nio.ByteBuffer nio = buffer.nioBuffer();
+                int position = nio.position();
+                nio.position(buffer.readIndex());
+                nio.get(bytes, 0, length);
+                nio.position(position);
                 buffer.readIndex(buffer.readIndex() + length);
                 return bytes;
             }
@@ -487,8 +503,27 @@ public final class ReplayByteBufferTypes {
     );
 
 
-    record TypeImpl<T>(@NotNull Class<T> type,
-    @NotNull ReplayByteBuffer.TypeWriter<T> writer,
-    @NotNull ReplayByteBuffer.TypeReader<T> reader) implements ReplayByteBuffer.Type<T> {
+    static final class TypeImpl<T> implements ReplayByteBuffer.Type<T> {
+        private final Class<T> type;
+        private final ReplayByteBuffer.TypeWriter<T> writer;
+        private final ReplayByteBuffer.TypeReader<T> reader;
+
+        TypeImpl(@NotNull Class<T> type,
+                 @NotNull ReplayByteBuffer.TypeWriter<T> writer,
+                 @NotNull ReplayByteBuffer.TypeReader<T> reader) {
+            this.type = type;
+            this.writer = writer;
+            this.reader = reader;
+        }
+
+        @Override
+        public ReplayByteBuffer.TypeWriter<T> writer() {
+            return writer;
+        }
+
+        @Override
+        public ReplayByteBuffer.TypeReader<T> reader() {
+            return reader;
+        }
     }
 }

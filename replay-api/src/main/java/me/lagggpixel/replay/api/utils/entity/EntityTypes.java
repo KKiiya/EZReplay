@@ -38,12 +38,19 @@ public class EntityTypes {
             case AREA_EFFECT_CLOUD:
                 return AREA_EFFECT_CLOUD;
             case MINECART:
+            case MINECART_CHEST:
+            case MINECART_FURNACE:
+            case MINECART_TNT:
+            case MINECART_HOPPER:
+            case MINECART_MOB_SPAWNER:
+            case MINECART_COMMAND:
                 return MINECART;
             case PRIMED_TNT:
                 return ACTIVATED_TNT;
             case ENDER_CRYSTAL:
                 return ENDER_CRYSTAL;
             case ARROW:
+            case TIPPED_ARROW:
                 return TIPPED_ARROW_PROJECTILE;
             case SNOWBALL:
                 return SNOWBALL_PROJECTILE;

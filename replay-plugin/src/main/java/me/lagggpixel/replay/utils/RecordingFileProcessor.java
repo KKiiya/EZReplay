@@ -74,7 +74,8 @@ public final class RecordingFileProcessor {
 
     public IRecording loadRecording(File file) {
         try (FileInputStream in = new FileInputStream(file)) {
-            byte[] bytes = in.readAllBytes();
+            byte[] bytes = new byte[(int) file.length()];
+            in.read(bytes);
             ReplayByteBuffer reader =
                     new ReplayByteBuffer(ByteBuffer.wrap(bytes));
             byte version = reader.read(BYTE);

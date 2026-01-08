@@ -117,7 +117,7 @@ public class Recording implements IRecording {
 
     @Override
     public void add(IFrame... frames) {
-        this.frames.addAll(List.of(frames));
+        this.frames.addAll(Arrays.asList(frames));
     }
 
     @Override

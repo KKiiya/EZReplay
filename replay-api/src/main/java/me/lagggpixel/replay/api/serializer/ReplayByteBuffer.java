@@ -108,7 +108,7 @@ public final class ReplayByteBuffer {
 
     @SafeVarargs
     public final <T> void writeCollection(@NotNull Type<T> type, @NotNull T @Nullable ... values) {
-        this.writeCollection(type, values == null ? null : List.of(values));
+        this.writeCollection(type, values == null ? null : Arrays.asList(values));
     }
 
     public <T extends Writer> void writeCollection(@Nullable Collection<@NotNull T> values) {
@@ -206,13 +206,15 @@ public final class ReplayByteBuffer {
 
     public byte[] readBytes(int length) {
         byte[] bytes = new byte[length];
-        this.nioBuffer.get(this.readIndex, bytes, 0, length);
+        this.nioBuffer.position(this.readIndex);
+        this.nioBuffer.get(bytes, 0, length);
         this.readIndex += length;
         return bytes;
     }
 
     public void copyTo(int srcOffset, byte @NotNull [] dest, int destOffset, int length) {
-        this.nioBuffer.get(srcOffset, dest, destOffset, length);
+        this.nioBuffer.position(srcOffset);
+        this.nioBuffer.get(dest, destOffset, length);
     }
 
     public byte @NotNull [] extractBytes(@NotNull Consumer<@NotNull ReplayByteBuffer> extractor) {
@@ -265,7 +267,7 @@ public final class ReplayByteBuffer {
             final ByteBuffer newBuffer = ByteBuffer.allocateDirect(newCapacity);
             this.nioBuffer.position(0);
             newBuffer.put(this.nioBuffer);
-            this.nioBuffer = newBuffer.clear();
+            this.nioBuffer = (ByteBuffer) newBuffer.clear();
         }
     }
 

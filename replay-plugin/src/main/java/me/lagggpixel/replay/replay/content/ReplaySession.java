@@ -19,6 +19,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
@@ -52,7 +53,7 @@ public class ReplaySession implements IReplaySession {
         this.world = world;
         this.playersWatching = new ArrayList<>();
         this.playerControls = new HashMap<>();
-        playersWatching.addAll(List.of(players));
+        playersWatching.addAll(Arrays.asList(players));
         this.replay = Replay.getInstance().getReplayManager().getReplayByID(replayId);
         if (replay == null) throw new NullPointerException("Tried loading replay with ID '" + replayId + "'. Replay doesn't exist");
 
@@ -82,7 +83,7 @@ public class ReplaySession implements IReplaySession {
         this.world = world;
         this.playersWatching = new ArrayList<>();
         this.playerControls = new HashMap<>();
-        this.playersWatching.addAll(List.of(players));
+        this.playersWatching.addAll(Arrays.asList(players));
         this.replay = replay;
 
         this.spawnedEntities = new HashMap<>();

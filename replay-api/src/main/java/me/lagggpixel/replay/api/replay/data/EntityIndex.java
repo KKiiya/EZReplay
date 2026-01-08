@@ -18,9 +18,7 @@ public class EntityIndex implements ReplayByteBuffer.Writer {
 
     public EntityIndex(ReplayByteBuffer reader) {
         int size = reader.read(VAR_INT);
-        if (size <= 0) {
-            return;
-        }
+        if (size <= 0) return;
         boolean allVersion4 = reader.read(BOOLEAN);
         short previousId = 0;
         for (int i = 0; i < size; i++) {
@@ -59,7 +57,7 @@ public class EntityIndex implements ReplayByteBuffer.Writer {
         writer.write(BOOLEAN, allVersion4);
         short previousId = 0;
         UUID previousUuid = null;
-        for (var entry : sorted) {
+        for (Map.Entry<UUID, Short> entry : sorted) {
             UUID uuid = entry.getKey();
             short id = entry.getValue();
             int delta = (id & 0xFFFF) - (previousId & 0xFFFF);

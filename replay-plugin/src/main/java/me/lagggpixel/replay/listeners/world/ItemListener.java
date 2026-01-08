@@ -14,7 +14,6 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityPickupItemEvent;
 import org.bukkit.event.entity.EntitySpawnEvent;
 import org.bukkit.event.entity.ItemMergeEvent;
-import org.bukkit.event.player.PlayerPickupItemEvent;
 
 public class ItemListener {
 
@@ -36,13 +35,14 @@ public class ItemListener {
         }
 
         @EventHandler
-        public void onPick(PlayerPickupItemEvent e) {
-            Player p = e.getPlayer();
+        public void onPick(EntityPickupItemEvent e) {
+            if (!(e.getEntity() instanceof Player)) return;
+            Player player = (Player) e.getEntity();
             Item item = e.getItem();
 
             if (e.isCancelled()) return;
 
-            IRecording recording = Replay.getInstance().getReplayManager().getActiveRecording(p.getWorld());
+            IRecording recording = Replay.getInstance().getReplayManager().getActiveRecording(player.getWorld());
             if (recording == null) return;
 
             for (int i = 0; i < recording.getSpawnedEntities().size(); i++) {
@@ -51,7 +51,7 @@ public class ItemListener {
                     break;
                 }
             }
-            Recordable recordable = new ItemPick(recording, item, p);
+            Recordable recordable = new ItemPick(recording, item, player);
             recording.getLastFrame().addRecordable(recordable);
         }
 
