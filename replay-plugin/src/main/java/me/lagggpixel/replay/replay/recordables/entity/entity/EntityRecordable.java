@@ -7,6 +7,7 @@ import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEn
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityTeleport;
 import me.lagggpixel.replay.api.data.Writeable;
 import me.lagggpixel.replay.api.replay.content.IReplaySession;
+import me.lagggpixel.replay.api.replay.content.RecEntity;
 import me.lagggpixel.replay.api.replay.data.IRecording;
 import me.lagggpixel.replay.api.replay.data.recordable.Recordable;
 import me.lagggpixel.replay.api.replay.data.recordable.RecordableRegistry;
@@ -55,9 +56,11 @@ public class EntityRecordable extends Recordable {
     @Override
     public void play(IReplaySession replaySession) {
         int fakeEntityId = entityId + 100000;
+        RecEntity recEntity = replaySession.getSpawnedEntities().get(entityId);
 
         WrapperPlayServerEntityTeleport teleportPacket = new WrapperPlayServerEntityTeleport(fakeEntityId, new Vector3d(x, y, z), yaw, pitch, true);
         WrapperPlayServerEntityRotation rotationPacket = new WrapperPlayServerEntityRotation(fakeEntityId, yaw, pitch, true);
+        recEntity.setPosition(new me.lagggpixel.replay.api.utils.Vector3d(x, y, z, yaw, pitch));
         for (Player viewer : replaySession.getViewers()) {
             User user = PacketEvents.getAPI().getPlayerManager().getUser(viewer);
             user.sendPacket(rotationPacket);

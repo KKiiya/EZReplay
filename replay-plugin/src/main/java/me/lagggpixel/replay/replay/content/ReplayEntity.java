@@ -7,7 +7,7 @@ import java.util.UUID;
 
 public class ReplayEntity extends RecEntity {
 
-    public ReplayEntity(short id, UUID uuid, EntityType type, String name, float health) {
-        super(id, uuid, type, name, health);
+    public ReplayEntity(short id, EntityType type, String name, float health) {
+        super(id, UUID.randomUUID(), type, name, health);
     }
 }

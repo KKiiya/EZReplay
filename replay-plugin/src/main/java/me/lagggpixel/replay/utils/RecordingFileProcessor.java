@@ -76,8 +76,7 @@ public final class RecordingFileProcessor {
         try (FileInputStream in = new FileInputStream(file)) {
             byte[] bytes = new byte[(int) file.length()];
             in.read(bytes);
-            ReplayByteBuffer reader =
-                    new ReplayByteBuffer(ByteBuffer.wrap(bytes));
+            ReplayByteBuffer reader = new ReplayByteBuffer(ByteBuffer.wrap(bytes));
             byte version = reader.read(BYTE);
             if (version != RECORDING_VERSION) {
                 throw new IllegalStateException("Invalid recording version");

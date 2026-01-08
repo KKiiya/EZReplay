@@ -12,10 +12,13 @@ import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSo
 import me.lagggpixel.replay.Replay;
 import me.lagggpixel.replay.api.data.Writeable;
 import me.lagggpixel.replay.api.replay.content.IReplaySession;
+import me.lagggpixel.replay.api.replay.content.RecEntity;
 import me.lagggpixel.replay.api.replay.data.IRecording;
 import me.lagggpixel.replay.api.replay.data.recordable.Recordable;
 import me.lagggpixel.replay.api.replay.data.recordable.RecordableRegistry;
 import me.lagggpixel.replay.api.serializer.ReplayByteBuffer;
+import me.lagggpixel.replay.api.utils.Vector3d;
+
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
@@ -45,20 +48,22 @@ public class EntityDeath extends Recordable {
     @Override
     public void play(IReplaySession replaySession) {
         int fakeEntityId = entityId + 100000;
+        RecEntity recEntity = replaySession.getSpawnedEntities().get(entityId);
+        Vector3d position = recEntity != null ? recEntity.getPosition() : new Vector3d(0, 0, 0);
         
+        WrapperPlayServerEntityStatus statusPacket = new WrapperPlayServerEntityStatus(fakeEntityId, 3);
+        WrapperPlayServerSoundEffect soundPacket = new WrapperPlayServerSoundEffect(getDeathSound(type), SoundCategory.AMBIENT, new Vector3i((int) position.getX(), (int) position.getY(), (int) position.getZ()), 1.0f, 1.0f);
+        WrapperPlayServerDestroyEntities destroyPacket = new WrapperPlayServerDestroyEntities(fakeEntityId);
         for (Player viewer : replaySession.getViewers()) {
             User user = PacketEvents.getAPI().getPlayerManager().getUser(viewer);
 
             // Send entity death status (3 = entity death)
-            WrapperPlayServerEntityStatus statusPacket = new WrapperPlayServerEntityStatus(fakeEntityId, 3);
-            WrapperPlayServerSoundEffect soundPacket = new WrapperPlayServerSoundEffect(getDeathSound(type), SoundCategory.AMBIENT, new Vector3i((int) viewer.getLocation().getX(), (int) viewer.getLocation().getY(), (int) viewer.getLocation().getZ()), 1.0f, 1.0f);
             user.sendPacket(statusPacket);
             user.sendPacket(soundPacket);
             
             // Schedule destroy packet after a short delay
             Bukkit.getScheduler().runTaskLater(Replay.getInstance(), () -> {
                 User userLater = PacketEvents.getAPI().getPlayerManager().getUser(viewer);
-                WrapperPlayServerDestroyEntities destroyPacket = new WrapperPlayServerDestroyEntities(fakeEntityId);
                 userLater.sendPacket(destroyPacket);
             }, 20L);
         }

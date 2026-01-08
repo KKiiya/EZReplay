@@ -11,10 +11,12 @@ import com.github.retrooper.packetevents.wrapper.play.server.*;
 import io.github.retrooper.packetevents.adventure.serializer.gson.GsonComponentSerializer;
 import me.lagggpixel.replay.api.data.Writeable;
 import me.lagggpixel.replay.api.replay.content.IReplaySession;
+import me.lagggpixel.replay.api.replay.content.RecEntity;
 import me.lagggpixel.replay.api.replay.data.IRecording;
 import me.lagggpixel.replay.api.replay.data.recordable.Recordable;
 import me.lagggpixel.replay.api.replay.data.recordable.RecordableRegistry;
 import me.lagggpixel.replay.api.serializer.ReplayByteBuffer;
+import me.lagggpixel.replay.replay.content.ReplayEntity;
 import me.lagggpixel.replay.utils.SerializerUtil;
 import net.kyori.adventure.text.Component;
 import org.bukkit.entity.Entity;
@@ -35,9 +37,7 @@ public class EntitySpawn extends Recordable {
     @Writeable private final String customName;
     @Writeable private final boolean isCustomNameVisible;
     @Writeable private final me.lagggpixel.replay.api.utils.Vector3d spawnLocation;
-    @Writeable private final double motX;
-    @Writeable private final double motY;
-    @Writeable private final double motZ;
+    @Writeable private final me.lagggpixel.replay.api.utils.Vector3d motion;
     @Writeable private final short entityId;
     @Writeable private final boolean isLiving;
 
@@ -47,9 +47,7 @@ public class EntitySpawn extends Recordable {
         this.customName = reader.read(STRING);
         this.isCustomNameVisible = reader.read(BOOLEAN);
         this.spawnLocation = SerializerUtil.read3DVector(reader);
-        this.motX = reader.read(DOUBLE);
-        this.motY = reader.read(DOUBLE);
-        this.motZ = reader.read(DOUBLE);
+        this.motion = SerializerUtil.read3DVector(reader);
         this.entityId = reader.read(SHORT);
         this.isLiving = reader.read(BOOLEAN);
     }
@@ -61,9 +59,7 @@ public class EntitySpawn extends Recordable {
         this.isCustomNameVisible = entity.isCustomNameVisible();
         this.entityType = entity.getType();
         this.entityId = replay.getEntityIndex().getOrRegister(entity.getUniqueId());
-        this.motX = entity.getVelocity().getX();
-        this.motY = entity.getVelocity().getY();
-        this.motZ = entity.getVelocity().getZ();
+        this.motion = me.lagggpixel.replay.api.utils.Vector3d.fromBukkitVector(entity.getVelocity());
         this.isLiving = entity instanceof LivingEntity;
     }
 
@@ -73,9 +69,7 @@ public class EntitySpawn extends Recordable {
         writer.write(STRING, customName);
         writer.write(BOOLEAN, isCustomNameVisible);
         SerializerUtil.write3DVector(writer, spawnLocation);
-        writer.write(DOUBLE, motX);
-        writer.write(DOUBLE, motY);
-        writer.write(DOUBLE, motZ);
+        SerializerUtil.write3DVector(writer, motion);
         writer.write(SHORT, entityId);
         writer.write(BOOLEAN, isLiving);
     }
@@ -83,6 +77,7 @@ public class EntitySpawn extends Recordable {
     @Override
     public void play(IReplaySession replaySession) {
         int fakeEntityId = entityId + 100000; // Use a fake entity ID for packet purposes
+        RecEntity recEntity = new ReplayEntity(entityId, entityType, customName, 20.0f);
 
         Vector3d position = new Vector3d(spawnLocation.getX(), spawnLocation.getY(), spawnLocation.getZ());
         com.github.retrooper.packetevents.protocol.entity.type.EntityType peEntityType = convertEntityType(entityType);
@@ -101,9 +96,14 @@ public class EntitySpawn extends Recordable {
                     Optional.empty()
             ));
         }
+
+        double motX = motion.getX();
+        double motY = motion.getY();
+        double motZ = motion.getZ();
         PacketWrapper<?> spawnPacket;
-        if (isLiving) spawnPacket = new WrapperPlayServerSpawnLivingEntity(fakeEntityId, java.util.UUID.randomUUID(), peEntityType, position, spawnLocation.getYaw(), spawnLocation.getPitch(), spawnLocation.getYaw(), new Vector3d(motX, motY, motZ), metadata);
-        else spawnPacket = new WrapperPlayServerSpawnEntity(fakeEntityId, Optional.of(java.util.UUID.randomUUID()), peEntityType, position, spawnLocation.getPitch(), spawnLocation.getYaw(), spawnLocation.getYaw(), 0, Optional.of(new Vector3d(motX, motY, motZ)));
+        if (isLiving) spawnPacket = new WrapperPlayServerSpawnLivingEntity(fakeEntityId, recEntity.getUuid(), peEntityType, position, spawnLocation.getYaw(), spawnLocation.getPitch(), spawnLocation.getYaw(), new Vector3d(motX, motY, motZ), metadata);
+        else spawnPacket = new WrapperPlayServerSpawnEntity(fakeEntityId, Optional.of(recEntity.getUuid()), peEntityType, position, spawnLocation.getPitch(), spawnLocation.getYaw(), spawnLocation.getYaw(), 0, Optional.of(new Vector3d(motX, motY, motZ)));
+        replaySession.getSpawnedEntities().put(entityId, recEntity);
 
         WrapperPlayServerEntityRotation rotationPacket = new WrapperPlayServerEntityRotation(fakeEntityId, spawnLocation.getYaw(), spawnLocation.getPitch(), true);
         WrapperPlayServerEntityVelocity velocityPacket = new WrapperPlayServerEntityVelocity(fakeEntityId, new Vector3d(motX, motY, motZ));
