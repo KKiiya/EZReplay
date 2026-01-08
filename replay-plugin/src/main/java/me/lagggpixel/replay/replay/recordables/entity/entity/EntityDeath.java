@@ -16,15 +16,26 @@ import me.lagggpixel.replay.api.replay.data.IRecording;
 import me.lagggpixel.replay.api.replay.data.recordable.Recordable;
 import me.lagggpixel.replay.api.replay.data.recordable.RecordableRegistry;
 
+import me.lagggpixel.replay.api.serializer.ReplayByteBuffer;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
+import org.jetbrains.annotations.NotNull;
+
+import static me.lagggpixel.replay.api.serializer.ReplayByteBuffer.INT;
+import static me.lagggpixel.replay.api.serializer.ReplayByteBuffer.SHORT;
 
 public class EntityDeath extends Recordable {
 
     @Writeable private final EntityType type;
     @Writeable private final short entityId;
+
+    public EntityDeath(ReplayByteBuffer reader) {
+        super(null);
+        this.type = EntityType.values()[reader.read(INT)];
+        this.entityId = reader.read(SHORT);
+    }
 
     public EntityDeath(IRecording replay, Entity entity) {
         super(replay);
@@ -67,5 +78,11 @@ public class EntityDeath extends Recordable {
 
     private Sound getDeathSound(EntityType type) {
         return Sounds.getByName("entity." + type.name().toLowerCase() + ".death");
+    }
+
+    @Override
+    public void write(@NotNull ReplayByteBuffer writer) {
+        writer.write(INT, type.ordinal());
+        writer.write(SHORT, entityId);
     }
 }

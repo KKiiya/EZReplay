@@ -15,11 +15,15 @@ import me.lagggpixel.replay.api.data.Writeable;
 import me.lagggpixel.replay.api.replay.content.IReplaySession;
 import me.lagggpixel.replay.api.replay.data.recordable.Recordable;
 import me.lagggpixel.replay.api.replay.data.recordable.RecordableRegistry;
+import me.lagggpixel.replay.api.serializer.ReplayByteBuffer;
 import me.lagggpixel.replay.api.utils.Vector3i;
 import me.lagggpixel.replay.api.utils.block.BlockAction;
 import me.lagggpixel.replay.api.replay.data.IRecording;
 import me.lagggpixel.replay.api.utils.block.BlockCache;
 import org.bukkit.entity.Player;
+import org.jetbrains.annotations.NotNull;
+
+import static me.lagggpixel.replay.api.serializer.ReplayByteBuffer.*;
 
 /**
  * Records block interactions like doors opening, levers flipping, buttons pressing
@@ -34,6 +38,15 @@ public class BlockInteractRecordable extends Recordable {
     @Writeable private final Vector3i blockPosition;
     @Writeable private final BlockAction actionType;
     @Writeable private final boolean playSound;
+
+    public BlockInteractRecordable(ReplayByteBuffer reader) {
+        super(null);
+        this.material = reader.read(INT);
+        this.data = reader.read(BYTE);
+        this.blockPosition = new Vector3i(reader.read(INT), reader.read(INT), reader.read(INT));
+        this.actionType = BlockAction.values()[reader.read(INT)];
+        this.playSound = reader.read(BOOLEAN);
+    }
 
     public BlockInteractRecordable(IRecording replay, BlockCache cache, BlockAction actionType, boolean playSound) {
         super(replay);
@@ -225,5 +238,16 @@ public class BlockInteractRecordable extends Recordable {
             default:
                 return isBreak ? Sounds.BLOCK_STONE_BREAK : Sounds.BLOCK_STONE_PLACE;
         }
+    }
+
+    @Override
+    public void write(@NotNull ReplayByteBuffer writer) {
+        writer.write(INT, material);
+        writer.write(BYTE, data);
+        writer.write(INT, blockPosition.getX());
+        writer.write(INT, blockPosition.getY());
+        writer.write(INT, blockPosition.getZ());
+        writer.write(INT, actionType.ordinal());
+        writer.write(BOOLEAN, playSound);
     }
 }

@@ -7,27 +7,49 @@ import com.github.retrooper.packetevents.protocol.world.states.type.StateType;
 import com.github.retrooper.packetevents.protocol.world.states.type.StateTypes;
 import com.github.retrooper.packetevents.util.Vector3i;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerMultiBlockChange;
+import me.lagggpixel.replay.api.data.Writeable;
 import me.lagggpixel.replay.api.replay.content.IReplaySession;
 import me.lagggpixel.replay.api.replay.data.IRecording;
 import me.lagggpixel.replay.api.replay.data.recordable.Recordable;
 import me.lagggpixel.replay.api.replay.data.recordable.RecordableRegistry;
+import me.lagggpixel.replay.api.serializer.ReplayByteBuffer;
 import me.lagggpixel.replay.api.utils.block.BlockCache;
 import org.bukkit.Chunk;
+import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
+import org.jetbrains.annotations.NotNull;
+
 import java.util.*;
+
+import static me.lagggpixel.replay.api.serializer.ReplayByteBuffer.*;
 
 public class BlockUpdateRecordable extends Recordable {
 
     private static final int MAX_BLOCKS_PER_PACKET = 4096; // PacketEvents limit
     private static final int BATCH_SIZE = 512; // Optimal batch size for smooth updates
     
-    private final List<BlockCache> newBlocks;
+    @Writeable private final List<BlockCache> newBlocks;
     private List<BlockCache> oldBlocks;
     
     // Cache for StateType lookups to improve performance
     private static final Map<String, StateType> STATE_TYPE_CACHE = new HashMap<>();
+
+    public BlockUpdateRecordable(ReplayByteBuffer reader) {
+        super(null);
+        int size = reader.read(VAR_INT);
+        this.newBlocks = new ArrayList<>(size);
+        for (int i = 0; i < size; i++) {
+            Material material = Material.values()[reader.read(INT)];
+            byte data = reader.read(BYTE);
+            int x = reader.read(INT);
+            int y = reader.read(INT);
+            int z = reader.read(INT);
+            this.newBlocks.add(new BlockCache(material, data, x, y, z));
+        }
+        this.oldBlocks = null;
+    }
 
     public BlockUpdateRecordable(IRecording replay, List<BlockCache> newBlocks) {
         super(replay);
@@ -191,5 +213,17 @@ public class BlockUpdateRecordable extends Recordable {
      */
     private int unpackChunkZ(long packed) {
         return (int) packed;
+    }
+
+    @Override
+    public void write(@NotNull ReplayByteBuffer writer) {
+        writer.write(VAR_INT, newBlocks.size());
+        for (BlockCache cache : newBlocks) {
+            writer.write(INT, cache.getMaterial().ordinal());
+            writer.write(BYTE, cache.getData());
+            writer.write(INT, cache.getX());
+            writer.write(INT, cache.getY());
+            writer.write(INT, cache.getZ());
+        }
     }
 }

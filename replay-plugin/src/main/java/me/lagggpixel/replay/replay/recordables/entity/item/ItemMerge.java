@@ -9,8 +9,12 @@ import me.lagggpixel.replay.api.replay.content.IReplaySession;
 import me.lagggpixel.replay.api.replay.data.IRecording;
 import me.lagggpixel.replay.api.replay.data.recordable.Recordable;
 import me.lagggpixel.replay.api.replay.data.recordable.RecordableRegistry;
+import me.lagggpixel.replay.api.serializer.ReplayByteBuffer;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
+import org.jetbrains.annotations.NotNull;
+
+import static me.lagggpixel.replay.api.serializer.ReplayByteBuffer.*;
 
 /**
  * @author Lagggpixel
@@ -19,6 +23,11 @@ import org.bukkit.entity.Player;
 public class ItemMerge extends Recordable {
 
     @Writeable private final short entityId;
+
+    public ItemMerge(ReplayByteBuffer reader) {
+        super(null);
+        this.entityId = reader.read(SHORT);
+    }
 
     public ItemMerge(IRecording replay, Item entity) {
         super(replay);
@@ -49,5 +58,10 @@ public class ItemMerge extends Recordable {
     @Override
     public short getTypeId() {
         return RecordableRegistry.ITEM_MERGE;
+    }
+
+    @Override
+    public void write(@NotNull ReplayByteBuffer writer) {
+        writer.write(SHORT, entityId);
     }
 }

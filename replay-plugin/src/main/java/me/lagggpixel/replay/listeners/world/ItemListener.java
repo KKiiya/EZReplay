@@ -60,7 +60,7 @@ public class ItemListener {
             if (recording == null) return;
 
             recording.getSpawnedEntities().remove(entity.getEntityId());
-            Recordable recordable = new ItemMerge(recording, entity, target);
+            Recordable recordable = new ItemMerge(recording, entity);
             recording.getLastFrame().addRecordable(recordable);
         }
     }
@@ -107,7 +107,7 @@ public class ItemListener {
             if (recording == null) return;
 
             recording.getSpawnedEntities().remove(entity.getEntityId());
-            Recordable recordable = new ItemMerge(recording, entity, target);
+            Recordable recordable = new ItemMerge(recording, entity);
             recording.getLastFrame().addRecordable(recordable);
         }
     }

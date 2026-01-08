@@ -11,7 +11,9 @@ import me.lagggpixel.replay.api.replay.content.IReplaySession;
 import me.lagggpixel.replay.api.replay.data.recordable.Recordable;
 import me.lagggpixel.replay.api.replay.data.IRecording;
 import me.lagggpixel.replay.api.replay.data.recordable.RecordableRegistry;
+import me.lagggpixel.replay.api.serializer.ReplayByteBuffer;
 import me.lagggpixel.replay.api.utils.item.ItemData;
+import org.bukkit.Material;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
@@ -20,11 +22,29 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+import static me.lagggpixel.replay.api.serializer.ReplayByteBuffer.*;
+
 public class Equipment extends Recordable {
 
     @Writeable private final ItemData[] equipment = new ItemData[5];
     @Writeable private final short entityId;
     @Writeable private final boolean isPlayer;
+
+    public Equipment(ReplayByteBuffer reader) {
+        super(null);
+        this.entityId = reader.read(SHORT);
+        this.isPlayer = reader.read(BOOLEAN);
+        for (int i = 0; i < 5; i++) {
+            Material material = Material.values()[reader.read(INT)];
+            byte data = reader.read(BYTE);
+            boolean enchanted = reader.read(BOOLEAN);
+            int amount = reader.read(INT);
+            // Create ItemData from serialized values
+            org.bukkit.inventory.ItemStack item = new org.bukkit.inventory.ItemStack(material, amount);
+            item.setDurability(data);
+            this.equipment[i] = new ItemData(item);
+        }
+    }
 
     public Equipment(IRecording replay, @NotNull LivingEntity entity) {
         super(replay);
@@ -80,5 +100,25 @@ public class Equipment extends Recordable {
     @Override
     public short getTypeId() {
         return RecordableRegistry.EQUIPMENT;
+    }
+
+    @Override
+    public void write(@NotNull ReplayByteBuffer writer) {
+        writer.write(SHORT, entityId);
+        writer.write(BOOLEAN, isPlayer);
+        for (int i = 0; i < 5; i++) {
+            ItemData item = equipment[i];
+            if (item == null) {
+                writer.write(INT, Material.AIR.ordinal());
+                writer.write(BYTE, (byte) 0);
+                writer.write(BOOLEAN, false);
+                writer.write(INT, 0);
+            } else {
+                writer.write(INT, item.getMaterial().ordinal());
+                writer.write(BYTE, item.getData());
+                writer.write(BOOLEAN, item.isEnchanted());
+                writer.write(INT, item.getAmount());
+            }
+        }
     }
 }

@@ -69,7 +69,7 @@ public class ReplayManager implements IReplayManager {
             int frameCount = in.readShort();
             for (int i = 0; i < frameCount; i++) {
                 Frame frame = new Frame(recording);
-                frame.read(in, index);
+                frame.read(in);
                 recording.getFrames().add(frame);
             }
 

@@ -10,15 +10,25 @@ import me.lagggpixel.replay.api.replay.content.IReplaySession;
 import me.lagggpixel.replay.api.replay.data.IRecording;
 import me.lagggpixel.replay.api.replay.data.recordable.Recordable;
 import me.lagggpixel.replay.api.replay.data.recordable.RecordableRegistry;
+import me.lagggpixel.replay.api.serializer.ReplayByteBuffer;
 import org.bukkit.entity.Player;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static me.lagggpixel.replay.api.serializer.ReplayByteBuffer.*;
 
 public class SwordBlock extends Recordable {
 
     @Writeable private final short entityId;
     @Writeable private final byte value;
+
+    public SwordBlock(ReplayByteBuffer reader) {
+        super(null);
+        this.entityId = reader.read(SHORT);
+        this.value = reader.read(BYTE);
+    }
 
     public SwordBlock(IRecording replay, Player playerBlocking) {
         super(replay);
@@ -48,5 +58,11 @@ public class SwordBlock extends Recordable {
     @Override
     public short getTypeId() {
         return RecordableRegistry.SWORD_BLOCK;
+    }
+
+    @Override
+    public void write(@NotNull ReplayByteBuffer writer) {
+        writer.write(SHORT, entityId);
+        writer.write(BYTE, value);
     }
 }

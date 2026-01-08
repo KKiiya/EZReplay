@@ -12,12 +12,18 @@ import me.lagggpixel.replay.api.replay.content.IReplaySession;
 import me.lagggpixel.replay.api.replay.data.IRecording;
 import me.lagggpixel.replay.api.replay.data.recordable.Recordable;
 import me.lagggpixel.replay.api.replay.data.recordable.RecordableRegistry;
+import me.lagggpixel.replay.api.serializer.ReplayByteBuffer;
 import me.lagggpixel.replay.api.utils.item.ItemData;
+import me.lagggpixel.replay.utils.SerializerUtil;
+import org.bukkit.Material;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Optional;
 import java.util.UUID;
+
+import static me.lagggpixel.replay.api.serializer.ReplayByteBuffer.*;
 
 public class ItemDrop extends Recordable {
 
@@ -27,6 +33,22 @@ public class ItemDrop extends Recordable {
     @Writeable private final double motY;
     @Writeable private final double motZ;
     @Writeable private final short entityId;
+
+    public ItemDrop(ReplayByteBuffer reader) {
+        super(null);
+        this.entityId = reader.read(SHORT);
+        this.location = SerializerUtil.read3DVector(reader);
+        this.motX = reader.read(DOUBLE);
+        this.motY = reader.read(DOUBLE);
+        this.motZ = reader.read(DOUBLE);
+        Material material = Material.values()[reader.read(INT)];
+        byte data = reader.read(BYTE);
+        boolean enchanted = reader.read(BOOLEAN);
+        int amount = reader.read(INT);
+        org.bukkit.inventory.ItemStack item = new org.bukkit.inventory.ItemStack(material, amount);
+        item.setDurability(data);
+        this.data = new ItemData(item);
+    }
 
     public ItemDrop(IRecording replay, Item item) {
         super(replay);
@@ -43,7 +65,7 @@ public class ItemDrop extends Recordable {
         int fakeEntityId = entityId + 100000;
         Vector3d position = new Vector3d(location.getX(), location.getY(), location.getZ());
 
-        WrapperPlayServerSpawnEntity spawnPacket = new WrapperPlayServerSpawnEntity(fakeEntityId, Optional.of(UUID.randomUUID()), EntityTypes.ITEM, position, 0f, 0f, 0f, 0, Optional.of(new Vector3d(motX, motY, motZ)));
+        WrapperPlayServerSpawnEntity spawnPacket = new WrapperPlayServerSpawnEntity(fakeEntityId, Optional.of(java.util.UUID.randomUUID()), EntityTypes.ITEM, position, 0f, 0f, 0f, 0, Optional.of(new Vector3d(motX, motY, motZ)));
         WrapperPlayServerEntityVelocity velocityPacket = new WrapperPlayServerEntityVelocity(fakeEntityId, new Vector3d(motX, motY, motZ));
 
         for (Player viewer : replaySession.getViewers()) {
@@ -68,5 +90,18 @@ public class ItemDrop extends Recordable {
     @Override
     public short getTypeId() {
         return RecordableRegistry.ITEM_DROP;
+    }
+
+    @Override
+    public void write(@NotNull ReplayByteBuffer writer) {
+        writer.write(SHORT, entityId);
+        SerializerUtil.write3DVector(writer, location);
+        writer.write(DOUBLE, motX);
+        writer.write(DOUBLE, motY);
+        writer.write(DOUBLE, motZ);
+        writer.write(INT, data.getMaterial().ordinal());
+        writer.write(BYTE, data.getData());
+        writer.write(BOOLEAN, data.isEnchanted());
+        writer.write(INT, data.getAmount());
     }
 }

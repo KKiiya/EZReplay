@@ -15,18 +15,30 @@ import me.lagggpixel.replay.api.replay.content.IReplaySession;
 import me.lagggpixel.replay.api.replay.data.IRecording;
 import me.lagggpixel.replay.api.replay.data.recordable.Recordable;
 import me.lagggpixel.replay.api.replay.data.recordable.RecordableRegistry;
+import me.lagggpixel.replay.api.serializer.ReplayByteBuffer;
+import me.lagggpixel.replay.utils.SerializerUtil;
 import org.bukkit.Location;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.UUID;
+
+import static me.lagggpixel.replay.api.serializer.ReplayByteBuffer.*;
 
 public class ExplosionRecordable extends Recordable {
 
     @Writeable private final short entityId;
     @Writeable private final me.lagggpixel.replay.api.utils.Vector3d position;
     @Writeable private final float strength;
+
+    public ExplosionRecordable(ReplayByteBuffer reader) {
+        super(null);
+        this.entityId = reader.read(SHORT);
+        this.position = SerializerUtil.read3DVector(reader);
+        this.strength = reader.read(FLOAT);
+    }
 
     public ExplosionRecordable(IRecording replay, Location location, Entity entity, float radius) {
         super(replay);
@@ -37,7 +49,7 @@ public class ExplosionRecordable extends Recordable {
 
     @Override
     public void play(IReplaySession replaySession) {
-        UUID tnt = replaySession.getSpawnedEntities().get(entityId);
+        UUID tnt = replaySession.getSpawnedEntities().get(entityId).getUuid();
         int x = (int) position.getX();
         int y = (int) position.getY();
         int z = (int) position.getZ();
@@ -68,5 +80,12 @@ public class ExplosionRecordable extends Recordable {
     @Override
     public short getTypeId() {
         return RecordableRegistry.EXPLOSION;
+    }
+
+    @Override
+    public void write(@NotNull ReplayByteBuffer writer) {
+        writer.write(SHORT, entityId);
+        SerializerUtil.write3DVector(writer, position);
+        writer.write(FLOAT, strength);
     }
 }

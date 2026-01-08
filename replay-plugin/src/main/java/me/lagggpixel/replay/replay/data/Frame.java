@@ -88,24 +88,14 @@ public class Frame implements IFrame {
         }
     }
 
+
     @Override
     public void write(DataOutputStream out) throws IOException {
-        out.writeShort(recordables.size());
-        for (Recordable recordable : recordables) {
-            out.writeShort(recordable.getTypeId());
-            recordable.write(out);
-        }
+
     }
 
     @Override
-    public void read(DataInputStream in, EntityIndex index) throws IOException {
-        int recordableCount = in.readShort();
-        this.recordables.clear();
+    public void read(DataInputStream in) throws IOException {
 
-        for (int i = 0; i < recordableCount; i++) {
-            short typeId = in.readShort();
-            Recordable recordable = RecordableRegistry.create(typeId, in, index);
-            this.recordables.add(recordable);
-        }
     }
 }

@@ -10,17 +10,27 @@ import me.lagggpixel.replay.api.replay.content.IReplaySession;
 import me.lagggpixel.replay.api.replay.data.IRecording;
 import me.lagggpixel.replay.api.replay.data.recordable.Recordable;
 import me.lagggpixel.replay.api.replay.data.recordable.RecordableRegistry;
+import me.lagggpixel.replay.api.serializer.ReplayByteBuffer;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import static me.lagggpixel.replay.api.serializer.ReplayByteBuffer.*;
+
 public class Burning extends Recordable {
 
     @Writeable private final short entityId;
     @Writeable private final int fireTicks;
+
+    public Burning(ReplayByteBuffer reader) {
+        super(null);
+        this.entityId = reader.read(SHORT);
+        this.fireTicks = reader.read(INT);
+    }
 
     public Burning(IRecording replay, Entity entity) {
         super(replay);
@@ -51,5 +61,11 @@ public class Burning extends Recordable {
     @Override
     public short getTypeId() {
         return RecordableRegistry.BURNING;
+    }
+
+    @Override
+    public void write(@NotNull ReplayByteBuffer writer) {
+        writer.write(SHORT, entityId);
+        writer.write(INT, fireTicks);
     }
 }
