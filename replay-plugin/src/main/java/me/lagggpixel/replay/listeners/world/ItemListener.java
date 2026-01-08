@@ -45,7 +45,12 @@ public class ItemListener {
             IRecording recording = Replay.getInstance().getReplayManager().getActiveRecording(p.getWorld());
             if (recording == null) return;
 
-            recording.getSpawnedEntities().remove(item.getEntityId());
+            for (int i = 0; i < recording.getSpawnedEntities().size(); i++) {
+                if (recording.getSpawnedEntities().get(i) == item.getEntityId()) {
+                    recording.getSpawnedEntities().remove(i);
+                    break;
+                }
+            }
             Recordable recordable = new ItemPick(recording, item, p);
             recording.getLastFrame().addRecordable(recordable);
         }
@@ -53,14 +58,18 @@ public class ItemListener {
         @EventHandler
         public void onMerge(ItemMergeEvent e) {
             Item entity = e.getEntity();
-            Item target = e.getTarget();
 
             if (e.isCancelled()) return;
             IRecording recording = Replay.getInstance().getReplayManager().getActiveRecording(entity.getWorld());
             if (recording == null) return;
 
-            recording.getSpawnedEntities().remove(entity.getEntityId());
-            Recordable recordable = new ItemMerge(recording, entity, target);
+            for (int i = 0; i < recording.getSpawnedEntities().size(); i++) {
+                if (recording.getSpawnedEntities().get(i) == entity.getEntityId()) {
+                    recording.getSpawnedEntities().remove(i);
+                    break;
+                }
+            }
+            Recordable recordable = new ItemMerge(recording, entity);
             recording.getLastFrame().addRecordable(recordable);
         }
     }
@@ -92,7 +101,12 @@ public class ItemListener {
             IRecording recording = Replay.getInstance().getReplayManager().getActiveRecording(entity.getWorld());
             if (recording == null) return;
 
-            recording.getSpawnedEntities().remove(item.getEntityId());
+            for (int i = 0; i < recording.getSpawnedEntities().size(); i++) {
+                if (recording.getSpawnedEntities().get(i) == item.getEntityId()) {
+                    recording.getSpawnedEntities().remove(i);
+                    break;
+                }
+            }
             Recordable recordable = new ItemPick(recording, item, entity);
             recording.getLastFrame().addRecordable(recordable);
         }
@@ -100,14 +114,18 @@ public class ItemListener {
         @EventHandler
         public void onMerge(ItemMergeEvent e) {
             Item entity = e.getEntity();
-            Item target = e.getTarget();
 
             if (e.isCancelled()) return;
             IRecording recording = Replay.getInstance().getReplayManager().getActiveRecording(entity.getWorld());
             if (recording == null) return;
 
-            recording.getSpawnedEntities().remove(entity.getEntityId());
-            Recordable recordable = new ItemMerge(recording, entity, target);
+            for (int i = 0; i < recording.getSpawnedEntities().size(); i++) {
+                if (recording.getSpawnedEntities().get(i) == entity.getEntityId()) {
+                    recording.getSpawnedEntities().remove(i);
+                    break;
+                }
+            }
+            Recordable recordable = new ItemMerge(recording, entity);
             recording.getLastFrame().addRecordable(recordable);
         }
     }

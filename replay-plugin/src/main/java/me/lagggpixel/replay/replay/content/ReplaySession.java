@@ -60,7 +60,7 @@ public class ReplaySession implements IReplaySession {
         this.replayPlayers = new HashMap<>();
 
         for (UUID player : replay.getPlayers()) {
-            RecPlayer recPlayer = new ReplayPlayer(replay.getEntityIndex().getOrRegister(player), player, replay.getPlayerName(player), 20.0f);
+            RecPlayer recPlayer = new ReplayPlayer(replay.getEntityIndex().getOrRegister(player), player, replay.getPlayerName(player));
             replayPlayers.put(replay.getEntityIndex().getOrRegister(player), recPlayer);
         } 
 
@@ -89,7 +89,7 @@ public class ReplaySession implements IReplaySession {
         this.replayPlayers = new HashMap<>();
 
         for (UUID player : replay.getPlayers()) {
-            RecPlayer recPlayer = new ReplayPlayer(replay.getEntityIndex().getOrRegister(player), player, replay.getPlayerName(player), 20.0f);
+            RecPlayer recPlayer = new ReplayPlayer(replay.getEntityIndex().getOrRegister(player), player, replay.getPlayerName(player));
             replayPlayers.put(replay.getEntityIndex().getOrRegister(player), recPlayer);
         }
 
@@ -136,7 +136,11 @@ public class ReplaySession implements IReplaySession {
     @Override
     public void start() {
         for (Player p : getViewers()) {
-            playerControls.put(p, new Controls(this, p));
+            try {
+                playerControls.put(p, new Controls(this, p));
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
 
         for (Short replayPlayer : spawnedEntities.keySet()) {

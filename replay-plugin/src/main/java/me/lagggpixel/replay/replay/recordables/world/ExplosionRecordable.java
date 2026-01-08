@@ -12,15 +12,14 @@ import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSo
 import com.github.retrooper.packetevents.protocol.sound.Sounds;
 import me.lagggpixel.replay.api.data.Writeable;
 import me.lagggpixel.replay.api.replay.content.IReplaySession;
+import me.lagggpixel.replay.api.replay.content.RecEntity;
 import me.lagggpixel.replay.api.replay.data.IRecording;
 import me.lagggpixel.replay.api.replay.data.recordable.Recordable;
 import me.lagggpixel.replay.api.replay.data.recordable.RecordableRegistry;
 import org.bukkit.Location;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
-
 import java.util.ArrayList;
-import java.util.UUID;
 
 public class ExplosionRecordable extends Recordable {
 
@@ -37,7 +36,7 @@ public class ExplosionRecordable extends Recordable {
 
     @Override
     public void play(IReplaySession replaySession) {
-        UUID tnt = replaySession.getSpawnedEntities().get(entityId);
+        RecEntity tnt = replaySession.getSpawnedEntities().get(entityId);
         int x = (int) position.getX();
         int y = (int) position.getY();
         int z = (int) position.getZ();

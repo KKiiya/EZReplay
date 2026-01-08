@@ -2,6 +2,7 @@ package me.lagggpixel.replay.replay.recordables.entity.player;
 
 import me.lagggpixel.replay.api.data.Writeable;
 import me.lagggpixel.replay.api.replay.content.IReplaySession;
+import me.lagggpixel.replay.api.replay.content.RecPlayer;
 import me.lagggpixel.replay.api.replay.data.IRecording;
 import me.lagggpixel.replay.api.replay.data.recordable.Recordable;
 import me.lagggpixel.replay.api.replay.data.recordable.RecordableRegistry;
@@ -33,9 +34,9 @@ public class Respawn extends Recordable {
 
     @Override
     public void play(IReplaySession replaySession) {
-        UUID fakePlayer = replaySession.getSpawnedEntities().get(entityId);
+        RecPlayer fakePlayer = replaySession.getReplayPlayers().get(entityId);
         Location spawnLocation = new Location(replaySession.getWorld(), x, y, z, yaw, pitch);
-        PacketUtils.spawnFakePlayer(replaySession.getViewers(), fakePlayer, spawnLocation);
+        PacketUtils.spawnFakePlayer(replaySession.getViewers(), fakePlayer.getUuid(), spawnLocation);
     }
 
     @Override

@@ -9,6 +9,7 @@ import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEn
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSpawnEntity;
 import me.lagggpixel.replay.api.data.Writeable;
 import me.lagggpixel.replay.api.replay.content.IReplaySession;
+import me.lagggpixel.replay.api.replay.content.RecEntity;
 import me.lagggpixel.replay.api.replay.data.EntityIndex;
 import me.lagggpixel.replay.api.replay.data.IRecording;
 import me.lagggpixel.replay.api.replay.data.recordable.Recordable;
@@ -48,7 +49,7 @@ public class ProjectileLaunchRecordable extends Recordable {
 
     @Override
     public void play(IReplaySession replaySession) {
-        UUID shooter = replaySession.getSpawnedEntities().get(this.shooterId);
+        RecEntity shooter = replaySession.getSpawnedEntities().get(this.shooterId);
         if (shooter == null) return;
 
         int fakeEntityId = entityId + 100000;

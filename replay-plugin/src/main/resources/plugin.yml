@@ -1,8 +1,8 @@
-name: replay-plugin
+name: EZReplay
 version: '${project.version}'
 main: me.lagggpixel.replay.Replay
 authors: [lagggpixel, Kiiya, agentnoobff]
-softdepend: [ PlaceholderAPI ]
+softdepend: [ PlaceholderAPI, PacketEvents ]
 commands:
   replay:
     description: Open the replays menu

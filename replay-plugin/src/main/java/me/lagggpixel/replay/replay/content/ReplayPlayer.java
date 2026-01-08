@@ -10,8 +10,8 @@ import me.lagggpixel.replay.utils.PacketUtils;
 
 public class ReplayPlayer extends RecPlayer {
     
-    public ReplayPlayer(short id, UUID uuid, String name, float health) {
-        super(id, uuid, EntityType.PLAYER, name, health);
+    public ReplayPlayer(short id, UUID uuid, String name) {
+        super(id, uuid, EntityType.PLAYER, name, 20.0f);
     }
 
     @Override

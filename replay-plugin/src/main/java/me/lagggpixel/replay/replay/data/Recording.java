@@ -14,6 +14,7 @@ import me.lagggpixel.replay.api.utils.Vector3d;
 import me.lagggpixel.replay.api.utils.block.BlockCache;
 import me.lagggpixel.replay.api.utils.data.RecordingUtils;
 import me.lagggpixel.replay.replay.content.ReplaySession;
+import me.lagggpixel.replay.replay.recordables.entity.entity.EntityDeath;
 import me.lagggpixel.replay.replay.recordables.entity.entity.EntityStatus;
 import me.lagggpixel.replay.replay.recordables.entity.player.status.Invisible;
 import me.lagggpixel.replay.replay.recordables.entity.player.status.Sneaking;
@@ -222,6 +223,7 @@ public class Recording implements IRecording {
                     trackedEquipment.put(player.getEntityId(), equipmentTrackerTaskId);
                 }
                 if (!playersThatPlayed.contains(player.getUniqueId())) playersThatPlayed.add(player.getUniqueId());
+                if (!spawnedEntities.contains(player.getEntityId())) spawnedEntities.add(player.getEntityId());
                 entityIndex.getOrRegister(player.getUniqueId());
                 playerNames.put(entityIndex.getOrRegister(player.getUniqueId()), player.getName());
                 lastFrame.addRecordable(new SwordBlock(this, player));
@@ -258,7 +260,7 @@ public class Recording implements IRecording {
                 lastFrame.addRecordable(new EntityStatus(this, entity));
             }
 
-            for (Entity entity : deadEntities) lastFrame.addRecordable(new EntityStatus(this, entity));
+            for (Entity entity : deadEntities) lastFrame.addRecordable(new EntityDeath(this, entity));
             getSpawnedEntities().removeAll(deadEntities.stream().map(Entity::getEntityId).collect(Collectors.toList()));
 
             if (tick > 0) {
@@ -278,10 +280,7 @@ public class Recording implements IRecording {
             }
 
             // Clean up old tracking data
-            if (tick % 100 == 0) {
-                recordedBlocksPerTick.keySet().removeIf(t -> t < tick - 100);
-            }
-            
+            if (tick % 100 == 0) recordedBlocksPerTick.keySet().removeIf(t -> t < tick - 100);
         }, 0, 1L).getTaskId();
 
         // Initial entity spawn
@@ -609,7 +608,6 @@ public class Recording implements IRecording {
 
     @Override
     public String getPlayerName(UUID player) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getPlayerName'");
+        return playerNames.get(entityIndex.getOrRegister(player));
     }
 }
