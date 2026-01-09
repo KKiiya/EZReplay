@@ -2,10 +2,11 @@ package me.lagggpixel.replay.replay.recordables.entity.entity;
 
 import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.protocol.item.ItemStack;
-import com.github.retrooper.packetevents.protocol.item.type.ItemTypes;
 import com.github.retrooper.packetevents.protocol.player.EquipmentSlot;
 import com.github.retrooper.packetevents.protocol.player.User;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityEquipment;
+
+import io.github.retrooper.packetevents.util.SpigotConversionUtil;
 import me.lagggpixel.replay.api.data.Writeable;
 import me.lagggpixel.replay.api.replay.content.IReplaySession;
 import me.lagggpixel.replay.api.replay.data.IRecording;
@@ -86,10 +87,7 @@ public class Equipment extends Recordable {
     
     private ItemStack convertToPacketEventsItem(org.bukkit.inventory.ItemStack bukkitStack) {
         if (bukkitStack == null) return ItemStack.EMPTY;
-        return ItemStack.builder()
-            .type(Objects.requireNonNull(ItemTypes.getByName("minecraft:" + bukkitStack.getType().name().toLowerCase())))
-            .amount(bukkitStack.getAmount())
-            .build();
+        return SpigotConversionUtil.fromBukkitItemStack(bukkitStack);
     }
 
 
