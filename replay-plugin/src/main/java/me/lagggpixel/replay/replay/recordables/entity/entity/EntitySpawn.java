@@ -76,33 +76,24 @@ public class EntitySpawn extends Recordable {
 
     @Override
     public void play(IReplaySession replaySession) {
-        int fakeEntityId = entityId + 100000; // Use a fake entity ID for packet purposes
         RecEntity recEntity = new ReplayEntity(entityId, entityType, customName, 20.0f);
+        int fakeEntityId = entityId + 100000;        
 
         Vector3d position = new Vector3d(spawnLocation.getX(), spawnLocation.getY(), spawnLocation.getZ());
         com.github.retrooper.packetevents.protocol.entity.type.EntityType peEntityType = convertEntityType(entityType);
         List<EntityData<?>> metadata = new ArrayList<>();
         if (customName != null && !customName.isEmpty()) {
             String json = GsonComponentSerializer.gson().serialize(Component.text(customName));
-            metadata.add(new EntityData<>(
-                    2,
-                    EntityDataTypes.OPTIONAL_COMPONENT,
-                    Optional.of(json)
-            ));
-        } else {
-            metadata.add(new EntityData<>(
-                    2,
-                    EntityDataTypes.OPTIONAL_COMPONENT,
-                    Optional.empty()
-            ));
-        }
-
+            metadata.add(new EntityData<>(2, EntityDataTypes.OPTIONAL_COMPONENT, Optional.of(json)));
+        } else metadata.add(new EntityData<>(2,EntityDataTypes.OPTIONAL_COMPONENT, Optional.empty()));
+        
         double motX = motion.getX();
         double motY = motion.getY();
         double motZ = motion.getZ();
         PacketWrapper<?> spawnPacket;
         if (isLiving) spawnPacket = new WrapperPlayServerSpawnLivingEntity(fakeEntityId, recEntity.getUuid(), peEntityType, position, spawnLocation.getYaw(), spawnLocation.getPitch(), spawnLocation.getYaw(), new Vector3d(motX, motY, motZ), metadata);
         else spawnPacket = new WrapperPlayServerSpawnEntity(fakeEntityId, Optional.of(recEntity.getUuid()), peEntityType, position, spawnLocation.getPitch(), spawnLocation.getYaw(), spawnLocation.getYaw(), 0, Optional.of(new Vector3d(motX, motY, motZ)));
+        recEntity.setPosition(spawnLocation);
         replaySession.getSpawnedEntities().put(entityId, recEntity);
 
         WrapperPlayServerEntityRotation rotationPacket = new WrapperPlayServerEntityRotation(fakeEntityId, spawnLocation.getYaw(), spawnLocation.getPitch(), true);

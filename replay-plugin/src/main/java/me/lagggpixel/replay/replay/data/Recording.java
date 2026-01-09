@@ -49,7 +49,7 @@ public class Recording implements IRecording {
     @Writeable private EntityIndex entityIndex;
     @Writeable private final List<IFrame> frames;
     @Writeable private final List<UUID> playersThatPlayed;
-    @Writeable private final Map<Short, String> playerNames;
+    @Writeable private final Map<UUID, String> playerNames;
     @Writeable private final Map<Short, Vector3d> spawnLocations;
     @Writeable private final Map<String, String> customData;
 
@@ -201,7 +201,7 @@ public class Recording implements IRecording {
                 if (!playersThatPlayed.contains(player.getUniqueId())) playersThatPlayed.add(player.getUniqueId());
                 if (!spawnedEntities.contains(player.getEntityId())) spawnedEntities.add(player.getEntityId());
                 entityIndex.getOrRegister(player.getUniqueId());
-                playerNames.put(entityIndex.getOrRegister(player.getUniqueId()), player.getName());
+                playerNames.put(player.getUniqueId(), player.getName());
                 lastFrame.addRecordable(new SwordBlock(this, player));
                 if (player.isSneaking()) lastFrame.addRecordable(new Sneaking(this, player.getUniqueId(), true));
                 if (player.isSprinting()) lastFrame.addRecordable(new Sprinting(this, player.getUniqueId(), true));
@@ -436,6 +436,6 @@ public class Recording implements IRecording {
 
     @Override
     public String getPlayerName(UUID player) {
-        return playerNames.get(entityIndex.getOrRegister(player));
+        return playerNames.get(player);
     }
 }
