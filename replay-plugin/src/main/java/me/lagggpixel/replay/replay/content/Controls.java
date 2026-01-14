@@ -15,18 +15,22 @@ import org.bukkit.inventory.meta.ItemMeta;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Map;
 
 public class Controls implements IControls {
 
+    private final Map<String, Runnable> controlActions;
     private final HashMap<Integer, ItemStack> oldInventory;
     private final IReplaySession replaySession;
     private final Player player;
     private boolean isInDelay = false;
 
     public Controls(IReplaySession replaySession, Player player) {
+        this.controlActions = new HashMap<>();
         this.oldInventory = new HashMap<>();
         this.replaySession = replaySession;
         this.player = player;
+        setupControls();
         giveItems();
     }
 
@@ -137,53 +141,52 @@ public class Controls implements IControls {
     @Override
     public void onControl(String control) {
         if (!isInDelay) {
-            switch (control) {
-                case "tracker":
-                    new TrackerMenu(replaySession, player);
-                    break;
-                case "decreaseSpeed":
-                    replaySession.setSpeed(replaySession.getSpeed() - 5);
-                    for (Player player : replaySession.getViewers()) {
-                        PacketUtils.sendActionBar(player, ChatColor.RED + "Speed decreased to " + ChatColor.YELLOW + "x" + replaySession.getSpeedAsDouble());
-                    }
-                    break;
-                case "rewind":
-                    replaySession.rewind(10);
-                    for (Player player : replaySession.getViewers()) {
-                        PacketUtils.sendActionBar(player, ChatColor.AQUA + "Rewound 10 seconds");
-                    }
-                    break;
-                case "pauseResume":
-                    if (replaySession.isPaused()) {
-                        replaySession.resume();
-                        for (Player player : replaySession.getViewers()) {
-                            PacketUtils.sendActionBar(player, ChatColor.GREEN + "Playback resumed");
-                        }
-                    } else {
-                        replaySession.pause();
-                        for (Player player : replaySession.getViewers()) {
-                            PacketUtils.sendActionBar(player, ChatColor.RED + "Playback paused");
-                        }
-                    }
-                    break;
-                case "forward":
-                    replaySession.fastForward(10);
-                    for (Player player : replaySession.getViewers()) {
-                        PacketUtils.sendActionBar(player, ChatColor.AQUA + "Fast forwarded 10 seconds");
-                    }
-                    break;
-                case "increaseSpeed":
-                    replaySession.setSpeed(replaySession.getSpeed() + 5);
-                    for (Player player : replaySession.getViewers()) {
-                        PacketUtils.sendActionBar(player, ChatColor.GREEN + "Speed increased to " + ChatColor.YELLOW + "x" + replaySession.getSpeedAsDouble());
-                    }
-                    break;
-                case "resetReplay":
-                    replaySession.reset();
-                    break;
-            }
+            Runnable action = controlActions.get(control);
+            if (action != null) action.run();
             isInDelay = true;
             Bukkit.getScheduler().runTaskLater(Replay.getInstance(), () -> isInDelay = false, 20L);
         }
+    }
+
+    private void setupControls() {
+        controlActions.put("tracker", () -> new TrackerMenu(replaySession, player));
+        controlActions.put("decreaseSpeed", () -> {
+            replaySession.setSpeed(replaySession.getSpeed() - 5);
+            for (Player player : replaySession.getViewers()) {
+                PacketUtils.sendActionBar(player, ChatColor.RED + "Speed decreased to " + ChatColor.YELLOW + "x" + replaySession.getSpeedAsDouble());
+            }
+        });
+        controlActions.put("rewind", () -> {
+            replaySession.rewind(10);
+            for (Player player : replaySession.getViewers()) {
+                PacketUtils.sendActionBar(player, ChatColor.AQUA + "Rewound 10 seconds");
+            }
+        });
+        controlActions.put("pauseResume", () -> {
+            if (replaySession.isPaused()) {
+                replaySession.resume();
+                for (Player player : replaySession.getViewers()) {
+                    PacketUtils.sendActionBar(player, ChatColor.GREEN + "Playback resumed");
+                }
+            } else {
+                replaySession.pause();
+                for (Player player : replaySession.getViewers()) {
+                    PacketUtils.sendActionBar(player, ChatColor.RED + "Playback paused");
+                }
+            }
+        });
+        controlActions.put("forward", () -> {
+            replaySession.fastForward(10);
+            for (Player player : replaySession.getViewers()) {
+                PacketUtils.sendActionBar(player, ChatColor.AQUA + "Fast forwarded 10 seconds");
+            }
+        });
+        controlActions.put("increaseSpeed", () -> {
+            replaySession.setSpeed(replaySession.getSpeed() + 5);
+            for (Player player : replaySession.getViewers()) {
+                PacketUtils.sendActionBar(player, ChatColor.GREEN + "Speed increased to " + ChatColor.YELLOW + "x" + replaySession.getSpeedAsDouble());
+            }
+        });
+        controlActions.put("resetReplay", replaySession::reset);
     }
 }
